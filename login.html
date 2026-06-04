@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Apex Courts</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; background: var(--ink); }
+
+    .auth-page {
+      min-height: calc(100vh - 80px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .auth-card {
+      background: var(--stone);
+      border: 1px solid var(--stone-line);
+      border-radius: 20px;
+      width: 100%; max-width: 440px;
+      overflow: hidden;
+    }
+
+    .auth-header {
+      padding: 36px 36px 28px;
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .auth-logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 24px; text-decoration: none;
+    }
+    .auth-logo-mark {
+      width: 32px; height: 32px; background: var(--gold); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px; letter-spacing: 0.06em; color: var(--cream);
+    }
+    .auth-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; letter-spacing: 0.03em;
+      color: var(--cream); line-height: 1; margin-bottom: 6px;
+    }
+    .auth-sub { font-size: 14px; color: var(--cream-muted); }
+
+    .auth-body { padding: 28px 36px 36px; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--cream-muted); margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%; padding: 13px 16px; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid var(--stone-line);
+      background: var(--ink); color: var(--cream);
+      font-size: 15px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--gold); }
+    .form-input::placeholder { color: rgba(242,237,228,0.25); }
+    .form-input.error { border-color: #ef4444; }
+
+    .pw-wrap { position: relative; }
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--cream-muted); cursor: pointer;
+      display: flex; align-items: center; padding: 4px;
+    }
+    .pw-toggle:hover { color: var(--cream); }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #fca5a5; margin-bottom: 16px; display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .btn-primary-full {
+      width: 100%; padding: 15px; border-radius: 12px;
+      background: var(--gold); color: var(--ink);
+      font-size: 15px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary-full:hover { transform: scale(1.01); box-shadow: 0 8px 32px rgba(201,168,76,0.35); }
+    .btn-primary-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider-line { flex: 1; height: 1px; background: var(--stone-line); }
+    .divider-text { font-size: 11px; color: rgba(242,237,228,0.25); letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .staff-hint {
+      background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 8px; padding: 10px 14px; font-size: 12px;
+      color: var(--cream-muted); margin-bottom: 16px; line-height: 1.6;
+    }
+    .staff-hint strong { color: var(--gold); }
+
+    .auth-footer { padding: 20px 36px; border-top: 1px solid var(--stone-line); text-align: center; font-size: 14px; color: var(--cream-muted); }
+    .auth-footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+    /* Success popup */
+    .popup-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .popup-overlay.open { opacity: 1; pointer-events: all; }
+    .popup-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 20px; padding: 40px 36px; max-width: 360px; width: 100%;
+      text-align: center;
+      transform: scale(0.9); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .popup-overlay.open .popup-card { transform: scale(1); }
+    .popup-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .popup-icon.success { background: rgba(34,197,94,0.12); border: 2px solid rgba(34,197,94,0.3); }
+    .popup-icon.error { background: rgba(239,68,68,0.12); border: 2px solid rgba(239,68,68,0.3); }
+    .popup-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--cream); margin-bottom: 8px; }
+    .popup-body { font-size: 14px; color: var(--cream-muted); line-height: 1.6; margin-bottom: 24px; }
+    .popup-btn {
+      width: 100%; padding: 14px; border-radius: 10px;
+      background: var(--gold); color: var(--ink);
+      font-size: 14px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .popup-btn:hover { transform: scale(1.02); }
+    .popup-btn.ghost {
+      background: transparent; border: 1px solid var(--stone-line);
+      color: var(--cream-muted); margin-top: 8px;
+    }
+
+    @media(max-width: 480px) {
+      .auth-header, .auth-body, .auth-footer { padding-left: 24px; padding-right: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="navbar" class="scrolled">
+  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="/">Home</a></li>
+    <li><a href="signup.html">Create Account</a></li>
+    <li><a href="book.html" class="nav-cta">Book a Court</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<main id="main" class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <a href="/" class="auth-logo" aria-label="Apex Courts">
+        <div class="auth-logo-mark">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2.5" fill="none"/>
+            <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <span class="auth-logo-text">APEX COURTS</span>
+      </a>
+      <h1 class="auth-title">SIGN IN</h1>
+      <p class="auth-sub">Welcome back. Ready to play?</p>
+    </div>
+
+    <div class="auth-body">
+      <div id="errorMsg" class="error-msg" role="alert" aria-live="polite"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="contactInput">Email or Phone</label>
+        <input class="form-input" type="text" id="contactInput" autocomplete="username"
+          placeholder="juan@example.com or +63 9XX XXX XXXX"
+          onkeydown="if(event.key==='Enter')document.getElementById('passwordInput').focus()" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="passwordInput">Password</label>
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="passwordInput" autocomplete="current-password"
+            placeholder="Your password"
+            onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:44px" />
+          <button class="pw-toggle" type="button" onclick="togglePw()" aria-label="Show/hide password" title="Show password">
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-primary-full" id="loginBtn" onclick="doLogin()">
+        Sign In
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Staff Access</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="staff-hint">
+        Staff: use username <strong>admin</strong> / <strong>pos</strong> with the staff password provided by management.
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="signup.html">Sign up free</a>
+    </div>
+
+  </div>
+</main>
+
+<!-- ─── SUCCESS POPUP ─── -->
+<div class="popup-overlay" id="successPopup" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+  <div class="popup-card">
+    <div class="popup-icon success" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="popup-title" id="successTitle">WELCOME BACK</div>
+    <p class="popup-body" id="successBody">You're signed in. Redirecting…</p>
+    <button class="popup-btn" onclick="goToDestination()">
+      Continue
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="vertical-align:-2px;margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ─── FAIL POPUP ─── -->
+<div class="popup-overlay" id="failPopup" role="dialog" aria-modal="true" aria-labelledby="failTitle">
+  <div class="popup-card">
+    <div class="popup-icon error" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <div class="popup-title" id="failTitle">LOGIN FAILED</div>
+    <p class="popup-body" id="failBody">Incorrect email or password.</p>
+    <button class="popup-btn" onclick="closeFailPopup()">Try Again</button>
+    <button class="popup-btn ghost" onclick="window.location.href='signup.html'">Create Account</button>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+let redirectTo = 'book.html';
+let successRole = null;
+
+// Read redirect param from URL
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('redirect')) redirectTo = p.get('redirect');
+
+  // If already logged in, redirect immediately
+  if (sessionStorage.getItem('apexUser')) {
+    window.location.href = redirectTo;
+  }
+})();
+
+function togglePw() {
+  const input = document.getElementById('passwordInput');
+  const icon = document.getElementById('eyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+}
+
+// Staff accounts (demo — hardcoded credentials)
+const STAFF_ACCOUNTS = [
+  { username: 'admin',  password: 'admin123', name: 'Admin User',  role: 'Admin' },
+  { username: 'pos',    password: 'pos123',   name: 'POS Staff',   role: 'POS Staff' },
+  { username: 'staff1', password: 'staff123', name: 'Staff Member', role: 'POS Staff' },
+];
+
+function doLogin() {
+  const contact  = document.getElementById('contactInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+
+  document.getElementById('errorMsg').classList.remove('show');
+
+  if (!contact || !password) {
+    showError('Please enter your email/phone and password.');
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+
+    // Check staff accounts first
+    const staffMatch = STAFF_ACCOUNTS.find(a =>
+      a.username.toLowerCase() === contact.toLowerCase() && a.password === password
+    );
+    if (staffMatch) {
+      sessionStorage.setItem('apexUser', staffMatch.name);
+      sessionStorage.setItem('apexRole', staffMatch.role);
+      successRole = staffMatch.role;
+      showSuccessPopup(staffMatch.name, staffMatch.role);
+      return;
+    }
+
+    // Check member accounts in localStorage
+    const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
+    const member = accounts.find(a =>
+      a.contact.toLowerCase() === contact.toLowerCase() && a.password === password
+    );
+    if (member) {
+      const fullName = member.firstName + ' ' + member.lastName;
+      sessionStorage.setItem('apexUser', fullName);
+      sessionStorage.removeItem('apexRole');
+      successRole = null;
+      showSuccessPopup(fullName, 'member');
+      return;
+    }
+
+    // Login failed
+    showFailPopup();
+  }, 600);
+}
+
+function showSuccessPopup(name, role) {
+  const title = document.getElementById('successTitle');
+  const body = document.getElementById('successBody');
+  title.textContent = role === 'Admin' ? 'WELCOME, ADMIN' : role === 'POS Staff' ? 'STAFF ACCESS GRANTED' : 'WELCOME BACK';
+  body.textContent = `Signed in as ${name}. Redirecting you now…`;
+  document.getElementById('successPopup').classList.add('open');
+  // Auto-redirect after 2s
+  setTimeout(goToDestination, 2000);
+}
+
+function goToDestination() {
+  const role = sessionStorage.getItem('apexRole');
+  if (role === 'Admin') {
+    window.location.href = 'admin/dashboard.html';
+  } else if (role === 'POS Staff') {
+    window.location.href = 'admin/pos.html';
+  } else {
+    window.location.href = redirectTo;
+  }
+}
+
+function showFailPopup() {
+  const contact = document.getElementById('contactInput').value.trim();
+  const body = document.getElementById('failBody');
+  body.textContent = `No account found for "${contact}", or the password is incorrect. Check your details and try again.`;
+  document.getElementById('failPopup').classList.add('open');
+}
+
+function closeFailPopup() {
+  document.getElementById('failPopup').classList.remove('open');
+  document.getElementById('contactInput').focus();
+}
+</script>
+</body>
+</html>

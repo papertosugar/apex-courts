@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cancellation & Credit Policy — Apex Courts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; }
+    .policy-page { max-width: 740px; margin: 0 auto; padding: 56px 5% 100px; }
+    .policy-eyebrow {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .policy-eyebrow-line { width: 32px; height: 2px; background: var(--gold); }
+    .policy-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .policy-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 6vw, 56px); letter-spacing: 0.02em;
+      line-height: 1; margin-bottom: 12px;
+    }
+    .policy-updated { font-size: 13px; color: var(--cream-muted); margin-bottom: 48px; }
+
+    .policy-section { margin-bottom: 48px; }
+    .policy-section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 0.05em; color: var(--gold);
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--stone-line);
+    }
+
+    .refund-table {
+      width: 100%; border-collapse: collapse; margin-bottom: 16px;
+    }
+    .refund-table th {
+      text-align: left; padding: 12px 16px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--cream-muted); background: var(--stone);
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .refund-table td {
+      padding: 14px 16px; font-size: 14px; color: var(--cream-muted);
+      border-bottom: 1px solid rgba(242,237,228,0.06);
+    }
+    .refund-table tr:last-child td { border-bottom: none; }
+    .refund-table .window { font-weight: 600; color: var(--cream); }
+    .refund-table .rate {
+      font-weight: 800; font-size: 15px;
+    }
+    .rate-100 { color: #22c55e; }
+    .rate-50  { color: #84cc16; }
+    .rate-30  { color: #eab308; }
+    .rate-10  { color: #f97316; }
+    .rate-0   { color: #f87171; }
+
+    .policy-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .policy-list li {
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 14px; color: var(--cream-muted); line-height: 1.7;
+    }
+    .policy-list li::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold); margin-top: 8px; flex-shrink: 0;
+    }
+    .policy-note {
+      background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 10px; padding: 16px 20px;
+      font-size: 13px; color: var(--cream-muted); line-height: 1.7;
+      margin-top: 16px;
+    }
+    .policy-note strong { color: var(--gold); }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--gold);
+      text-decoration: none; margin-bottom: 40px;
+      padding: 8px 0; transition: gap 0.2s;
+    }
+    .back-link:hover { gap: 12px; }
+  </style>
+</head>
+<body>
+
+<nav id="navbar" class="scrolled">
+  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="/">Home</a></li>
+    <li><a href="book.html" class="nav-cta">Book a Court</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<main id="main" class="policy-page">
+
+  <a href="/" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to Home
+  </a>
+
+  <div class="policy-eyebrow">
+    <div class="policy-eyebrow-line"></div>
+    <span class="policy-eyebrow-text">Player Guidelines</span>
+  </div>
+  <h1 class="policy-title">Cancellation &amp;<br>Credit Policy</h1>
+  <p class="policy-updated">Effective June 2025 · Last updated June 4, 2025</p>
+
+  <!-- Section 1: Refund Schedule -->
+  <div class="policy-section">
+    <div class="policy-section-title">Refund &amp; Credit Schedule</div>
+    <table class="refund-table" role="table" aria-label="Cancellation credit schedule">
+      <thead>
+        <tr>
+          <th>Cancellation Window</th>
+          <th>Credit Refund</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="window">More than 24 hours before</td>
+          <td class="rate rate-100">100%</td>
+          <td>Full credit returned</td>
+        </tr>
+        <tr>
+          <td class="window">12 – 24 hours before</td>
+          <td class="rate rate-50">50%</td>
+          <td>Half credit returned</td>
+        </tr>
+        <tr>
+          <td class="window">6 – 12 hours before</td>
+          <td class="rate rate-30">30%</td>
+          <td>Partial credit returned</td>
+        </tr>
+        <tr>
+          <td class="window">Less than 6 hours before</td>
+          <td class="rate rate-10">10%</td>
+          <td>Minimal credit returned</td>
+        </tr>
+        <tr>
+          <td class="window">No-show</td>
+          <td class="rate rate-0">0%</td>
+          <td>Non-refundable, non-transferable</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="policy-note">
+      <strong>How to cancel:</strong> Log in to your account and cancel from your booking history, or contact the front desk directly. Cancellations must be submitted before the cutoff window — time is calculated from the confirmed booking start time.
+    </div>
+  </div>
+
+  <!-- Section 2: Credit Rules -->
+  <div class="policy-section">
+    <div class="policy-section-title">Credit Terms</div>
+    <ul class="policy-list" aria-label="Credit rules">
+      <li>Credits are valid for <strong style="color:var(--cream)">90 days</strong> from the date of issue.</li>
+      <li>Credits may be applied to future court bookings, equipment rentals, and eligible Court Lab services.</li>
+      <li>Credits are non-transferable and may not be converted to cash.</li>
+      <li>Multiple credits may be combined toward a single booking.</li>
+      <li>Credits issued as part of a promotional offer may have separate terms and expiry dates.</li>
+    </ul>
+  </div>
+
+  <!-- Section 3: Facility Issues -->
+  <div class="policy-section">
+    <div class="policy-section-title">Facility Disruptions</div>
+    <ul class="policy-list">
+      <li>Apex Courts reserves the right to provide a <strong style="color:var(--cream)">full refund or full credit</strong> in cases of facility issues, safety concerns, or operational disruptions that prevent a session from proceeding.</li>
+      <li>In the event of a partial disruption (e.g., early court closure), a pro-rated credit will be issued for unused time.</li>
+      <li>Disruptions caused by weather, power, or force majeure events will be handled on a case-by-case basis.</li>
+    </ul>
+  </div>
+
+  <!-- Section 4: No-shows -->
+  <div class="policy-section">
+    <div class="policy-section-title">No-Shows &amp; Late Arrivals</div>
+    <ul class="policy-list">
+      <li>No-show reservations are <strong style="color:#f87171">non-refundable and non-transferable</strong>.</li>
+      <li>Courts will be held for <strong style="color:var(--cream)">15 minutes</strong> past the booking start time. After that, the court may be released to walk-in players.</li>
+      <li>Late arrivals do not extend the booking end time — the session ends at the originally confirmed time.</li>
+      <li>If you know you'll be late, please call the front desk — we will hold the court when possible.</li>
+    </ul>
+  </div>
+
+  <!-- Section 5: Modifications -->
+  <div class="policy-section">
+    <div class="policy-section-title">Booking Modifications</div>
+    <ul class="policy-list">
+      <li>Bookings may be rescheduled up to <strong style="color:var(--cream)">12 hours before</strong> the session start time without penalty, subject to availability.</li>
+      <li>Rescheduling within 12 hours will incur a rescheduling fee of <strong style="color:var(--cream)">₱100</strong>.</li>
+      <li>Court type changes (e.g., pickleball to badminton) are treated as a cancellation and re-booking.</li>
+      <li>Duration extensions must be requested at the front desk and are subject to court availability.</li>
+    </ul>
+    <div class="policy-note">
+      <strong>Questions?</strong> Our front desk team is available daily from 7:00 AM to 12:00 AM. Call us at (555) 123-4567 or visit in person.
+    </div>
+  </div>
+
+</main>
+
+<script src="js/main.js"></script>
+</body>
+</html>

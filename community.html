@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community — Apex Courts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; }
+
+    .community-hero {
+      max-width: 1180px; margin: 0 auto; padding: 56px 5% 40px;
+    }
+    .comm-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .comm-eyebrow-line { width: 32px; height: 2px; background: var(--gold); }
+    .comm-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .comm-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 5vw, 52px); letter-spacing: 0.02em; line-height: 1; margin-bottom: 12px;
+    }
+    .comm-sub { font-size: 15px; color: var(--cream-muted); max-width: 480px; line-height: 1.6; }
+
+    /* Tabs */
+    .comm-tabs {
+      display: flex; gap: 4px; padding: 0 5%; max-width: 1180px; margin: 0 auto 0;
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .comm-tab {
+      padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      color: var(--cream-muted); background: none; border: none; font-family: inherit;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .comm-tab:hover { color: var(--cream); }
+    .comm-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .comm-tab-badge {
+      padding: 2px 7px; border-radius: 100px;
+      background: rgba(201,168,76,0.15); color: var(--gold);
+      font-size: 10px; font-weight: 800;
+    }
+
+    /* Layout */
+    .comm-layout {
+      max-width: 1180px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 320px;
+      gap: 32px; padding: 32px 5% 80px; align-items: start;
+    }
+    @media(max-width: 900px) { .comm-layout { grid-template-columns: 1fr; } }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── NEWS ── */
+    .news-list { display: flex; flex-direction: column; gap: 20px; }
+    .news-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 14px; overflow: hidden; transition: border-color 0.2s;
+    }
+    .news-card:hover { border-color: rgba(201,168,76,0.3); }
+    .news-card-img {
+      width: 100%; height: 180px; background: var(--stone);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .news-card-img-placeholder {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .news-card-body { padding: 20px 24px; }
+    .news-tag {
+      display: inline-block; padding: 3px 10px; border-radius: 100px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      background: rgba(201,168,76,0.12); color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .news-card-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+    .news-card-body-text { font-size: 13px; color: var(--cream-muted); line-height: 1.7; margin-bottom: 14px; }
+    .news-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: rgba(242,237,228,0.35); }
+    .news-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+
+    /* Admin post news btn */
+    .admin-add-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border-radius: 9px;
+      background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);
+      color: var(--gold); font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all 0.2s; margin-bottom: 24px;
+    }
+    .admin-add-btn:hover { background: rgba(201,168,76,0.18); }
+
+    /* ── REVIEWS ── */
+    .post-composer {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 14px; padding: 20px; margin-bottom: 24px;
+    }
+    .post-composer-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), rgba(201,168,76,0.5));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--ink); flex-shrink: 0;
+      font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em;
+    }
+    .post-textarea {
+      width: 100%; padding: 12px 14px; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid var(--stone-line);
+      background: var(--ink); color: var(--cream);
+      font-size: 14px; font-family: inherit; resize: vertical;
+      outline: none; transition: border-color 0.2s; min-height: 80px;
+    }
+    .post-textarea:focus { border-color: var(--gold); }
+    .post-textarea::placeholder { color: rgba(242,237,228,0.25); }
+    .post-composer-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 12px; flex-wrap: wrap; gap: 10px;
+    }
+    .post-meta-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sport-tag-btn {
+      padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--stone-line); background: transparent; color: var(--cream-muted);
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .sport-tag-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+    .photo-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--stone-line); background: transparent; color: var(--cream-muted);
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .photo-btn:hover { border-color: rgba(201,168,76,0.3); color: var(--cream); }
+    .post-submit-btn {
+      padding: 9px 20px; border-radius: 9px;
+      background: var(--gold); color: var(--ink);
+      font-size: 13px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .post-submit-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+    .post-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    #photoInput { display: none; }
+    .photo-preview {
+      margin-top: 10px; display: none;
+      border-radius: 10px; overflow: hidden; max-height: 200px;
+    }
+    .photo-preview img { width: 100%; object-fit: cover; display: block; }
+    .photo-preview-remove {
+      position: absolute; top: 6px; right: 6px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+    }
+
+    /* Login nudge */
+    .login-nudge {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 14px; padding: 24px; margin-bottom: 24px;
+      text-align: center;
+    }
+    .login-nudge p { font-size: 14px; color: var(--cream-muted); margin-bottom: 14px; }
+    .login-nudge a {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 9px;
+      background: var(--gold); color: var(--ink);
+      font-size: 13px; font-weight: 800; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .login-nudge a:hover { transform: scale(1.02); }
+
+    /* Post cards */
+    .posts-list { display: flex; flex-direction: column; gap: 16px; }
+    .post-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 14px; padding: 20px; transition: border-color 0.2s;
+    }
+    .post-card:hover { border-color: rgba(242,237,228,0.1); }
+    .post-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .post-header-info { flex: 1; }
+    .post-author { font-size: 14px; font-weight: 700; }
+    .post-date { font-size: 12px; color: rgba(242,237,228,0.35); margin-top: 2px; }
+    .post-sport-tag {
+      padding: 3px 9px; border-radius: 6px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      background: rgba(201,168,76,0.1); color: var(--gold); align-self: flex-start;
+    }
+    .post-text { font-size: 14px; color: var(--cream-muted); line-height: 1.7; margin-bottom: 10px; }
+    .post-image { border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+    .post-image img { width: 100%; display: block; max-height: 300px; object-fit: cover; }
+    .post-footer { display: flex; align-items: center; gap: 16px; }
+    .post-like-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none; color: var(--cream-muted);
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      padding: 4px 0; transition: color 0.2s;
+    }
+    .post-like-btn:hover, .post-like-btn.liked { color: #f87171; }
+    .post-delete-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none; color: rgba(239,68,68,0.5);
+      font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+      padding: 4px 0; transition: color 0.2s; margin-left: auto;
+    }
+    .post-delete-btn:hover { color: #f87171; }
+
+    /* Sidebar */
+    .comm-sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .sidebar-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 14px; padding: 20px;
+    }
+    .sidebar-card-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--cream-muted);
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; }
+    .stat-row .stat-label { color: var(--cream-muted); }
+    .stat-row .stat-val { font-weight: 700; color: var(--cream); }
+    .leaderboard-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+    .lb-rank { font-size: 12px; font-weight: 800; color: var(--gold); width: 20px; text-align: center; }
+    .lb-name { flex: 1; font-size: 13px; font-weight: 600; }
+    .lb-count { font-size: 12px; color: var(--cream-muted); }
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-pill {
+      padding: 5px 11px; border-radius: 100px; font-size: 11px; font-weight: 600;
+      background: rgba(242,237,228,0.05); border: 1px solid var(--stone-line);
+      color: var(--cream-muted); cursor: pointer; transition: all 0.2s;
+    }
+    .tag-pill:hover { border-color: rgba(201,168,76,0.3); color: var(--gold); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--cream-muted); }
+    .empty-state svg { opacity: 0.2; margin-bottom: 14px; }
+    .empty-state p { font-size: 14px; }
+
+    /* Toast */
+    #commToast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 3000;
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      padding: 14px 20px; border-radius: 12px;
+      background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3);
+      color: #4ade80; font-size: 14px; font-weight: 600;
+      max-width: 320px;
+    }
+
+    /* News modal (admin post) */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 20px; padding: 32px; max-width: 520px; width: 100%;
+      transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .modal-card { transform: scale(1); }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label-sm { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 7px; }
+    .form-input-sm { width: 100%; padding: 11px 14px; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--stone-line); background: var(--ink); color: var(--cream); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-input-sm:focus { border-color: var(--gold); }
+    .form-textarea-sm { width: 100%; padding: 11px 14px; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--stone-line); background: var(--ink); color: var(--cream); font-size: 13px; font-family: inherit; outline: none; resize: vertical; min-height: 100px; transition: border-color 0.2s; }
+    .form-textarea-sm:focus { border-color: var(--gold); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+    .modal-btn.primary { background: var(--gold); color: var(--ink); }
+    .modal-btn.ghost { background: transparent; color: var(--cream); border: 1px solid var(--stone-line); }
+    .modal-btn:hover { transform: scale(1.02); }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="/#sports">Sports</a></li>
+    <li><a href="community.html" class="active">Community</a></li>
+    <li><a href="login.html">Sign In</a></li>
+    <li><a href="book.html" class="nav-cta">Book a Court</a></li>
+  </ul>
+  <div id="navUserBadge" style="display:none;align-items:center;gap:10px">
+    <span id="navUserName" style="font-size:13px;color:var(--cream-muted)"></span>
+    <button onclick="doLogout()" style="padding:6px 14px;border-radius:7px;border:1px solid var(--stone-line);background:transparent;color:var(--cream-muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Logout</button>
+  </div>
+  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<main id="main">
+
+  <!-- Hero -->
+  <div class="community-hero">
+    <div class="comm-eyebrow">
+      <div class="comm-eyebrow-line"></div>
+      <span class="comm-eyebrow-text">Player Community</span>
+    </div>
+    <h1 class="comm-title">APEX<br><span style="color:var(--gold)">COMMUNITY</span></h1>
+    <p class="comm-sub">News, updates, and real stories from Apex Courts players. Share your wins, tips, and game highlights.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="comm-tabs" role="tablist" aria-label="Community sections">
+    <button class="comm-tab active" role="tab" aria-selected="true" onclick="switchTab('news',this)" id="tabNews">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+      News
+      <span class="comm-tab-badge" id="newsCount">0</span>
+    </button>
+    <button class="comm-tab" role="tab" aria-selected="false" onclick="switchTab('reviews',this)" id="tabReviews">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Member Reviews
+      <span class="comm-tab-badge" id="reviewCount">0</span>
+    </button>
+  </div>
+
+  <!-- Main layout -->
+  <div class="comm-layout">
+
+    <!-- Left: content -->
+    <div>
+
+      <!-- NEWS TAB -->
+      <div class="tab-panel active" id="panel-news">
+        <div id="adminNewsBar" style="display:none">
+          <button class="admin-add-btn" onclick="openNewsModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Post News Update
+          </button>
+        </div>
+        <div class="news-list" id="newsList">
+          <!-- seeded from JS -->
+        </div>
+      </div>
+
+      <!-- REVIEWS TAB -->
+      <div class="tab-panel" id="panel-reviews">
+        <!-- Composer or login nudge -->
+        <div id="composerArea"></div>
+
+        <div class="posts-list" id="postsList">
+          <!-- loaded from localStorage -->
+        </div>
+        <div id="postsEmpty" class="empty-state" style="display:none">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p>No reviews yet. Be the first to share your experience!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: sidebar -->
+    <aside class="comm-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Community Stats</div>
+        <div class="stat-row"><span class="stat-label">Members</span><span class="stat-val" id="statMembers">—</span></div>
+        <div class="stat-row"><span class="stat-label">Reviews</span><span class="stat-val" id="statReviews">—</span></div>
+        <div class="stat-row"><span class="stat-label">News Posts</span><span class="stat-val" id="statNews">—</span></div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Top Contributors</div>
+        <div id="leaderboard"></div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Browse by Sport</div>
+        <div class="tag-cloud">
+          <div class="tag-pill" onclick="filterPosts('pickleball')">Pickleball</div>
+          <div class="tag-pill" onclick="filterPosts('badminton')">Badminton</div>
+          <div class="tag-pill" onclick="filterPosts('drill')">Drill Zone</div>
+          <div class="tag-pill" onclick="filterPosts('')">All</div>
+        </div>
+      </div>
+
+      <div class="sidebar-card" style="text-align:center">
+        <div class="sidebar-card-title">Share Your Game</div>
+        <p style="font-size:13px;color:var(--cream-muted);margin-bottom:16px;line-height:1.6">Members can post reviews, tips, and game highlights for the community.</p>
+        <a href="book.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:800;text-decoration:none;transition:all 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+          Book a Court
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Admin: post news modal -->
+<div class="modal-overlay" id="newsModal">
+  <div class="modal-card">
+    <div class="modal-title">Post News Update</div>
+    <div class="form-group">
+      <label class="form-label-sm">Tag</label>
+      <select class="form-input-sm" id="newsTag">
+        <option value="Announcement">Announcement</option>
+        <option value="Event">Event</option>
+        <option value="Update">Update</option>
+        <option value="Promo">Promo</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Title</label>
+      <input class="form-input-sm" type="text" id="newsTitle" placeholder="News headline…" />
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Body</label>
+      <textarea class="form-textarea-sm" id="newsBody" placeholder="Write the full update…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeNewsModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="submitNews()">Publish</button>
+    </div>
+  </div>
+</div>
+
+<div id="commToast"></div>
+
+<script src="js/main.js"></script>
+<script>
+/* ── STATE ── */
+const currentUser = sessionStorage.getItem('apexUser');
+const currentRole = sessionStorage.getItem('apexRole');
+let currentFilter = '';
+let selectedSport = '';
+let photoDataUrl = null;
+
+/* ── NAV USER ── */
+(function() {
+  const badge = document.getElementById('navUserBadge');
+  const nameEl = document.getElementById('navUserName');
+  const links = document.querySelector('.nav-links');
+  if (currentUser) {
+    badge.style.display = 'flex';
+    nameEl.textContent = 'Hi, ' + currentUser.split(' ')[0];
+    // Hide sign-in link
+    links.querySelectorAll('a[href="login.html"]').forEach(a => a.parentElement.style.display = 'none');
+  }
+})();
+
+function doLogout() {
+  sessionStorage.clear();
+  window.location.reload();
+}
+
+/* ── STORAGE ── */
+function getNews() { return JSON.parse(localStorage.getItem('apexNews') || '[]'); }
+function saveNews(arr) { localStorage.setItem('apexNews', JSON.stringify(arr)); }
+function getPosts() { return JSON.parse(localStorage.getItem('apexPosts') || '[]'); }
+function savePosts(arr) { localStorage.setItem('apexPosts', JSON.stringify(arr)); }
+
+/* ── SEED DEFAULT NEWS ── */
+function seedNews() {
+  if (getNews().length) return;
+  const defaults = [
+    {
+      id: 'N1', tag: 'Announcement', title: 'Apex Courts is Now Open!',
+      body: 'We are thrilled to announce that Apex Courts is officially open. Featuring 4 pickleball courts, 4 badminton courts, and 1 dedicated Drill Zone, we\'re your home for premium indoor court sports in the city.',
+      author: 'Apex Courts', date: new Date(Date.now() - 7*24*3600000).toISOString(),
+    },
+    {
+      id: 'N2', tag: 'Event', title: 'Opening Weekend Pickleball Tournament',
+      body: 'Join us for our grand opening weekend tournament! Open to all skill levels. Prizes for top 3 teams. Register at the front desk or call us. Spots are limited — first come, first served.',
+      author: 'Apex Courts', date: new Date(Date.now() - 3*24*3600000).toISOString(),
+    },
+    {
+      id: 'N3', tag: 'Update', title: 'Peak Hour Pricing Now Active',
+      body: 'As announced, peak hours are now 2:00 PM – 12:00 AM daily. Court rates during peak hours remain ₱600/hr for pickleball and badminton. The Drill Zone stays at ₱400 for the first 30 minutes.',
+      author: 'Apex Courts', date: new Date(Date.now() - 1*24*3600000).toISOString(),
+    },
+  ];
+  saveNews(defaults);
+}
+
+/* ── TABS ── */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.comm-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active'); el.setAttribute('aria-selected','true');
+}
+
+/* ── RENDER NEWS ── */
+function renderNews() {
+  const news = getNews().slice().reverse(); // newest first
+  const list = document.getElementById('newsList');
+  document.getElementById('newsCount').textContent = news.length;
+  document.getElementById('statNews').textContent = news.length;
+
+  // Show admin button
+  if (currentRole === 'Admin') {
+    document.getElementById('adminNewsBar').style.display = 'block';
+  }
+
+  list.innerHTML = '';
+  if (!news.length) {
+    list.innerHTML = '<div class="empty-state"><p>No news yet.</p></div>';
+    return;
+  }
+  news.forEach(n => {
+    const card = document.createElement('article');
+    card.className = 'news-card';
+    const date = new Date(n.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    card.innerHTML = `
+      <div class="news-card-img">
+        <div class="news-card-img-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="1.5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+        </div>
+      </div>
+      <div class="news-card-body">
+        <span class="news-tag">${n.tag}</span>
+        <div class="news-card-title">${n.title}</div>
+        <div class="news-card-body-text">${n.body}</div>
+        <div class="news-meta">
+          <span>${n.author || 'Apex Courts'}</span>
+          <div class="news-meta-dot"></div>
+          <span>${date}</span>
+          ${currentRole === 'Admin' ? `<div class="news-meta-dot"></div><span style="color:#f87171;cursor:pointer" onclick="deleteNews('${n.id}')">Delete</span>` : ''}
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function deleteNews(id) {
+  if (!confirm('Delete this news post?')) return;
+  saveNews(getNews().filter(n => n.id !== id));
+  renderNews();
+  showToast('News post deleted.');
+}
+
+/* ── NEWS MODAL ── */
+function openNewsModal() { document.getElementById('newsModal').classList.add('open'); }
+function closeNewsModal() { document.getElementById('newsModal').classList.remove('open'); }
+function submitNews() {
+  const tag = document.getElementById('newsTag').value;
+  const title = document.getElementById('newsTitle').value.trim();
+  const body = document.getElementById('newsBody').value.trim();
+  if (!title || !body) { alert('Please fill in the title and body.'); return; }
+  const news = getNews();
+  news.push({ id: 'N' + Date.now(), tag, title, body, author: currentUser || 'Admin', date: new Date().toISOString() });
+  saveNews(news);
+  closeNewsModal();
+  document.getElementById('newsTitle').value = '';
+  document.getElementById('newsBody').value = '';
+  renderNews();
+  showToast('News post published!');
+}
+
+/* ── RENDER REVIEWS ── */
+function renderComposer() {
+  const area = document.getElementById('composerArea');
+  if (!currentUser) {
+    area.innerHTML = `
+      <div class="login-nudge">
+        <p>Sign in to share your experience, post photos, and connect with the community.</p>
+        <a href="login.html?redirect=community.html">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Sign In to Post
+        </a>
+      </div>`;
+    return;
+  }
+
+  const initials = currentUser.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  area.innerHTML = `
+    <div class="post-composer">
+      <div class="post-composer-top">
+        <div class="avatar">${initials}</div>
+        <span style="font-size:14px;font-weight:600">Share with the community</span>
+      </div>
+      <textarea class="post-textarea" id="postText" placeholder="How was your session? Share tips, highlights, or feedback…"></textarea>
+      <div id="photoPreviewWrap" class="photo-preview" style="position:relative">
+        <img id="photoPreviewImg" src="" alt="Photo preview" />
+        <button class="photo-preview-remove" onclick="removePhoto()" title="Remove photo">×</button>
+      </div>
+      <div class="post-composer-actions">
+        <div class="post-meta-row">
+          <label class="photo-btn" for="photoInput" title="Attach photo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Photo
+          </label>
+          <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoSelect(event)" />
+          <button class="sport-tag-btn ${selectedSport==='' ? 'selected':''}" onclick="selectPostSport('',this)">All</button>
+          <button class="sport-tag-btn ${selectedSport==='pickleball'?'selected':''}" onclick="selectPostSport('pickleball',this)">Pickleball</button>
+          <button class="sport-tag-btn ${selectedSport==='badminton'?'selected':''}" onclick="selectPostSport('badminton',this)">Badminton</button>
+          <button class="sport-tag-btn ${selectedSport==='drill'?'selected':''}" onclick="selectPostSport('drill',this)">Drill Zone</button>
+        </div>
+        <button class="post-submit-btn" onclick="submitPost()">Post</button>
+      </div>
+    </div>`;
+}
+
+function selectPostSport(sport, el) {
+  selectedSport = sport;
+  document.querySelectorAll('.sport-tag-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function handlePhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoDataUrl = ev.target.result;
+    const preview = document.getElementById('photoPreviewWrap');
+    const img = document.getElementById('photoPreviewImg');
+    img.src = photoDataUrl;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  photoDataUrl = null;
+  document.getElementById('photoPreviewWrap').style.display = 'none';
+  document.getElementById('photoInput').value = '';
+}
+
+function submitPost() {
+  const text = document.getElementById('postText')?.value.trim();
+  if (!text && !photoDataUrl) { showToast('Please write something first.'); return; }
+  const posts = getPosts();
+  posts.unshift({
+    id: 'P' + Date.now(),
+    author: currentUser,
+    sport: selectedSport,
+    text: text || '',
+    photo: photoDataUrl || null,
+    likes: 0,
+    likedBy: [],
+    date: new Date().toISOString(),
+  });
+  savePosts(posts);
+  photoDataUrl = null;
+  selectedSport = '';
+  renderComposer();
+  renderPosts();
+  showToast('Your post is live!');
+}
+
+function renderPosts(filter) {
+  if (filter !== undefined) currentFilter = filter;
+  let posts = getPosts();
+  if (currentFilter) posts = posts.filter(p => p.sport === currentFilter);
+  document.getElementById('reviewCount').textContent = getPosts().length;
+  document.getElementById('statReviews').textContent = getPosts().length;
+
+  const list = document.getElementById('postsList');
+  const empty = document.getElementById('postsEmpty');
+  list.innerHTML = '';
+  empty.style.display = posts.length ? 'none' : 'block';
+
+  posts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    const initials = p.author.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const date = new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const sportLabel = p.sport === 'pickleball' ? 'Pickleball' : p.sport === 'badminton' ? 'Badminton' : p.sport === 'drill' ? 'Drill Zone' : '';
+    const isLiked = p.likedBy && p.likedBy.includes(currentUser || '');
+    const canDelete = currentRole === 'Admin' || p.author === currentUser;
+
+    card.innerHTML = `
+      <div class="post-header">
+        <div class="avatar" style="font-size:13px">${initials}</div>
+        <div class="post-header-info">
+          <div class="post-author">${p.author}</div>
+          <div class="post-date">${date}</div>
+        </div>
+        ${sportLabel ? `<span class="post-sport-tag">${sportLabel}</span>` : ''}
+      </div>
+      ${p.text ? `<div class="post-text">${p.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>` : ''}
+      ${p.photo ? `<div class="post-image"><img src="${p.photo}" alt="Post image" loading="lazy" /></div>` : ''}
+      <div class="post-footer">
+        <button class="post-like-btn ${isLiked?'liked':''}" onclick="toggleLike('${p.id}',this)" aria-label="Like post">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="${isLiked?'#f87171':'none'}" stroke="${isLiked?'#f87171':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          ${p.likes || 0}
+        </button>
+        ${canDelete ? `<button class="post-delete-btn" onclick="deletePost('${p.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Delete
+        </button>` : ''}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleLike(id, btn) {
+  if (!currentUser) { window.location.href = 'login.html?redirect=community.html'; return; }
+  const posts = getPosts();
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  if (!p.likedBy) p.likedBy = [];
+  const idx = p.likedBy.indexOf(currentUser);
+  if (idx > -1) { p.likedBy.splice(idx, 1); p.likes = Math.max(0, (p.likes||1)-1); }
+  else { p.likedBy.push(currentUser); p.likes = (p.likes||0)+1; }
+  savePosts(posts);
+  renderPosts();
+}
+
+function deletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  savePosts(getPosts().filter(p => p.id !== id));
+  renderPosts();
+  showToast('Post deleted.');
+}
+
+function filterPosts(sport) { renderPosts(sport); }
+
+/* ── SIDEBAR ── */
+function renderSidebar() {
+  const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
+  document.getElementById('statMembers').textContent = accounts.length || '—';
+
+  // Leaderboard: authors by post count
+  const posts = getPosts();
+  const counts = {};
+  posts.forEach(p => { counts[p.author] = (counts[p.author]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const lb = document.getElementById('leaderboard');
+  if (!sorted.length) { lb.innerHTML = '<p style="font-size:13px;color:var(--cream-muted)">No posts yet.</p>'; return; }
+  lb.innerHTML = sorted.map(([name, count], i) => `
+    <div class="leaderboard-item">
+      <span class="lb-rank">${i+1}</span>
+      <span class="lb-name">${name.split(' ')[0]}</span>
+      <span class="lb-count">${count} post${count>1?'s':''}</span>
+    </div>`).join('');
+}
+
+/* ── TOAST ── */
+function showToast(msg) {
+  const t = document.getElementById('commToast');
+  t.textContent = msg;
+  t.style.transform = 'translateY(0)'; t.style.opacity = '1';
+  setTimeout(() => { t.style.transform = 'translateY(100px)'; t.style.opacity = '0'; }, 3000);
+}
+
+/* ── INIT ── */
+seedNews();
+renderNews();
+renderComposer();
+renderPosts();
+renderSidebar();
+</script>
+</body>
+</html>

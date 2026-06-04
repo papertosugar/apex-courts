@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Apex Courts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { background: #08080A; }
+    .topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+    .tb-left { display: flex; align-items: center; gap: 16px; }
+    .tb-logo { display: flex; align-items: center; gap: 8px; }
+    .tb-logo-icon { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg,var(--gold),var(--gold-light)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: var(--black); }
+    .tb-title { font-size: 14px; font-weight: 700; }
+    .tb-title span { color: var(--gold); }
+    .tb-page { font-size: 13px; color: var(--text-muted); }
+    .tb-divider { width: 1px; height: 20px; background: var(--border); }
+    .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 56px); margin-top: 56px; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 10px; }
+    .sb-section { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0 10px; margin: 16px 0 6px; }
+    .sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: var(--text-muted); font-size: 13px; font-weight: 500; text-decoration: none; }
+    .sb-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .sb-item.active { background: rgba(212,175,55,0.1); color: var(--gold); }
+    .main { overflow-y: auto; padding: 32px; }
+    .page-header { margin-bottom: 28px; }
+    .page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-sub { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    @media(max-width:1100px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; transition: all 0.3s var(--spring); }
+    .kpi-card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+    .kpi-icon { font-size: 24px; margin-bottom: 12px; }
+    .kpi-label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+    .kpi-value { font-size: 30px; font-weight: 800; background: linear-gradient(135deg,var(--gold),var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .kpi-change { font-size: 11px; margin-top: 4px; }
+    .kpi-change.up { color: #4ade80; }
+    .kpi-change.down { color: #f87171; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    @media(max-width:900px) { .grid-2 { grid-template-columns: 1fr; } .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .mini-btn { padding: 5px 12px; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .mini-btn:hover { border-color: var(--border-bright); color: var(--text); }
+    /* Chart */
+    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+    .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(to top, var(--gold-dim), var(--gold)); transition: height 0.5s cubic-bezier(0.34,1.56,0.64,1); min-height: 4px; }
+    .chart-label { font-size: 10px; color: var(--text-dim); }
+    /* Recent activity */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 9px; background: rgba(255,255,255,0.02); }
+    .activity-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .activity-text { flex: 1; font-size: 13px; }
+    .activity-time { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+    /* Court utilization */
+    .util-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .util-label { font-size: 12px; font-weight: 600; width: 80px; flex-shrink: 0; }
+    .util-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+    .util-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 1s ease; }
+    .util-pct { font-size: 12px; font-weight: 700; color: var(--gold); width: 35px; text-align: right; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-logo"><div class="tb-logo-icon">A</div><span class="tb-title">APEX <span>COURTS</span></span></div>
+    <div class="tb-divider"></div>
+    <span class="tb-page">Admin Dashboard</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums" id="dashTime"></div>
+    <div style="font-size:12px;color:var(--text-muted)" id="dashUser"></div>
+    <a href="pos.html" style="padding:6px 14px;border-radius:7px;background:rgba(212,175,55,0.1);border:1px solid var(--border-bright);color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Open POS</a>
+    <button style="padding:6px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer" onclick="sessionStorage.clear();window.location.href='index.html'">Logout</button>
+  </div>
+</div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sb-section">Overview</div>
+    <a class="sb-item active" href="#">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Dashboard
+    </a>
+    <a class="sb-item" href="pos.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> POS System
+    </a>
+    <div class="sb-section">Manage</div>
+    <a class="sb-item" href="pos.html#bookings">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Bookings
+    </a>
+    <a class="sb-item" href="pos.html#courts">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg> Courts
+    </a>
+    <a class="sb-item" href="#">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Members
+    </a>
+    <a class="sb-item" href="#">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Revenue
+    </a>
+    <div class="sb-section">Site</div>
+    <a class="sb-item" href="../index.html" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Homepage
+    </a>
+  </nav>
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">Good morning 👋</div>
+      <div class="page-sub">Here's what's happening at Apex Courts today</div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Today's Revenue</div>
+        <div class="kpi-value" id="kpi-rev">$0</div>
+        <div class="kpi-change up">↑ 12% vs yesterday</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🏟</div>
+        <div class="kpi-label">Courts Occupied</div>
+        <div class="kpi-value">4<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)">/12</span></div>
+        <div class="kpi-change up">↑ 2 more than this time yesterday</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">📅</div>
+        <div class="kpi-label">Bookings Today</div>
+        <div class="kpi-value" id="kpi-book">9</div>
+        <div class="kpi-change up">↑ 3 walk-ins</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">Active Members</div>
+        <div class="kpi-value">347</div>
+        <div class="kpi-change up">↑ 5 new this week</div>
+      </div>
+    </div>
+
+    <!-- Charts + Activity -->
+    <div class="grid-2">
+      <!-- Revenue chart -->
+      <div class="card">
+        <div class="card-title">
+          <span>Weekly Revenue</span>
+          <button class="mini-btn">This Week</button>
+        </div>
+        <div class="chart-bars" id="revenueChart"></div>
+      </div>
+      <!-- Court utilization -->
+      <div class="card">
+        <div class="card-title">Court Utilization Today</div>
+        <div id="utilBars"></div>
+      </div>
+    </div>
+
+    <!-- Activity Log + Upcoming -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <span>Staff Activity Log</span>
+          <button class="mini-btn" onclick="loadActivityLog()">Refresh</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="logFilters">
+          <button onclick="filterLog('all',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--gold);background:rgba(212,175,55,0.1);color:var(--gold);font-family:inherit">All</button>
+          <button onclick="filterLog('walkin',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Walk-ins</button>
+          <button onclick="filterLog('edit',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Edits</button>
+          <button onclick="filterLog('cancel',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Cancels</button>
+        </div>
+        <div class="activity-list" id="activityList" style="max-height:320px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Upcoming Bookings</div>
+        <div id="upcomingList" style="max-height:320px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Auth guard ──
+(function() {
+  if (!sessionStorage.getItem('apexRole')) window.location.href = 'index.html';
+  const u = sessionStorage.getItem('apexUser') || 'Admin';
+  document.getElementById('dashUser').textContent = u;
+})();
+
+// ── Clock ──
+setInterval(() => {
+  const el = document.getElementById('dashTime');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+
+// ── Data helpers ──
+function getBookings() { return JSON.parse(localStorage.getItem('apexBookings') || '[]'); }
+function getActivityLog() { return JSON.parse(localStorage.getItem('apexActivityLog') || '[]'); }
+
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+// ── KPI from real bookings ──
+function loadKPIs() {
+  const today = new Date().toISOString().split('T')[0];
+  const bookings = getBookings();
+  const todayBookings = bookings.filter(b => b.date === today && b.status !== 'cancelled');
+  const revenue = todayBookings.reduce((s,b) => s + (b.totalAmount||0), 0);
+  const walkins = todayBookings.filter(b => b.status === 'walkin').length;
+
+  const revEl = document.getElementById('kpi-rev');
+  const bookEl = document.getElementById('kpi-book');
+  if (revEl) {
+    let cur = 0;
+    const target = revenue || 3600;
+    const id = setInterval(() => {
+      cur = Math.min(cur + Math.ceil(target/40), target);
+      revEl.textContent = '₱' + cur.toLocaleString();
+      if (cur >= target) clearInterval(id);
+    }, 20);
+  }
+  if (bookEl) bookEl.textContent = todayBookings.length || 9;
+
+  // Walk-in change label
+  const wiEl = document.querySelector('[data-walkin-count]');
+  if (wiEl) wiEl.textContent = `↑ ${walkins} walk-in${walkins !== 1 ? 's' : ''}`;
+}
+
+// ── Revenue chart ──
+const REV_DATA = [18200, 24600, 20300, 29100, 23400, 34200, 0];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
+(function() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayRev = getBookings().filter(b=>b.date===today&&b.status!=='cancelled').reduce((s,b)=>s+(b.totalAmount||0),0);
+  REV_DATA[6] = todayRev || 3600;
+  const maxRev = Math.max(...REV_DATA);
+  const chart = document.getElementById('revenueChart');
+  if (!chart) return;
+  REV_DATA.forEach((v, i) => {
+    const pct = maxRev > 0 ? (v / maxRev * 100) : 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-bar-wrap';
+    wrap.innerHTML = `<div class="chart-bar" style="height:0%" data-h="${pct}%"></div><div class="chart-label">${DAYS[i]}</div>`;
+    chart.appendChild(wrap);
+  });
+  setTimeout(() => { chart.querySelectorAll('.chart-bar').forEach(b => b.style.height = b.dataset.h); }, 300);
+})();
+
+// ── Utilization ──
+const UTIL = [
+  { label: 'Pickleball', pct: 75 },
+  { label: 'Badminton',  pct: 50 },
+  { label: 'Drill Zone', pct: 40 },
+  { label: 'Peak hrs',   pct: 92 },
+  { label: 'Off-peak',   pct: 35 },
+];
+const utilEl = document.getElementById('utilBars');
+if (utilEl) {
+  UTIL.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'util-row';
+    div.innerHTML = `<div class="util-label">${u.label}</div>
+      <div class="util-bar"><div class="util-fill" style="width:0%" data-w="${u.pct}%"></div></div>
+      <div class="util-pct">${u.pct}%</div>`;
+    utilEl.appendChild(div);
+  });
+  setTimeout(() => { utilEl.querySelectorAll('.util-fill').forEach(b => b.style.width = b.dataset.w); }, 400);
+}
+
+// ── Activity log from localStorage ──
+let currentLogFilter = 'all';
+
+function filterLog(type, btn) {
+  currentLogFilter = type;
+  document.querySelectorAll('#logFilters button').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--text-muted)';
+  });
+  btn.style.background = 'rgba(212,175,55,0.1)';
+  btn.style.borderColor = 'var(--gold)';
+  btn.style.color = 'var(--gold)';
+  loadActivityLog();
+}
+
+function loadActivityLog() {
+  const actList = document.getElementById('activityList');
+  if (!actList) return;
+  let log = getActivityLog();
+  if (currentLogFilter !== 'all') log = log.filter(l => l.action === currentLogFilter);
+
+  actList.innerHTML = '';
+  if (!log.length) {
+    actList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No activity logged yet</div>';
+    return;
+  }
+
+  const ACTION_STYLE = {
+    walkin: { icon: '🚶', bg: 'rgba(99,102,241,0.12)', label: 'Walk-in' },
+    edit:   { icon: '✏️', bg: 'rgba(234,179,8,0.1)',   label: 'Edited' },
+    cancel: { icon: '🗑', bg: 'rgba(239,68,68,0.1)',   label: 'Cancelled' },
+  };
+
+  log.slice(0, 30).forEach((entry, i) => {
+    const s = ACTION_STYLE[entry.action] || { icon: '📋', bg: 'rgba(255,255,255,0.05)', label: entry.action };
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.style.cssText = `opacity:0;transform:translateX(12px);transition:all 0.3s ${i*0.04}s`;
+    div.innerHTML = `
+      <div class="activity-icon" style="background:${s.bg};font-size:16px">${s.icon}</div>
+      <div class="activity-text" style="line-height:1.4">
+        <div style="font-size:12px;font-weight:700;color:var(--text)">${s.label} · ${entry.bookingId}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${entry.details}</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">by ${entry.staffName}</div>
+      </div>
+      <div class="activity-time">${timeAgo(entry.timestamp)}</div>`;
+    actList.appendChild(div);
+  });
+  setTimeout(() => { actList.querySelectorAll('.activity-item').forEach(el => { el.style.opacity='1'; el.style.transform='translateX(0)'; }); }, 50);
+}
+
+// ── Upcoming bookings ──
+function loadUpcoming() {
+  const upList = document.getElementById('upcomingList');
+  if (!upList) return;
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+
+  const upcoming = getBookings()
+    .filter(b => b.status !== 'cancelled' && b.date >= today)
+    .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? 1 : -1)
+    .slice(0, 8);
+
+  upList.innerHTML = '';
+  if (!upcoming.length) {
+    upList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No upcoming bookings</div>';
+    return;
+  }
+
+  upcoming.forEach(b => {
+    const sportLabel = b.sport === 'pickleball' ? 'Pickleball' : b.sport === 'badminton' ? 'Badminton' : 'Drill Zone';
+    const abbr = b.sport === 'pickleball' ? 'PB' : b.sport === 'badminton' ? 'BD' : 'DZ';
+    const dur = b.duration < 1 ? '30min' : b.duration === 1 ? '1hr' : b.duration + 'hrs';
+    const statusColor = b.status === 'walkin' ? '#a5b4fc' : '#4ade80';
+    const isToday = b.date === today;
+    upList.innerHTML += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <div style="text-align:right;flex-shrink:0;width:80px">
+        <div style="font-size:12px;font-weight:700;color:var(--gold)">${b.time||'—'}</div>
+        <div style="font-size:10px;color:var(--text-dim)">${isToday ? 'Today' : b.date}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.userName}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${sportLabel} · ${abbr} ${b.court} · ${dur}</div>
+      </div>
+      <div style="font-size:10px;padding:3px 8px;border-radius:4px;color:${statusColor};border:1px solid ${statusColor}22;background:${statusColor}11;flex-shrink:0">${b.status}</div>
+    </div>`;
+  });
+}
+
+// ── Init ──
+loadKPIs();
+loadActivityLog();
+loadUpcoming();
+</script>
+</body>
+</html>

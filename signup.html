@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — Apex Courts</title>
+  <meta name="description" content="Create your Apex Courts account to book courts, track sessions, and manage your membership." />
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; background: var(--ink); }
+
+    .auth-page {
+      min-height: calc(100vh - 80px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .auth-card {
+      background: var(--stone);
+      border: 1px solid var(--stone-line);
+      border-radius: 20px;
+      width: 100%; max-width: 460px;
+      overflow: hidden;
+    }
+
+    .auth-header {
+      padding: 36px 36px 28px;
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .auth-logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .auth-logo-mark {
+      width: 32px; height: 32px; background: var(--gold); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px; letter-spacing: 0.06em; color: var(--cream);
+    }
+    .auth-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; letter-spacing: 0.03em;
+      color: var(--cream); line-height: 1;
+      margin-bottom: 6px;
+    }
+    .auth-sub { font-size: 14px; color: var(--cream-muted); }
+
+    .auth-body { padding: 28px 36px 36px; }
+
+    /* Steps */
+    .auth-steps { display: flex; gap: 0; margin-bottom: 28px; }
+    .auth-step {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      position: relative;
+    }
+    .auth-step::after {
+      content: ''; position: absolute; top: 14px; left: 50%;
+      width: 100%; height: 1px; background: var(--stone-line);
+    }
+    .auth-step:last-child::after { display: none; }
+    .as-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--stone-line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--cream-muted);
+      background: var(--stone); position: relative; z-index: 1;
+      transition: all 0.3s;
+    }
+    .auth-step.active .as-dot { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+    .auth-step.done .as-dot { border-color: #22c55e; background: rgba(34,197,94,0.15); color: #22c55e; }
+    .as-label { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cream-muted); }
+    .auth-step.active .as-label { color: var(--gold); }
+
+    /* Form elements */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--cream-muted); margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%; padding: 13px 16px; box-sizing: border-box;
+      border-radius: 10px; border: 1px solid var(--stone-line);
+      background: var(--ink); color: var(--cream);
+      font-size: 15px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--gold); }
+    .form-input::placeholder { color: rgba(242,237,228,0.25); }
+    .form-input.error { border-color: #ef4444; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .contact-toggle {
+      display: flex; gap: 0; margin-bottom: 18px;
+      border: 1px solid var(--stone-line); border-radius: 10px; overflow: hidden;
+    }
+    .contact-tab {
+      flex: 1; padding: 10px; text-align: center;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--cream-muted);
+      border: none; transition: all 0.2s; font-family: inherit;
+    }
+    .contact-tab.active { background: var(--gold); color: var(--ink); }
+
+    .send-otp-row { display: flex; gap: 8px; }
+    .send-otp-row .form-input { flex: 1; }
+    .btn-send-otp {
+      padding: 13px 16px; border-radius: 10px;
+      background: rgba(201,168,76,0.15); border: 1px solid var(--gold);
+      color: var(--gold); font-size: 13px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; font-family: inherit;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-send-otp:hover { background: rgba(201,168,76,0.25); }
+    .btn-send-otp:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .otp-grid { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+    .otp-box {
+      width: 48px; height: 56px; border-radius: 10px;
+      border: 1px solid var(--stone-line); background: var(--ink);
+      text-align: center; font-size: 22px; font-weight: 700; color: var(--cream);
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .otp-box:focus { border-color: var(--gold); }
+
+    .resend-row { text-align: center; font-size: 13px; color: var(--cream-muted); margin-top: 8px; }
+    .resend-link { color: var(--gold); cursor: pointer; text-decoration: underline; }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #fca5a5; margin-bottom: 16px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .success-msg {
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #86efac; margin-bottom: 16px;
+      display: none;
+    }
+    .success-msg.show { display: block; }
+
+    .btn-primary-full {
+      width: 100%; padding: 15px; border-radius: 12px;
+      background: var(--gold); color: var(--ink);
+      font-size: 15px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary-full:hover { transform: scale(1.01); box-shadow: 0 8px 32px rgba(201,168,76,0.35); }
+    .btn-primary-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .terms-note { font-size: 12px; color: var(--cream-muted); text-align: center; margin-top: 14px; line-height: 1.6; }
+    .terms-note a { color: var(--gold); text-decoration: none; }
+
+    .auth-footer { padding: 20px 36px; border-top: 1px solid var(--stone-line); text-align: center; font-size: 14px; color: var(--cream-muted); }
+    .auth-footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+    /* Success screen */
+    .success-screen { display: none; text-align: center; padding: 8px 0; }
+    .success-screen.show { display: block; }
+    .success-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(34,197,94,0.12); border: 2px solid rgba(34,197,94,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 36px;
+    }
+    .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--cream); margin-bottom: 8px; }
+    .success-body { font-size: 14px; color: var(--cream-muted); line-height: 1.7; margin-bottom: 24px; }
+
+    /* Step panels */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    @media(max-width: 480px) {
+      .auth-header, .auth-body, .auth-footer { padding-left: 24px; padding-right: 24px; }
+      .form-row { grid-template-columns: 1fr; }
+      .otp-box { width: 40px; height: 50px; font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="navbar" class="scrolled">
+  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#sports">Sports</a></li>
+    <li><a href="book.html" class="nav-cta">Book a Court</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<main id="main" class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <a href="/" class="auth-logo" aria-label="Apex Courts">
+        <div class="auth-logo-mark">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2.5" fill="none"/>
+            <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <span class="auth-logo-text">APEX COURTS</span>
+      </a>
+      <h1 class="auth-title">CREATE ACCOUNT</h1>
+      <p class="auth-sub">Book courts, track your sessions, manage your membership.</p>
+    </div>
+
+    <div class="auth-body">
+      <!-- Step indicators -->
+      <div class="auth-steps" role="list" aria-label="Registration steps">
+        <div class="auth-step active" id="astep1" role="listitem">
+          <div class="as-dot">1</div>
+          <div class="as-label">Details</div>
+        </div>
+        <div class="auth-step" id="astep2" role="listitem">
+          <div class="as-dot">2</div>
+          <div class="as-label">Verify</div>
+        </div>
+        <div class="auth-step" id="astep3" role="listitem">
+          <div class="as-dot">3</div>
+          <div class="as-label">Done</div>
+        </div>
+      </div>
+
+      <div id="errorMsg" class="error-msg" role="alert" aria-live="polite"></div>
+      <div id="successMsg" class="success-msg" role="status" aria-live="polite"></div>
+
+      <!-- ── STEP 1: Personal details ── -->
+      <div class="step-panel active" id="panel1">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="firstName">First Name</label>
+            <input class="form-input" type="text" id="firstName" autocomplete="given-name" placeholder="Juan" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lastName">Last Name</label>
+            <input class="form-input" type="text" id="lastName" autocomplete="family-name" placeholder="Dela Cruz" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" autocomplete="new-password" placeholder="At least 8 characters" />
+        </div>
+
+        <!-- Contact method toggle -->
+        <div class="form-group">
+          <div class="form-label">Verify via</div>
+          <div class="contact-toggle" role="tablist" aria-label="Verification method">
+            <button class="contact-tab active" role="tab" aria-selected="true" id="tab-email" onclick="setContactMethod('email')">Email</button>
+            <button class="contact-tab" role="tab" aria-selected="false" id="tab-phone" onclick="setContactMethod('phone')">Phone</button>
+          </div>
+
+          <!-- Email input -->
+          <div id="emailField">
+            <div class="send-otp-row">
+              <input class="form-input" type="email" id="emailInput" autocomplete="email" placeholder="juan@example.com" />
+              <button class="btn-send-otp" id="sendEmailOtp" onclick="sendOtp('email')">Send Code</button>
+            </div>
+          </div>
+
+          <!-- Phone input -->
+          <div id="phoneField" style="display:none">
+            <div class="send-otp-row">
+              <input class="form-input" type="tel" id="phoneInput" autocomplete="tel" placeholder="+63 9XX XXX XXXX" />
+              <button class="btn-send-otp" id="sendPhoneOtp" onclick="sendOtp('phone')">Send Code</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary-full" onclick="proceedToVerify()">
+          Continue
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <p class="terms-note">By creating an account you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+      </div>
+
+      <!-- ── STEP 2: OTP verification ── -->
+      <div class="step-panel" id="panel2">
+        <p id="otpInstructions" style="font-size:14px;color:var(--cream-muted);margin-bottom:20px;line-height:1.6"></p>
+
+        <div class="form-group">
+          <div class="form-label">Enter 6-digit code</div>
+          <div class="otp-grid" id="otpGrid" role="group" aria-label="One-time password digits">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+          </div>
+          <div class="resend-row">Didn't get it? <span class="resend-link" onclick="resendOtp()">Resend code</span></div>
+        </div>
+
+        <button class="btn-primary-full" onclick="verifyOtp()">
+          Verify &amp; Create Account
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+        <button onclick="goBack()" style="width:100%;margin-top:10px;padding:12px;border-radius:10px;background:transparent;border:1px solid var(--stone-line);color:var(--cream-muted);font-size:14px;cursor:pointer;font-family:inherit;">
+          Back
+        </button>
+      </div>
+
+      <!-- ── STEP 3: Success ── -->
+      <div class="step-panel" id="panel3">
+        <div class="success-screen show">
+          <div class="success-icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="success-title">YOU'RE IN</h2>
+          <p class="success-body">Your account has been created and verified.<br>Book your first court and start playing.</p>
+          <a href="book.html" class="btn-primary-full" style="text-decoration:none;display:flex">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Book a Court
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+
+  </div>
+</main>
+
+<script src="js/main.js"></script>
+<script>
+/* ── STATE ── */
+let contactMethod = 'email';
+let generatedOtp = null;
+let pendingContact = null;
+
+/* ── HELPERS ── */
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('successMsg').classList.remove('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('successMsg');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('errorMsg').classList.remove('show');
+}
+function clearMessages() {
+  document.getElementById('errorMsg').classList.remove('show');
+  document.getElementById('successMsg').classList.remove('show');
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('panel' + i).classList.toggle('active', i === n);
+    const step = document.getElementById('astep' + i);
+    step.classList.remove('active','done');
+    if (i < n) step.classList.add('done'), step.querySelector('.as-dot').textContent = '✓';
+    else if (i === n) step.classList.add('active');
+  });
+  clearMessages();
+}
+
+/* ── CONTACT METHOD TOGGLE ── */
+function setContactMethod(method) {
+  contactMethod = method;
+  document.getElementById('emailField').style.display = method === 'email' ? 'block' : 'none';
+  document.getElementById('phoneField').style.display = method === 'phone' ? 'block' : 'none';
+  document.getElementById('tab-email').classList.toggle('active', method === 'email');
+  document.getElementById('tab-email').setAttribute('aria-selected', method === 'email');
+  document.getElementById('tab-phone').classList.toggle('active', method === 'phone');
+  document.getElementById('tab-phone').setAttribute('aria-selected', method === 'phone');
+}
+
+/* ── DUPLICATE ACCOUNT CHECK ── */
+function isDuplicate(contact) {
+  const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
+  return accounts.some(a => a.contact.toLowerCase() === contact.toLowerCase());
+}
+
+/* ── SEND OTP ── */
+function sendOtp(via) {
+  const value = via === 'email'
+    ? document.getElementById('emailInput').value.trim()
+    : document.getElementById('phoneInput').value.trim();
+
+  if (!value) { showError('Please enter your ' + (via === 'email' ? 'email address' : 'phone number') + '.'); return; }
+
+  if (via === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    showError('Please enter a valid email address.'); return;
+  }
+  if (via === 'phone' && !/^[+\d\s\-()]{7,15}$/.test(value)) {
+    showError('Please enter a valid phone number.'); return;
+  }
+
+  if (isDuplicate(value)) {
+    showError('An account with this ' + (via === 'email' ? 'email' : 'phone number') + ' already exists. Try signing in instead.');
+    return;
+  }
+
+  // Generate 6-digit OTP and store in sessionStorage (demo — in production this would be server-sent)
+  generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
+  pendingContact = value;
+  sessionStorage.setItem('apexPendingOtp', generatedOtp);
+  sessionStorage.setItem('apexPendingContact', value);
+
+  const btn = document.getElementById(via === 'email' ? 'sendEmailOtp' : 'sendPhoneOtp');
+  btn.disabled = true;
+  btn.textContent = 'Sent!';
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend'; }, 30000);
+
+  // Demo: show code in success bar so user can test
+  showSuccess('Code sent! (Demo: your code is ' + generatedOtp + ')');
+}
+
+/* ── STEP 1 → STEP 2 ── */
+function proceedToVerify() {
+  clearMessages();
+  const first = document.getElementById('firstName').value.trim();
+  const last = document.getElementById('lastName').value.trim();
+  const pass = document.getElementById('password').value;
+
+  if (!first || !last) { showError('Please enter your full name.'); return; }
+  if (pass.length < 8) { showError('Password must be at least 8 characters.'); return; }
+
+  const contact = contactMethod === 'email'
+    ? document.getElementById('emailInput').value.trim()
+    : document.getElementById('phoneInput').value.trim();
+
+  if (!contact) { showError('Please enter and verify your ' + (contactMethod === 'email' ? 'email' : 'phone number') + '.'); return; }
+  if (!generatedOtp) { showError('Please send the verification code first.'); return; }
+
+  // Show OTP instructions
+  const masked = contactMethod === 'email'
+    ? contact.replace(/(.{2})(.+)(@.+)/, '$1****$3')
+    : contact.replace(/(.{3})(.+)(.{2})/, '$1****$3');
+  document.getElementById('otpInstructions').textContent =
+    'We sent a 6-digit code to ' + masked + '. Enter it below to verify your account.';
+
+  setStep(2);
+  document.querySelector('.otp-box').focus();
+}
+
+/* ── OTP INPUT BEHAVIOR ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const boxes = document.querySelectorAll('.otp-box');
+  boxes.forEach((box, i) => {
+    box.addEventListener('input', e => {
+      const v = e.target.value.replace(/\D/g, '');
+      e.target.value = v ? v[0] : '';
+      if (v && i < boxes.length - 1) boxes[i + 1].focus();
+    });
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+    });
+    box.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'');
+      boxes.forEach((b, j) => { b.value = pasted[j] || ''; });
+      boxes[Math.min(pasted.length, boxes.length - 1)].focus();
+    });
+  });
+});
+
+/* ── VERIFY OTP ── */
+function verifyOtp() {
+  const entered = Array.from(document.querySelectorAll('.otp-box')).map(b => b.value).join('');
+  const stored = sessionStorage.getItem('apexPendingOtp');
+
+  if (entered.length < 6) { showError('Please enter all 6 digits.'); return; }
+  if (entered !== stored) { showError('Incorrect code. Please try again.'); return; }
+
+  // Save account (demo: localStorage, no passwords stored in plain text — just contact + name)
+  const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
+  const newAccount = {
+    contact: pendingContact || sessionStorage.getItem('apexPendingContact'),
+    firstName: document.getElementById('firstName').value.trim(),
+    lastName: document.getElementById('lastName').value.trim(),
+    password: document.getElementById('password').value, // stored for demo login
+    method: contactMethod,
+    role: 'member',
+    createdAt: new Date().toISOString(),
+  };
+  accounts.push(newAccount);
+  localStorage.setItem('apexAccounts', JSON.stringify(accounts));
+
+  // Set session
+  sessionStorage.setItem('apexUser', newAccount.firstName + ' ' + newAccount.lastName);
+  sessionStorage.removeItem('apexPendingOtp');
+  sessionStorage.removeItem('apexPendingContact');
+
+  setStep(3);
+}
+
+function resendOtp() {
+  sendOtp(contactMethod);
+}
+
+function goBack() {
+  setStep(1);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open Play — Apex Courts</title>
+  <meta name="description" content="Join an Apex Courts Open Play session. Play with new people, meet the community, and enjoy affordable drop-in games." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; }
+
+    /* ── PAGE HEADER ── */
+    .op-hero {
+      max-width: 1180px; margin: 0 auto;
+      padding: 56px 5% 0;
+      display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: flex-end;
+    }
+    @media(max-width:700px) { .op-hero { grid-template-columns: 1fr; } }
+    .op-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .op-eyebrow-line { width: 32px; height: 2px; background: var(--gold); }
+    .op-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .op-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6vw, 64px); letter-spacing: 0.02em; line-height: 1; margin-bottom: 10px; }
+    .op-sub { font-size: 15px; color: var(--cream-muted); max-width: 480px; line-height: 1.7; }
+    .op-hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .admin-create-btn {
+      display: none; align-items: center; gap: 8px;
+      padding: 11px 20px; border-radius: 10px;
+      background: var(--gold); color: var(--ink);
+      font-size: 13px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .admin-create-btn:hover { transform: scale(1.02); box-shadow: 0 6px 24px rgba(201,168,76,0.35); }
+
+    /* ── POLICY BANNER ── */
+    .op-policy {
+      max-width: 1180px; margin: 32px auto 0; padding: 0 5%;
+    }
+    .policy-banner {
+      background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.18);
+      border-radius: 14px; padding: 24px 28px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px 32px;
+    }
+    .policy-item { display: flex; align-items: flex-start; gap: 12px; }
+    .policy-icon {
+      width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+      background: rgba(201,168,76,0.1); display: flex; align-items: center; justify-content: center; color: var(--gold);
+    }
+    .policy-item-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 3px; }
+    .policy-item-value { font-size: 13px; color: var(--cream); line-height: 1.5; }
+
+    /* ── SESSION TABS ── */
+    .op-tabs {
+      max-width: 1180px; margin: 36px auto 0; padding: 0 5%;
+      display: flex; gap: 4px; border-bottom: 1px solid var(--stone-line);
+    }
+    .op-tab {
+      padding: 13px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      color: var(--cream-muted); background: none; border: none; font-family: inherit;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .op-tab:hover { color: var(--cream); }
+    .op-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .op-tab-count {
+      padding: 2px 7px; border-radius: 100px;
+      background: rgba(201,168,76,0.12); color: var(--gold);
+      font-size: 10px; font-weight: 800;
+    }
+
+    /* ── SESSIONS LAYOUT ── */
+    .op-content {
+      max-width: 1180px; margin: 0 auto; padding: 32px 5% 80px;
+      display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start;
+    }
+    @media(max-width:900px) { .op-content { grid-template-columns: 1fr; } }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SESSION CARD ── */
+    .sessions-list { display: flex; flex-direction: column; gap: 16px; }
+    .session-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 16px; overflow: hidden; transition: border-color 0.2s;
+    }
+    .session-card:hover { border-color: rgba(201,168,76,0.25); }
+    .session-card.extended { border-left: 3px solid rgba(201,168,76,0.5); }
+    .session-header {
+      padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px;
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .session-date-block {
+      width: 56px; flex-shrink: 0; text-align: center;
+      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18);
+      border-radius: 10px; padding: 8px 4px;
+    }
+    .session-date-mon { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+    .session-date-day { font-size: 28px; font-weight: 800; color: var(--cream); line-height: 1; }
+    .session-date-dow { font-size: 10px; color: var(--cream-muted); }
+    .session-info { flex: 1; }
+    .session-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .session-badge {
+      padding: 3px 9px; border-radius: 100px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .badge-extended { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .badge-confirmed { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .badge-open { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+    .badge-cancelled { background: rgba(239,68,68,0.1); color: #f87171; }
+    .badge-closed { background: rgba(255,255,255,0.06); color: var(--cream-muted); }
+    .session-meta { font-size: 13px; color: var(--cream-muted); line-height: 1.7; }
+    .session-meta strong { color: var(--cream); }
+    .session-status-area { text-align: right; flex-shrink: 0; }
+    .session-slots {
+      font-size: 22px; font-weight: 800; color: var(--cream);
+      line-height: 1;
+    }
+    .session-slots.urgent { color: #f97316; }
+    .session-slots.full { color: #f87171; }
+    .session-slots-label { font-size: 11px; color: var(--cream-muted); margin-top: 2px; }
+    .session-price { font-size: 15px; font-weight: 700; color: var(--gold); margin-top: 6px; }
+
+    /* Participants bar */
+    .session-participants {
+      padding: 14px 24px; background: rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .participants-bar { flex: 1; min-width: 140px; }
+    .participants-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .bar-track {
+      height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 3px; background: var(--gold); transition: width 0.5s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .bar-fill.full { background: #f87171; }
+    .bar-fill.urgent { background: #f97316; }
+    .register-btn {
+      padding: 10px 20px; border-radius: 9px;
+      background: var(--gold); color: var(--ink);
+      font-size: 13px; font-weight: 800; font-family: inherit;
+      border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .register-btn:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+    .register-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .register-btn.registered { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+    .cancel-reg-btn {
+      padding: 10px 16px; border-radius: 9px; margin-left: 8px;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+      color: #f87171; font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .cancel-reg-btn:hover { background: rgba(239,68,68,0.15); }
+
+    /* Closed card - dimmed */
+    .session-card.closed-card { opacity: 0.65; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      color: var(--cream-muted);
+    }
+    .empty-state svg { opacity: 0.15; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ── SIDEBAR ── */
+    .op-sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .sidebar-card { background: var(--stone); border: 1px solid var(--stone-line); border-radius: 14px; padding: 20px; }
+    .sidebar-card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--stone-line); }
+    .sidebar-stat { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid rgba(242,237,228,0.04); }
+    .sidebar-stat:last-child { border-bottom: none; }
+    .sidebar-stat-label { color: var(--cream-muted); }
+    .sidebar-stat-val { font-weight: 700; color: var(--cream); }
+    .pricing-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(242,237,228,0.04); font-size: 13px; }
+    .pricing-row:last-child { border-bottom: none; }
+    .pricing-tag { padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; }
+    .pricing-tag.off { background: rgba(255,255,255,0.06); color: var(--cream-muted); }
+    .pricing-tag.peak { background: rgba(201,168,76,0.12); color: var(--gold); }
+
+    /* ── MODALS ── */
+    .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-card { background: var(--stone); border: 1px solid var(--stone-line); border-radius: 20px; padding: 32px; max-width: 480px; width: 100%; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .modal-overlay.open .modal-card { transform: scale(1); }
+    .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--cream-muted); margin-bottom: 20px; line-height: 1.6; }
+    .form-group { margin-bottom: 14px; }
+    .form-label-sm { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 7px; }
+    .form-input-sm { width: 100%; padding: 11px 14px; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--stone-line); background: var(--ink); color: var(--cream); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-input-sm:focus { border-color: var(--gold); }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+    .modal-btn.primary { background: var(--gold); color: var(--ink); }
+    .modal-btn.ghost { background: transparent; color: var(--cream); border: 1px solid var(--stone-line); }
+    .modal-btn:hover { transform: scale(1.02); }
+    .modal-btn.danger { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+
+    /* Toast */
+    #opToast { position: fixed; bottom: 24px; right: 24px; z-index: 3000; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); padding: 14px 20px; border-radius: 12px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; font-size: 14px; font-weight: 600; max-width: 320px; }
+    #opToast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks" role="list">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#sports">Sports</a></li>
+    <li><a href="openplay.html" style="color:var(--gold)">Open Play</a></li>
+    <li><a href="community.html">Community</a></li>
+    <li><a href="book.html" class="nav-cta">Book a Court</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<main id="main">
+
+  <!-- Page Header -->
+  <div class="op-hero">
+    <div>
+      <div class="op-eyebrow">
+        <div class="op-eyebrow-line"></div>
+        <span class="op-eyebrow-text">Community Sessions</span>
+      </div>
+      <h1 class="op-title">OPEN PLAY</h1>
+      <p class="op-sub">Show up, meet players, and get on the court. No partner needed — just register for a session and we'll handle the rest.</p>
+    </div>
+    <div class="op-hero-right">
+      <button class="admin-create-btn" id="adminCreateBtn" onclick="openCreateModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Session
+      </button>
+    </div>
+  </div>
+
+  <!-- Policy Banner -->
+  <div class="op-policy">
+    <div class="policy-banner" role="list" aria-label="Open Play policy highlights">
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Min Players</div>
+          <div class="policy-item-value">4 standard · 8 extended</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Reg. Closes</div>
+          <div class="policy-item-value">2 days before at 12:00 AM</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Pricing</div>
+          <div class="policy-item-value">₱200/person · ₱300 peak (after 2 PM)</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Refund Policy</div>
+          <div class="policy-item-value">Full refund if minimum not reached</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="op-tabs" role="tablist">
+    <button class="op-tab active" role="tab" aria-selected="true" onclick="switchTab('upcoming',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Upcoming
+      <span class="op-tab-count" id="upcomingCount">0</span>
+    </button>
+    <button class="op-tab" role="tab" aria-selected="false" onclick="switchTab('closed',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+      Closed
+      <span class="op-tab-count" id="closedCount">0</span>
+    </button>
+  </div>
+
+  <!-- Content + Sidebar -->
+  <div class="op-content">
+    <div>
+      <!-- Upcoming sessions -->
+      <div class="tab-panel active" id="panel-upcoming">
+        <div class="sessions-list" id="upcomingList"></div>
+        <div id="upcomingEmpty" class="empty-state" style="display:none">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <h3>No upcoming sessions</h3>
+          <p>Check back soon — new Open Play sessions are added weekly. Follow us on social media for announcements.</p>
+        </div>
+      </div>
+
+      <!-- Closed sessions -->
+      <div class="tab-panel" id="panel-closed">
+        <p style="font-size:13px;color:var(--cream-muted);margin-bottom:20px">Sessions from the past 30 days.</p>
+        <div class="sessions-list" id="closedList"></div>
+        <div id="closedEmpty" class="empty-state" style="display:none">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+          <h3>No closed sessions yet</h3>
+          <p>Closed and past sessions will appear here for up to 30 days.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="op-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Session Stats</div>
+        <div class="sidebar-stat"><span class="sidebar-stat-label">Active Sessions</span><span class="sidebar-stat-val" id="statActive">—</span></div>
+        <div class="sidebar-stat"><span class="sidebar-stat-label">Total Registered</span><span class="sidebar-stat-val" id="statTotal">—</span></div>
+        <div class="sidebar-stat"><span class="sidebar-stat-label">Available Spots</span><span class="sidebar-stat-val" id="statSpots">—</span></div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Pricing</div>
+        <div class="pricing-row">
+          <span>Standard (before 2 PM)</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="pricing-tag off">Off-peak</span>
+            <strong style="color:var(--cream)">₱200</strong>
+          </div>
+        </div>
+        <div class="pricing-row">
+          <span>Peak (2 PM – 12 AM)</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="pricing-tag peak">Peak</span>
+            <strong style="color:var(--gold)">₱300</strong>
+          </div>
+        </div>
+        <div class="pricing-row">
+          <span>Extended Open Play</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <strong style="color:var(--cream)">₱200–300</strong>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--cream-muted);margin-top:10px;line-height:1.6">Payment collected at venue on arrival. Full refund if session is cancelled.</p>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Extended Open Play</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px">
+          <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
+            Minimum 8 players required
+          </li>
+          <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
+            Up to 2 hours of play
+          </li>
+          <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
+            Confirmation sent 48hrs before
+          </li>
+          <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
+            Full refund if minimum not reached
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card" style="text-align:center">
+        <div class="sidebar-card-title">Prefer Private Booking?</div>
+        <p style="font-size:13px;color:var(--cream-muted);margin-bottom:14px;line-height:1.6">Reserve a court just for your group.</p>
+        <a href="book.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:800;text-decoration:none;transition:all 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+          Book a Court
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ─── CREATE SESSION MODAL (Admin) ─── -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal-card">
+    <div class="modal-title">Create Open Play Session</div>
+    <div class="modal-sub">Session will be visible to all players immediately after publishing.</div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label-sm">Date</label>
+        <input type="date" class="form-input-sm" id="csDate" />
+      </div>
+      <div class="form-group">
+        <label class="form-label-sm">Start Time</label>
+        <input type="time" class="form-input-sm" id="csTime" min="07:00" max="23:00" />
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label-sm">Sport</label>
+        <select class="form-input-sm" id="csSport">
+          <option value="pickleball">Pickleball</option>
+          <option value="badminton">Badminton</option>
+          <option value="mixed">Mixed / Open</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label-sm">Session Type</label>
+        <select class="form-input-sm" id="csType" onchange="updateMaxPlayers()">
+          <option value="standard">Standard (1 hr · min 4)</option>
+          <option value="extended">Extended (2 hr · min 8)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Max Players</label>
+      <input type="number" class="form-input-sm" id="csMaxPlayers" value="12" min="4" max="32" />
+      <p style="font-size:11px;color:var(--cream-muted);margin-top:6px">Extended sessions: max 32 players. Standard: max 16.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Notes (Optional)</label>
+      <input type="text" class="form-input-sm" id="csNotes" placeholder="e.g. All levels welcome, bring your own paddle" />
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeCreateModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="submitCreateSession()">Publish Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── REGISTER MODAL ─── -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal-card">
+    <div class="modal-title" id="regModalTitle">Register for Session</div>
+    <div class="modal-sub" id="regModalSub">Complete your registration below.</div>
+    <input type="hidden" id="regSessionId" />
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label-sm">First Name</label>
+        <input type="text" class="form-input-sm" id="regFirst" placeholder="Juan" />
+      </div>
+      <div class="form-group">
+        <label class="form-label-sm">Last Name</label>
+        <input type="text" class="form-input-sm" id="regLast" placeholder="Dela Cruz" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Phone / Email</label>
+      <input type="text" class="form-input-sm" id="regContact" placeholder="For confirmation & updates" />
+    </div>
+    <div id="regPriceDisplay" style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px">
+      <span style="font-size:13px;color:var(--cream-muted)">Fee per person</span>
+      <span style="font-size:20px;font-weight:800;color:var(--gold)" id="regPriceAmt">₱200</span>
+    </div>
+    <p style="font-size:12px;color:var(--cream-muted);margin-bottom:16px;line-height:1.6">Payment is collected on arrival. Full refund if session is cancelled due to insufficient players.</p>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeRegisterModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="submitRegistration()">Confirm Registration</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SUCCESS MODAL ─── -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-card" style="text-align:center;max-width:400px">
+    <div style="width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="modal-title">You're Registered!</div>
+    <p class="modal-sub" id="successModalBody">See you on the court.</p>
+    <button class="modal-btn primary" onclick="document.getElementById('successModal').classList.remove('open')">Done</button>
+  </div>
+</div>
+
+<div id="opToast"></div>
+
+<script src="js/main.js"></script>
+<script>
+/* ── AUTH & ROLE ── */
+const currentUser = sessionStorage.getItem('apexUser');
+const currentRole = sessionStorage.getItem('apexRole');
+
+if (currentRole === 'Admin') {
+  document.getElementById('adminCreateBtn').style.display = 'inline-flex';
+}
+
+/* ── DATA ── */
+const OP_KEY = 'apexOpenPlay';
+function getSessions() { return JSON.parse(localStorage.getItem(OP_KEY) || '[]'); }
+function saveSessions(arr) { localStorage.setItem(OP_KEY, JSON.stringify(arr)); }
+
+/* ── SEED DEMO SESSIONS ── */
+function seedSessions() {
+  if (getSessions().length) return;
+  const now = new Date();
+  function daysFrom(n) {
+    const d = new Date(now); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0];
+  }
+  const demos = [
+    { id:'OP-001', type:'standard', sport:'pickleball', date:daysFrom(3), time:'10:00', maxPlayers:12, notes:'All levels welcome! Bring your A-game.', registrations:[], status:'upcoming', price:200, createdAt:new Date().toISOString() },
+    { id:'OP-002', type:'extended', sport:'badminton', date:daysFrom(5), time:'14:30', maxPlayers:16, notes:'Extended session — bring water and stamina!', registrations:[], status:'upcoming', price:300, createdAt:new Date().toISOString() },
+    { id:'OP-003', type:'standard', sport:'mixed', date:daysFrom(7), time:'09:00', maxPlayers:8, notes:'Morning session. Great for beginners and intermediates.', registrations:[], status:'upcoming', price:200, createdAt:new Date().toISOString() },
+    // Closed (past)
+    { id:'OP-000', type:'standard', sport:'pickleball', date:daysFrom(-5), time:'11:00', maxPlayers:12, notes:'', registrations:[{name:'Maria S.',contact:'',registeredAt:new Date().toISOString()},{name:'James R.',contact:'',registeredAt:new Date().toISOString()},{name:'Claire T.',contact:'',registeredAt:new Date().toISOString()},{name:'David K.',contact:'',registeredAt:new Date().toISOString()},{name:'Lynn B.',contact:'',registeredAt:new Date().toISOString()}], status:'closed', price:200, createdAt:new Date().toISOString() },
+  ];
+  saveSessions(demos);
+}
+
+/* ── PURGE OLD CLOSED (> 30 days) ── */
+function purgeOld() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const filtered = getSessions().filter(s => {
+    if (s.status !== 'closed' && s.status !== 'cancelled') return true;
+    return new Date(s.date) >= cutoff;
+  });
+  saveSessions(filtered);
+}
+
+/* ── AUTO-STATUS UPDATE ── */
+function updateStatuses() {
+  const sessions = getSessions();
+  const now = new Date();
+  let changed = false;
+  sessions.forEach(s => {
+    if (s.status === 'upcoming' || s.status === 'confirmed') {
+      const sessionDate = new Date(s.date + 'T' + s.time);
+      if (sessionDate < now) {
+        s.status = 'closed';
+        changed = true;
+      }
+    }
+  });
+  if (changed) saveSessions(sessions);
+}
+
+/* ── HELPERS ── */
+function isRegistrationClosed(s) {
+  const closeDate = new Date(s.date + 'T00:00:00');
+  closeDate.setDate(closeDate.getDate() - 2);
+  return new Date() >= closeDate;
+}
+
+function getPrice(s) {
+  const [h] = s.time.split(':').map(Number);
+  return h >= 14 ? 300 : 200;
+}
+
+function sportLabel(sport) {
+  return sport === 'pickleball' ? 'Pickleball' : sport === 'badminton' ? 'Badminton' : 'Mixed / Open';
+}
+
+function isUserRegistered(s) {
+  if (!currentUser) return false;
+  return s.registrations.some(r => r.name === currentUser || r.contact === currentUser);
+}
+
+/* ── TABS ── */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.op-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active'); el.setAttribute('aria-selected','true');
+}
+
+/* ── RENDER ── */
+function render() {
+  const sessions = getSessions();
+  const upcoming = sessions.filter(s => s.status === 'upcoming' || s.status === 'confirmed');
+  const closed = sessions.filter(s => s.status === 'closed' || s.status === 'cancelled');
+
+  document.getElementById('upcomingCount').textContent = upcoming.length;
+  document.getElementById('closedCount').textContent = closed.length;
+
+  // Stats
+  const totalRegistered = upcoming.reduce((s, x) => s + x.registrations.length, 0);
+  const totalSpots = upcoming.reduce((s, x) => s + Math.max(0, x.maxPlayers - x.registrations.length), 0);
+  document.getElementById('statActive').textContent = upcoming.length;
+  document.getElementById('statTotal').textContent = totalRegistered;
+  document.getElementById('statSpots').textContent = totalSpots;
+
+  renderSessionList('upcomingList', 'upcomingEmpty', upcoming, false);
+  renderSessionList('closedList', 'closedEmpty', closed, true);
+}
+
+function renderSessionList(listId, emptyId, sessions, isClosed) {
+  const list = document.getElementById(listId);
+  const empty = document.getElementById(emptyId);
+  list.innerHTML = '';
+  empty.style.display = sessions.length ? 'none' : 'block';
+
+  sessions.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'session-card' + (s.type === 'extended' ? ' extended' : '') + (isClosed ? ' closed-card' : '');
+
+    const date = new Date(s.date);
+    const mon = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+    const day = date.getDate();
+    const dow = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const [h, m] = s.time.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    const timeLabel = `${h12}:${String(m).padStart(2,'0')} ${period}`;
+    const duration = s.type === 'extended' ? '2 hours' : '1 hour';
+
+    const price = getPrice(s);
+    const regCount = s.registrations.length;
+    const minPlayers = s.type === 'extended' ? 8 : 4;
+    const spotsLeft = Math.max(0, s.maxPlayers - regCount);
+    const fillPct = Math.round((regCount / s.maxPlayers) * 100);
+    const isFull = spotsLeft === 0;
+    const isUrgent = spotsLeft <= 2 && spotsLeft > 0;
+    const regClosed = isRegistrationClosed(s);
+    const userReg = isUserRegistered(s);
+
+    const slotsClass = isFull ? 'full' : isUrgent ? 'urgent' : '';
+
+    let statusBadge = '';
+    if (s.status === 'confirmed') statusBadge = '<span class="session-badge badge-confirmed">Confirmed</span>';
+    else if (s.status === 'cancelled') statusBadge = '<span class="session-badge badge-cancelled">Cancelled</span>';
+    else if (s.status === 'closed') statusBadge = '<span class="session-badge badge-closed">Closed</span>';
+    else if (isFull) statusBadge = '<span class="session-badge badge-cancelled">Full</span>';
+    else statusBadge = '<span class="session-badge badge-open">Open</span>';
+
+    let registerArea = '';
+    if (!isClosed && s.status !== 'cancelled') {
+      if (isFull && !userReg) {
+        registerArea = `<button class="register-btn" disabled>Full</button>`;
+      } else if (regClosed) {
+        registerArea = `<button class="register-btn" disabled>Reg. Closed</button>`;
+      } else if (userReg) {
+        registerArea = `<button class="register-btn registered" disabled>✓ Registered</button>
+          <button class="cancel-reg-btn" onclick="cancelRegistration('${s.id}')">Cancel</button>`;
+      } else {
+        registerArea = `<button class="register-btn" onclick="openRegisterModal('${s.id}')">Register</button>`;
+      }
+    }
+
+    const adminControls = (currentRole === 'Admin' && !isClosed) ? `
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button style="padding:5px 10px;border-radius:7px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" onclick="confirmSession('${s.id}')">Confirm</button>
+        <button style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" onclick="cancelSession('${s.id}')">Cancel</button>
+      </div>` : '';
+
+    card.innerHTML = `
+      <div class="session-header">
+        <div class="session-date-block" aria-label="${dow} ${mon} ${day}">
+          <div class="session-date-mon">${mon}</div>
+          <div class="session-date-day">${day}</div>
+          <div class="session-date-dow">${dow}</div>
+        </div>
+        <div class="session-info">
+          <div class="session-title">
+            ${sportLabel(s.sport)} Open Play
+            ${s.type === 'extended' ? '<span class="session-badge badge-extended">Extended</span>' : ''}
+            ${statusBadge}
+          </div>
+          <div class="session-meta">
+            <strong>${timeLabel}</strong> · ${duration}
+            ${s.notes ? `<br>${s.notes}` : ''}
+          </div>
+        </div>
+        <div class="session-status-area">
+          <div class="session-slots ${slotsClass}">${isFull ? 'Full' : spotsLeft}</div>
+          <div class="session-slots-label">${isFull ? 'No spots left' : 'spots left'}</div>
+          <div class="session-price">₱${price}/person</div>
+        </div>
+      </div>
+      <div class="session-participants">
+        <div class="participants-bar">
+          <div class="participants-label">
+            <span>Players registered</span>
+            <span>${regCount} / ${s.maxPlayers} · min ${minPlayers}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill ${isFull?'full':isUrgent?'urgent':''}" style="width:${fillPct}%"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center">
+          ${registerArea}
+          ${adminControls}
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ── CREATE MODAL ── */
+function openCreateModal() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('csDate').min = today;
+  document.getElementById('csDate').value = '';
+  document.getElementById('csTime').value = '10:00';
+  document.getElementById('csMaxPlayers').value = '12';
+  document.getElementById('csNotes').value = '';
+  document.getElementById('createModal').classList.add('open');
+}
+function closeCreateModal() { document.getElementById('createModal').classList.remove('open'); }
+function updateMaxPlayers() {
+  const type = document.getElementById('csType').value;
+  document.getElementById('csMaxPlayers').value = type === 'extended' ? '20' : '12';
+}
+function submitCreateSession() {
+  const date = document.getElementById('csDate').value;
+  const time = document.getElementById('csTime').value;
+  const sport = document.getElementById('csSport').value;
+  const type = document.getElementById('csType').value;
+  const max = parseInt(document.getElementById('csMaxPlayers').value);
+  const notes = document.getElementById('csNotes').value.trim();
+  if (!date || !time) { showToast('Please fill in date and time.', true); return; }
+  const sessions = getSessions();
+  sessions.push({ id:'OP-' + Date.now(), type, sport, date, time, maxPlayers: max || 12, notes, registrations:[], status:'upcoming', createdAt:new Date().toISOString() });
+  saveSessions(sessions);
+  closeCreateModal();
+  render();
+  showToast('Session published!');
+}
+
+/* ── REGISTER MODAL ── */
+function openRegisterModal(id) {
+  if (!currentUser) { window.location.href = 'login.html?redirect=openplay.html'; return; }
+  const s = getSessions().find(x => x.id === id);
+  if (!s) return;
+  const price = getPrice(s);
+  document.getElementById('regSessionId').value = id;
+  document.getElementById('regModalTitle').textContent = `Register — ${sportLabel(s.sport)} Open Play`;
+
+  const date = new Date(s.date).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  const [h, m] = s.time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  document.getElementById('regModalSub').textContent = `${date} · ${h12}:${String(m).padStart(2,'0')} ${period}`;
+  document.getElementById('regPriceAmt').textContent = '₱' + price;
+
+  // Pre-fill name from session
+  const parts = currentUser.split(' ');
+  document.getElementById('regFirst').value = parts[0] || '';
+  document.getElementById('regLast').value = parts.slice(1).join(' ') || '';
+  document.getElementById('regContact').value = '';
+  document.getElementById('registerModal').classList.add('open');
+}
+function closeRegisterModal() { document.getElementById('registerModal').classList.remove('open'); }
+function submitRegistration() {
+  const id = document.getElementById('regSessionId').value;
+  const first = document.getElementById('regFirst').value.trim();
+  const last = document.getElementById('regLast').value.trim();
+  const contact = document.getElementById('regContact').value.trim();
+  if (!first) { showToast('Please enter your first name.', true); return; }
+
+  const sessions = getSessions();
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  if (s.registrations.some(r => r.name === (first + ' ' + last))) {
+    showToast('You\'re already registered for this session.', true); return;
+  }
+  s.registrations.push({ name: first + ' ' + last, contact, registeredAt: new Date().toISOString() });
+  saveSessions(sessions);
+  closeRegisterModal();
+
+  const price = getPrice(s);
+  document.getElementById('successModalBody').innerHTML = `
+    You're registered for <strong>${sportLabel(s.sport)} Open Play</strong>.<br>
+    Pay <strong>₱${price}</strong> on arrival. See you on the court!`;
+  document.getElementById('successModal').classList.add('open');
+  render();
+}
+
+function cancelRegistration(id) {
+  if (!currentUser) return;
+  const sessions = getSessions();
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  s.registrations = s.registrations.filter(r => r.name !== currentUser);
+  saveSessions(sessions);
+  render();
+  showToast('Registration cancelled. A full credit will be issued.');
+}
+
+/* ── ADMIN ACTIONS ── */
+function confirmSession(id) {
+  const sessions = getSessions();
+  const s = sessions.find(x => x.id === id);
+  if (s && s.registrations.length >= (s.type === 'extended' ? 8 : 4)) {
+    s.status = 'confirmed';
+    saveSessions(sessions);
+    render();
+    showToast('Session confirmed and players notified.');
+  } else {
+    showToast('Not enough players to confirm.', true);
+  }
+}
+
+function cancelSession(id) {
+  if (!confirm('Cancel this session? All registrants will receive a full refund.')) return;
+  const sessions = getSessions();
+  const s = sessions.find(x => x.id === id);
+  if (s) { s.status = 'cancelled'; saveSessions(sessions); render(); showToast('Session cancelled. Full refunds issued.'); }
+}
+
+/* ── TOAST ── */
+function showToast(msg, isError) {
+  const t = document.getElementById('opToast');
+  t.textContent = msg;
+  t.className = isError ? 'error' : '';
+  t.style.transform = 'translateY(0)'; t.style.opacity = '1';
+  setTimeout(() => { t.style.transform = 'translateY(100px)'; t.style.opacity = '0'; }, 3500);
+}
+
+/* ── INIT ── */
+seedSessions();
+purgeOld();
+updateStatuses();
+render();
+</script>
+</body>
+</html>

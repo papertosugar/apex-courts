@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS System — Apex Courts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { background: #08080A; }
+
+    /* ── TOP BAR ── */
+    .pos-topbar {
+      height: 56px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    }
+    .pos-topbar-left { display: flex; align-items: center; gap: 16px; }
+    .pos-logo { display: flex; align-items: center; gap: 8px; }
+    .pos-logo-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: var(--black);
+    }
+    .pos-logo-text { font-size: 14px; font-weight: 700; letter-spacing: 0.05em; }
+    .pos-logo-text span { color: var(--gold); }
+    .pos-divider { width: 1px; height: 24px; background: var(--border); }
+    .pos-page-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    .pos-topbar-right { display: flex; align-items: center; gap: 12px; }
+    .pos-time { font-size: 13px; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
+    .pos-user { font-size: 12px; color: var(--text-muted); }
+    .pos-logout {
+      padding: 6px 14px; border-radius: 7px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .pos-logout:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+    /* ── LAYOUT ── */
+    .pos-layout {
+      display: grid; grid-template-columns: 220px 1fr 380px;
+      height: calc(100vh - 56px); margin-top: 56px; overflow: hidden;
+    }
+    @media(max-width:1100px) { .pos-layout { grid-template-columns: 56px 1fr 340px; } }
+    @media(max-width:800px) { .pos-layout { grid-template-columns: 1fr; } }
+
+    /* ── SIDEBAR ── */
+    .pos-sidebar {
+      background: var(--surface); border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 16px 12px;
+    }
+    .sidebar-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); padding: 0 8px; margin: 16px 0 6px;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 9px; cursor: pointer;
+      transition: all 0.15s; color: var(--text-muted);
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden;
+    }
+    .sidebar-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .sidebar-item.active { background: rgba(212,175,55,0.1); color: var(--gold); border-left: 2px solid var(--gold); margin-left: -2px; }
+    .sidebar-item svg { flex-shrink: 0; }
+    .sidebar-badge {
+      margin-left: auto; padding: 2px 7px; border-radius: 100px;
+      background: var(--gold); color: var(--black);
+      font-size: 10px; font-weight: 800;
+    }
+
+    /* ── MAIN PANEL ── */
+    .pos-main { overflow-y: auto; padding: 24px; background: var(--black); }
+    .pos-main-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .pos-main-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-sm {
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; border: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-sm.gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--black); }
+    .btn-sm.gold:hover { box-shadow: 0 4px 20px rgba(212,175,55,0.3); transform: scale(1.02); }
+    .btn-sm.outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-sm.outline:hover { border-color: var(--border-bright); color: var(--text); }
+    .btn-sm.green { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.25); color: #4ade80; }
+    .btn-sm.red { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+
+    /* ── COURT GRID (POS) ── */
+    .courts-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px; margin-bottom: 32px;
+    }
+    .court-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; cursor: pointer;
+      transition: all 0.25s var(--spring); position: relative;
+    }
+    .court-card:hover { transform: scale(1.02); }
+    .court-card.occupied { border-color: rgba(212,175,55,0.4); background: rgba(212,175,55,0.04); }
+    .court-card.available { border-color: rgba(34,197,94,0.25); }
+    .court-card.maintenance { border-color: rgba(239,68,68,0.2); opacity: 0.6; }
+    .cc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .cc-name { font-size: 15px; font-weight: 700; }
+    .cc-badge {
+      padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .cc-badge.occupied { background: rgba(212,175,55,0.15); color: var(--gold); }
+    .cc-badge.available { background: rgba(34,197,94,0.1); color: #4ade80; }
+    .cc-badge.maintenance { background: rgba(239,68,68,0.1); color: #f87171; }
+    .cc-info { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .cc-timer {
+      margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+      background: rgba(0,0,0,0.3); font-variant-numeric: tabular-nums;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cc-timer-time { font-size: 22px; font-weight: 800; font-family: 'Courier New', monospace; }
+    .cc-timer-time.urgent { color: #f87171; animation: pulse 1s infinite; }
+    .cc-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+    /* ── BOOKING TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--text-dim); border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 13px 14px; font-size: 13px; color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .data-table .name { font-weight: 600; color: var(--text); }
+    .status-chip {
+      padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.05em; display: inline-block;
+    }
+    .status-chip.confirmed { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .status-chip.pending { background: rgba(234,179,8,0.1); color: #facc15; border: 1px solid rgba(234,179,8,0.2); }
+    .status-chip.walkin { background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+    .status-chip.cancelled { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+    /* ── CART / RECEIPT ── */
+    .pos-cart {
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; height: 100%; overflow: hidden;
+    }
+    .cart-header {
+      padding: 18px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cart-title { font-size: 15px; font-weight: 700; }
+    .cart-clear { font-size: 12px; color: var(--text-dim); cursor: pointer; transition: color 0.2s; }
+    .cart-clear:hover { color: #f87171; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 12px 20px; }
+    .cart-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .cart-item-icon { font-size: 20px; flex-shrink: 0; width: 32px; text-align: center; }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-size: 13px; font-weight: 600; }
+    .cart-item-sub { font-size: 11px; color: var(--text-muted); }
+    .cart-item-price { font-size: 14px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+    .cart-item-remove {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.15);
+      color: #f87171; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; transition: all 0.2s;
+    }
+    .cart-item-remove:hover { background: rgba(239,68,68,0.2); }
+    .cart-qty {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .qty-btn {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: var(--surface-3); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; transition: all 0.2s;
+    }
+    .qty-btn:hover { border-color: var(--border-bright); }
+    .qty-num { font-size: 13px; font-weight: 700; min-width: 20px; text-align: center; }
+    .cart-totals { padding: 16px 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .cart-total-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+    .cart-total-row .l { color: var(--text-muted); }
+    .cart-grand-total { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+    .cart-grand-label { font-size: 16px; font-weight: 700; }
+    .cart-grand-amount { font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--gold), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .cart-payment { padding: 16px 20px; }
+    .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .pay-method-btn {
+      padding: 12px 10px; border-radius: 9px; text-align: center;
+      border: 1px solid var(--border); background: var(--surface-2);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; color: var(--text-muted);
+    }
+    .pay-method-btn.selected { border-color: var(--border-bright); background: rgba(212,175,55,0.08); color: var(--gold); }
+    .pay-method-btn:hover:not(.selected) { border-color: rgba(255,255,255,0.1); color: var(--text); }
+    .charge-btn {
+      width: 100%; padding: 15px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--black); font-size: 16px; font-weight: 900;
+      border: none; cursor: pointer; transition: all 0.25s var(--spring);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .charge-btn:hover { transform: scale(1.02); box-shadow: 0 6px 30px rgba(212,175,55,0.4); }
+    .charge-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    /* ── PRODUCT GRID (add items) ── */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .product-tile {
+      padding: 14px 10px; border-radius: 10px; text-align: center;
+      background: var(--surface); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.2s var(--spring);
+    }
+    .product-tile:hover { border-color: rgba(212,175,55,0.35); transform: scale(1.03); }
+    .product-tile:active { transform: scale(0.97); }
+    .pt-icon { font-size: 28px; margin-bottom: 6px; }
+    .pt-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+    .pt-price { font-size: 13px; font-weight: 800; color: var(--gold); }
+
+    /* ── TABS ── */
+    .pos-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+    .pos-tab {
+      flex: 1; padding: 9px 12px; border-radius: 7px; text-align: center;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; color: var(--text-muted);
+    }
+    .pos-tab.active { background: rgba(212,175,55,0.1); color: var(--gold); border: 1px solid var(--border-bright); }
+
+    /* ── WALK-IN MODAL ── */
+    .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-card { background: var(--surface-2); border: 1px solid var(--border-bright); border-radius: 20px; padding: 32px; max-width: 460px; width: 100%; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .modal-overlay.open .modal-card { transform: scale(1); }
+    .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+    .form-input { width: 100%; padding: 11px 14px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-3); color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--border-bright); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; }
+    .modal-btn.primary { background: linear-gradient(135deg,var(--gold),var(--gold-light)); color: var(--black); }
+    .modal-btn.ghost { background: var(--surface-3); color: var(--text); border: 1px solid var(--border); }
+    .modal-btn:hover { transform: scale(1.02); }
+
+    /* Alarm indicator */
+    .alarm-indicator {
+      position: absolute; top: -6px; right: -6px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #ef4444; border: 2px solid var(--black);
+      animation: pulse 1s infinite;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOP BAR ─── -->
+<div class="pos-topbar">
+  <div class="pos-topbar-left">
+    <div class="pos-logo">
+      <div class="pos-logo-icon">A</div>
+      <span class="pos-logo-text">APEX <span>COURTS</span></span>
+    </div>
+    <div class="pos-divider"></div>
+    <span class="pos-page-title">Point of Sale</span>
+  </div>
+  <div class="pos-topbar-right">
+    <div class="pos-time" id="posTime"></div>
+    <div class="pos-user" id="posUserLabel">Staff</div>
+    <button class="pos-logout" onclick="sessionStorage.clear();window.location.href='index.html'">Logout</button>
+  </div>
+</div>
+
+<!-- ─── LAYOUT ─── -->
+<div class="pos-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <nav class="pos-sidebar">
+    <div class="sidebar-section-label">Main</div>
+    <div class="sidebar-item active" onclick="showView('pos',this)" data-tip="POS">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>POS Register</span>
+    </div>
+    <div class="sidebar-item" onclick="showView('courts',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Court Status</span>
+      <span class="sidebar-badge" id="occupiedCount">4</span>
+    </div>
+    <div class="sidebar-item" onclick="showView('bookings',this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Bookings</span>
+    </div>
+    <div class="sidebar-section-label">Products</div>
+    <div class="sidebar-item" onclick="setCategory('rental')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Equipment Rental</span>
+    </div>
+    <div class="sidebar-item" onclick="setCategory('fb')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Food &amp; Beverage</span>
+    </div>
+    <div class="sidebar-item" onclick="setCategory('membership')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      <span>Memberships</span>
+    </div>
+    <div class="sidebar-section-label">Actions</div>
+    <div class="sidebar-item" onclick="openWalkIn()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      <span>Walk-In Booking</span>
+    </div>
+    <div class="sidebar-item" onclick="window.open('../index.html','_blank')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>View Homepage</span>
+    </div>
+  </nav>
+
+  <!-- ─── MAIN CONTENT ─── -->
+  <div class="pos-main" id="posMainContent">
+    <!-- POS Register View -->
+    <div id="view-pos">
+      <div class="pos-main-header">
+        <div>
+          <div class="pos-main-title">POS Register</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Add items to the cart and process payment</div>
+        </div>
+        <div class="action-btns">
+          <button class="btn-sm green" onclick="openWalkIn()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Walk-In
+          </button>
+          <button class="btn-sm outline" onclick="setCategory('all')">All Items</button>
+        </div>
+      </div>
+
+      <div class="pos-tabs">
+        <div class="pos-tab active" onclick="setCategory('all',this)">All</div>
+        <div class="pos-tab" onclick="setCategory('court',this)">Court</div>
+        <div class="pos-tab" onclick="setCategory('rental',this)">Rental</div>
+        <div class="pos-tab" onclick="setCategory('fb',this)">F&amp;B</div>
+        <div class="pos-tab" onclick="setCategory('membership',this)">Membership</div>
+      </div>
+
+      <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <!-- Courts View -->
+    <div id="view-courts" style="display:none">
+      <div class="pos-main-header">
+        <div>
+          <div class="pos-main-title">Court Status</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Live view — click a court to manage</div>
+        </div>
+        <div class="action-btns">
+          <button class="btn-sm gold" onclick="openWalkIn()">+ Walk-In</button>
+          <button class="btn-sm outline" onclick="renderCourtsView()">↺ Refresh</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="padding:14px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px;font-weight:800;color:var(--gold)" id="countOccupied">4</div>
+          <div style="font-size:12px;color:var(--text-muted)">Occupied</div>
+        </div>
+        <div style="padding:14px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px;font-weight:800;color:#4ade80" id="countAvail">8</div>
+          <div style="font-size:12px;color:var(--text-muted)">Available</div>
+        </div>
+        <div style="padding:14px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px;font-weight:800;color:#f87171">0</div>
+          <div style="font-size:12px;color:var(--text-muted)">Maintenance</div>
+        </div>
+      </div>
+
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text-muted)">Pickleball Courts</div>
+      <div class="courts-grid" id="pickleballCourts"></div>
+      <div style="font-size:14px;font-weight:700;margin:24px 0 12px;color:var(--text-muted)">Badminton Courts</div>
+      <div class="courts-grid" id="badmintonCourts"></div>
+      <div style="font-size:14px;font-weight:700;margin:24px 0 12px;color:var(--text-muted)">Drill Zone</div>
+      <div class="courts-grid" id="drillCourts"></div>
+    </div>
+
+    <!-- Bookings View -->
+    <div id="view-bookings" style="display:none">
+      <div class="pos-main-header">
+        <div class="pos-main-title">Today's Bookings</div>
+        <div class="action-btns">
+          <button class="btn-sm gold" onclick="openWalkIn()">+ Walk-In</button>
+          <button class="btn-sm outline">Export CSV</button>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="bookingSearch" placeholder="Search by name or ID…" oninput="renderBookings()" style="flex:1;min-width:160px;padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;font-family:inherit;outline:none" />
+          <input type="date" id="bookingDateFilter" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;outline:none;font-family:inherit" />
+          <select onchange="renderBookings()" id="bookingSportFilter" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;outline:none">
+            <option value="">All Sports</option><option value="pickleball">Pickleball</option><option value="badminton">Badminton</option><option value="drill">Drill Zone</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="bookingsTable">
+            <thead>
+              <tr>
+                <th>ID</th><th>Name</th><th>Sport</th><th>Court</th>
+                <th>Time</th><th>Duration</th><th>Status</th><th>Total</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CART SIDEBAR ─── -->
+  <div class="pos-cart">
+    <div class="cart-header">
+      <div class="cart-title">Current Order</div>
+      <span class="cart-clear" onclick="clearCart()">Clear all</span>
+    </div>
+
+    <div class="cart-items" id="cartItems">
+      <div style="text-align:center;padding:40px 0;color:var(--text-dim);font-size:13px">
+        <div style="font-size:32px;margin-bottom:10px">🛒</div>
+        No items yet. Click products to add.
+      </div>
+    </div>
+
+    <div class="cart-totals" id="cartTotals" style="display:none">
+      <div class="cart-total-row"><span class="l">Subtotal</span><span id="cartSubtotal">$0</span></div>
+      <div class="cart-total-row"><span class="l">Tax (8%)</span><span id="cartTax">$0</span></div>
+      <div class="cart-grand-total">
+        <span class="cart-grand-label">Total</span>
+        <span class="cart-grand-amount" id="cartTotal">$0</span>
+      </div>
+    </div>
+
+    <div class="cart-payment">
+      <div class="pay-methods" id="payMethods">
+        <div class="pay-method-btn selected" onclick="selectPay('card',this)">💳 Card</div>
+        <div class="pay-method-btn" onclick="selectPay('cash',this)">💵 Cash</div>
+        <div class="pay-method-btn" onclick="selectPay('apple',this)">🍎 Apple Pay</div>
+        <div class="pay-method-btn" onclick="selectPay('member',this)">👤 Member</div>
+      </div>
+      <button class="charge-btn" id="chargeBtn" onclick="processPayment()" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Charge ₱<span id="chargeBtnAmount">0</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── WALK-IN MODAL ─── -->
+<div class="modal-overlay" id="walkInModal">
+  <div class="modal-card">
+    <div class="modal-title">🚶 Walk-In Booking</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-input" id="wi-first" placeholder="Alex" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-input" id="wi-last" placeholder="Johnson" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sport</label>
+        <select class="form-input" id="wi-sport">
+          <option value="pickleball">Pickleball</option>
+          <option value="badminton">Badminton</option>
+          <option value="drill">Drill Zone</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Court #</label>
+        <select class="form-input" id="wi-court">
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Start Time</label>
+        <input type="time" class="form-input" id="wi-time" min="07:00" max="23:00" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <select class="form-input" id="wi-dur">
+          <option value="0.5">30 min</option>
+          <option value="1" selected>1 hour</option>
+          <option value="1.5">1.5 hours</option>
+          <option value="2">2 hours</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone (Optional)</label>
+      <input type="tel" class="form-input" id="wi-phone" placeholder="+63 9XX XXX XXXX" />
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeWalkIn()">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmWalkIn()">Add to POS & Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── EDIT BOOKING MODAL ─── -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-card">
+    <div class="modal-title">Edit Booking</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px" id="editBookingUser"></div>
+    <input type="hidden" id="editBookingId" />
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">New Date</label>
+        <input type="date" class="form-input" id="editDate" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Time</label>
+        <input type="time" class="form-input" id="editTime" min="07:00" max="23:00" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Court #</label>
+        <input type="number" class="form-input" id="editCourt" min="1" max="4" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <select class="form-input" id="editDuration">
+          <option value="0.5">30 min</option>
+          <option value="1">1 hour</option>
+          <option value="1.5">1.5 hours</option>
+          <option value="2">2 hours</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveEditBooking()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CANCEL CONFIRM MODAL ─── -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-card" style="max-width:400px;text-align:center">
+    <div style="width:60px;height:60px;border-radius:50%;background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <div class="modal-title" style="font-size:18px">Cancel Booking?</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px">This action cannot be undone.</p>
+    <p style="font-family:monospace;font-size:13px;color:var(--gold);margin-bottom:24px" id="cancelBookingId"></p>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeCancelModal()">Keep Booking</button>
+      <button class="modal-btn" id="cancelConfirmBtn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SUCCESS TOAST ─── -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;z-index:3000;transform:translateY(100px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);padding:14px 20px;border-radius:12px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;max-width:320px"></div>
+
+<script src="../js/pos.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+/* ─── APEX COURTS — main.js v2 ─── */
+
+// ─── NAVBAR ───
+const navbar = document.getElementById('navbar');
+if (navbar) {
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+}
+
+// ─── MOBILE MENU ───
+function toggleMenu() {
+  const links = document.getElementById('navLinks');
+  const btn = document.getElementById('hamburger');
+  if (!links || !btn) return;
+  const isOpen = links.classList.toggle('open');
+  btn.setAttribute('aria-expanded', String(isOpen));
+  btn.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+  const spans = btn.querySelectorAll('span');
+  if (isOpen) {
+    spans[0].style.transform = 'rotate(45deg) translate(5px,5px)';
+    spans[1].style.opacity = '0';
+    spans[2].style.transform = 'rotate(-45deg) translate(5px,-5px)';
+  } else {
+    spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+  }
+}
+// Close menu on outside click
+document.addEventListener('click', e => {
+  const links = document.getElementById('navLinks');
+  const btn = document.getElementById('hamburger');
+  if (links?.classList.contains('open') && !links.contains(e.target) && !btn?.contains(e.target)) {
+    toggleMenu();
+  }
+});
+
+// ─── SCROLL REVEAL (directional, staggered) ───
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    // Honour explicit transition-delay set inline
+    el.classList.add('visible');
+    revealObserver.unobserve(el);
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -48px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ─── MAGNETIC BUTTON EFFECT (motion that whispers) ───
+document.querySelectorAll('.btn-primary, .nav-cta').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    btn.style.transform = `translate(${x * 0.12}px, ${y * 0.18}px)`;
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = '';
+    btn.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s';
+    setTimeout(() => { btn.style.transition = ''; }, 400);
+  });
+});
+
+// ─── AVAILABILITY GRID ───
+const TIMES    = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
+const DZ_TIMES = ['8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];  // Drill Zone hours
+const COURTS   = { pickleball: 6, badminton: 6, drillzone: 1 };
+
+function getDaySlots(sport) {
+  const seed = new Date().getDate() + (sport === 'pickleball' ? 0 : sport === 'badminton' ? 100 : 200);
+  const rng  = n => { const x = Math.sin(n + seed) * 10000; return x - Math.floor(x); };
+  const slots = {};
+  const n = COURTS[sport];
+  /* Drill Zone uses 30-min blocks (show as half-open per slot) */
+  const isDZ = sport === 'drillzone';
+  const timeArr = isDZ ? DZ_TIMES : TIMES;
+  for (let c = 1; c <= n; c++) {
+    slots[c] = [];
+    for (let t = 0; t < timeArr.length; t++) {
+      const r = rng(c * 100 + t);
+      if (r < 0.06 && t === 2) slots[c].push('mine');
+      else if (r < (isDZ ? 0.35 : 0.42)) slots[c].push('booked');
+      else slots[c].push('open');
+    }
+  }
+  return slots;
+}
+
+function renderAvailability(sport) {
+  const grid = document.getElementById('availGrid');
+  if (!grid) return;
+  const isDZ    = sport === 'drillzone';
+  const timeArr = isDZ ? DZ_TIMES : TIMES;
+  const slots   = getDaySlots(sport);
+  const n       = COURTS[sport];
+  const label   = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
+  const now     = new Date().getHours();
+
+  // Time header row
+  let html = `<div style="display:flex;gap:4px;margin-bottom:8px">
+    <div style="width:88px;flex-shrink:0"></div><div style="display:flex;gap:4px;flex:1">`;
+  timeArr.forEach((t) => {
+    const h = parseInt(t) + (t.includes('PM') && t !== '12PM' ? 12 : 0);
+    html += `<div style="flex:1;font-size:9px;text-align:center;letter-spacing:0.04em;color:${h === now ? 'var(--gold)' : 'var(--cream-dim)'};font-weight:${h === now ? '700' : '400'}">${t}</div>`;
+  });
+  html += '</div></div>';
+
+  // Drill Zone notice
+  if (isDZ) {
+    html += `<div style="margin:0 0 10px;padding:8px 12px;border-radius:8px;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);font-size:11px;color:rgba(201,168,76,0.75);display:flex;align-items:center;gap:8px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="11" opacity="0.25"/></svg>
+      Solo training zone · Ball machine included · Book in 30 or 60-min blocks
+    </div>`;
+  }
+
+  // Court rows
+  const rowLabel = isDZ ? 'Drill Zone' : `${label} Court`;
+  for (let c = 1; c <= n; c++) {
+    html += `<div class="court-row" role="row" aria-label="${rowLabel}${n > 1 ? ' ' + c : ''}">
+      <div class="court-label" role="rowheader">${isDZ ? 'DZ' : label + ' ' + c}</div>
+      <div class="time-slots" role="group" aria-label="Time slots">`;
+    slots[c].forEach((s, i) => {
+      const tLabel = timeArr[i];
+      const h = parseInt(tLabel) + (tLabel.includes('PM') && tLabel !== '12PM' ? 12 : 0);
+      const isPast = isToday() && h < now;
+      const cls = isPast && s !== 'mine' ? 'booked' : s;
+      const slotLabel = cls === 'open' && !isPast ? 'OPEN' : (cls === 'mine' ? 'MINE' : '');
+      const ariaLabel = `${tLabel}: ${cls === 'open' && !isPast ? 'Available' : cls === 'mine' ? 'Your booking' : 'Booked'}`;
+      html += `<div class="slot ${cls}"
+        role="${cls === 'open' && !isPast ? 'button' : 'cell'}"
+        tabindex="${cls === 'open' && !isPast ? '0' : '-1'}"
+        aria-label="${ariaLabel}"
+        ${cls === 'open' && !isPast ? `onclick="window.location.href='book.html?sport=${sport}&court=${c}&time=${tLabel}'"
+        onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"` : ''}
+      >${slotLabel}</div>`;
+    });
+    html += '</div></div>';
+  }
+
+  grid.innerHTML = html;
+
+  // Stagger entrance — 30ms per slot (ui-ux-pro-max rule: stagger 30–50ms)
+  grid.querySelectorAll('.slot').forEach((slot, i) => {
+    slot.style.opacity = '0';
+    slot.style.transform = 'scaleY(0.6)';
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        slot.style.transition = 'opacity 0.25s var(--ease-out), transform 0.3s var(--ease-spring)';
+        slot.style.opacity = '1';
+        slot.style.transform = 'none';
+      }, Math.min(i * 5, 200)); // cap at 200ms total
+    });
+  });
+}
+
+function isToday() { return true; } // simplification
+
+function switchSport(sport, tabEl) {
+  document.querySelectorAll('.avail-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
+  tabEl.classList.add('active');
+  tabEl.setAttribute('aria-selected', 'true');
+  renderAvailability(sport);
+}
+
+// Today's date
+const todayEl = document.getElementById('todayDate');
+if (todayEl) todayEl.textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+renderAvailability('pickleball');
+
+// ─── TESTIMONIALS — infinite marquee ───
+const TESTIMONIALS = [
+  { name: 'Sarah K.', role: 'Pro Member', avatar: 'SK', stars: 5, text: '"Best pickleball courts I\'ve played on outside of a tournament. The flooring is exceptional and booking takes 90 seconds flat."' },
+  { name: 'Marcus T.', role: 'Badminton Player', avatar: 'MT', stars: 5, text: '"The ceiling height alone makes these courts worth it. Perfect lighting, zero glare. My shuttle speeds are consistent every single session."' },
+  { name: 'Jennifer L.', role: 'Elite Member', avatar: 'JL', stars: 5, text: '"I drive 45 minutes to play here. The unlimited membership pays for itself in two weeks. Staff are genuinely welcoming."' },
+  { name: 'David H.', role: 'Drop-In Player', avatar: 'DH', stars: 5, text: '"Walked in without a reservation, got a court in 20 minutes, rented equipment for $8, played 2 hours. Completely seamless."' },
+  { name: 'Priya R.', role: 'Pro Member', avatar: 'PR', stars: 5, text: '"Live court availability is a game changer. No more calling ahead or showing up to find everything taken. Pure convenience."' },
+  { name: 'Tom W.', role: 'Elite Member', avatar: 'TW', stars: 5, text: '"Ran our company league tournament here — 40 people, zero hiccups. Staff handled scheduling, equipment, even catering. Will return every quarter."' },
+];
+
+const track = document.getElementById('testimonialTrack');
+if (track) {
+  // Double for seamless loop
+  [...TESTIMONIALS, ...TESTIMONIALS].forEach(t => {
+    const card = document.createElement('article');
+    card.className = 't-card';
+    card.setAttribute('aria-label', `Review by ${t.name}`);
+    card.innerHTML = `
+      <div class="t-stars" aria-label="${t.stars} out of 5 stars">${'★'.repeat(t.stars)}</div>
+      <blockquote class="t-text">${t.text}</blockquote>
+      <div class="t-author">
+        <div class="t-avatar" aria-hidden="true">${t.avatar}</div>
+        <div>
+          <div class="t-name">${t.name}</div>
+          <div class="t-role">${t.role}</div>
+        </div>
+      </div>`;
+    track.appendChild(card);
+  });
+}
+
+// ─── COUNTER ANIMATION ───
+function animateCounters() {
+  document.querySelectorAll('.hero-stat-num').forEach(el => {
+    const raw = el.textContent;
+    const num = parseFloat(raw);
+    if (isNaN(num)) return;
+    const suffix = raw.replace(/[\d.]/g, '');
+    const duration = 1000;
+    const start = performance.now();
+    const update = now => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(num * eased) + suffix;
+      if (p < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  });
+}
+
+const statsObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) { animateCounters(); statsObs.disconnect(); }
+}, { threshold: 0.5 });
+const firstStat = document.querySelector('.hero-stat-num');
+if (firstStat) statsObs.observe(firstStat);

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Login — Apex Courts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-wrap {
+      width: 100%; max-width: 420px;
+      animation: fadeInUp 0.6s var(--transition) both;
+    }
+    .login-logo {
+      text-align: center; margin-bottom: 40px;
+    }
+    .login-logo-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 900; color: var(--black);
+      margin: 0 auto 16px;
+      box-shadow: 0 0 40px rgba(212,175,55,0.3);
+      animation: glow-pulse 3s infinite;
+    }
+    .login-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .login-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+    .login-card {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px;
+    }
+    .role-tabs { display: flex; gap: 8px; margin-bottom: 28px; }
+    .role-tab {
+      flex: 1; padding: 10px; text-align: center; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface-3);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; color: var(--text-muted);
+    }
+    .role-tab.active { background: rgba(212,175,55,0.12); border-color: var(--border-bright); color: var(--gold); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .form-input {
+      width: 100%; padding: 13px 16px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface-3);
+      color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--border-bright); }
+    .form-input::placeholder { color: var(--text-dim); }
+    .login-btn {
+      width: 100%; padding: 14px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--black); font-size: 15px; font-weight: 800;
+      border: none; cursor: pointer; margin-top: 8px;
+      transition: all 0.25s var(--spring);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .login-btn:hover { transform: scale(1.02); box-shadow: 0 6px 30px rgba(212,175,55,0.4); }
+    .login-btn:active { transform: scale(0.98); }
+    .login-hint { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 20px; }
+    .error-msg {
+      padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      color: #f87171; font-size: 13px; display: none;
+    }
+    .back-link {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      color: var(--text-dim); text-decoration: none; font-size: 13px;
+      margin-top: 24px; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="login-logo-icon">A</div>
+    <div class="login-title">Staff Portal</div>
+    <div class="login-sub">Apex Courts — Secure Access</div>
+  </div>
+
+  <div class="login-card">
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="setRole('admin',this)">🔐 Admin</div>
+      <div class="role-tab" onclick="setRole('pos',this)">🖥 POS Staff</div>
+    </div>
+
+    <div class="error-msg" id="errorMsg">Incorrect PIN or username. Please try again.</div>
+
+    <div class="form-group">
+      <label class="form-label" for="username">Username</label>
+      <input type="text" id="username" class="form-input" placeholder="staff@apexcourts.com" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="pin">PIN / Password</label>
+      <input type="password" id="pin" class="form-input" placeholder="••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') login()" />
+    </div>
+
+    <button class="login-btn" onclick="login()">
+      Sign In
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <div class="login-hint">Demo: any username + PIN "1234" → <b>Admin</b><br>any username + PIN "5678" → <b>POS Staff</b></div>
+  </div>
+
+  <a href="/" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to Homepage
+  </a>
+</div>
+
+<script>
+let currentRole = 'admin';
+function setRole(role, el) {
+  currentRole = role;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('errorMsg').style.display = 'none';
+}
+function login() {
+  const pin = document.getElementById('pin').value;
+  const err = document.getElementById('errorMsg');
+  if (pin === '1234') {
+    sessionStorage.setItem('apexRole', 'admin');
+    sessionStorage.setItem('apexUser', document.getElementById('username').value || 'Admin');
+    window.location.href = 'dashboard.html';
+  } else if (pin === '5678') {
+    sessionStorage.setItem('apexRole', 'pos');
+    sessionStorage.setItem('apexUser', document.getElementById('username').value || 'POS Staff');
+    window.location.href = 'pos.html';
+  } else {
+    err.style.display = 'block';
+    const inp = document.getElementById('pin');
+    inp.style.borderColor = 'rgba(239,68,68,0.5)';
+    inp.style.animation = 'shake 0.3s';
+    setTimeout(() => { inp.style.borderColor = ''; inp.style.animation = ''; }, 800);
+  }
+}
+</script>
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}
+}
+</style>
+</body>
+</html>
