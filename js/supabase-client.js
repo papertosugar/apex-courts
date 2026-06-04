@@ -16,8 +16,8 @@
 // For local development, hard-code here.
 // For Vercel production, these come from environment variables
 // injected via a <script> tag in your HTML head or an edge function.
-const SUPABASE_URL      = window.__ENV__?.SUPABASE_URL      || 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || 'YOUR_ANON_KEY';
+const SUPABASE_URL      = window.__ENV__?.SUPABASE_URL      || 'https://qughntfplchllsiaiteu.supabase.co';
+const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2hudGZwbGNobGxzaWFpdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODI4NzgsImV4cCI6MjA5NjE1ODg3OH0.MFspR7dJ0cMN1ayq6fZxruk9Nv2yKJQzxvzJy96FBBI';
 
 // Load Supabase client (added via CDN in HTML head)
 const { createClient } = window.supabase;
