@@ -298,30 +298,55 @@ function selectPayMethod(method, el) {
   document.getElementById('payConfirmBtn').dataset.method = method;
 }
 
-function finalizePayment() {
-  const method = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
-  const code = 'APX-' + Math.floor(1000 + Math.random() * 9000);
-
-  // Save booking to localStorage
-  const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
-  const dateStr = state.selectedDate ? state.selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-  const user = sessionStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
+async function finalizePayment() {
+  const method    = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
+  const code      = 'APX-' + Math.floor(1000 + Math.random() * 9000);
+  const dateStr   = state.selectedDate ? state.selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
   const courtCost = courtPrice(state.duration);
-  const extrasCost = Array.from(state.extras).reduce((s,k)=>s+PRICING.extras[k].price,0);
+  const extrasCost= Array.from(state.extras).reduce((s,k)=>s+PRICING.extras[k].price,0);
+
+  // ── Save to Supabase ─────────────────────────────────────────
+  if (window.ApexCourts) {
+    try {
+      // Convert time label ('9AM') → '09:00', add duration for end time
+      const startH = (() => {
+        let h = parseInt(state.selectedTime);
+        if (state.selectedTime.includes('PM') && h !== 12) h += 12;
+        if (state.selectedTime.includes('AM') && h === 12) h = 0;
+        return h;
+      })();
+      const endH = startH + state.duration;
+      const toTime = h => String(h).padStart(2,'0') + ':00';
+
+      // Look up court_id from DB (sport + court number)
+      const courts = await ApexCourts.getCourts(state.sport);
+      const courtRow = courts.find(c => c.court_number === state.court);
+
+      if (courtRow) {
+        await ApexCourts.createBooking({
+          courtId:     courtRow.id,
+          date:        dateStr,
+          startTime:   toTime(startH),
+          endTime:     toTime(endH),
+          durationMins: state.duration * 60,
+          playerCount: 2,
+          notes:       `Extras: ${Array.from(state.extras).join(', ') || 'none'} | Pay: ${method}`,
+        });
+      }
+    } catch (e) {
+      console.warn('[Booking] Supabase save failed, using localStorage:', e.message);
+    }
+  }
+
+  // ── Always save to localStorage as fallback ──────────────────
+  const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const user = sessionStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
   bookings.push({
-    id: code,
-    userName: user,
-    sport: state.sport,
-    date: dateStr,
-    time: state.selectedTime,
-    duration: state.duration,
-    court: state.court,
-    extras: Array.from(state.extras),
-    totalAmount: courtCost + extrasCost,
-    status: 'confirmed',
-    paymentMethod: method,
-    createdAt: new Date().toISOString(),
-    createdBy: 'online',
+    id: code, userName: user, sport: state.sport, date: dateStr,
+    time: state.selectedTime, duration: state.duration, court: state.court,
+    extras: Array.from(state.extras), totalAmount: courtCost + extrasCost,
+    status: 'confirmed', paymentMethod: method,
+    createdAt: new Date().toISOString(), createdBy: 'online',
   });
   localStorage.setItem('apexBookings', JSON.stringify(bookings));
 

@@ -275,6 +275,8 @@
     .modal-btn.ghost { background: transparent; color: var(--cream); border: 1px solid var(--stone-line); }
     .modal-btn:hover { transform: scale(1.02); }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 </head>
 <body>
 
@@ -462,6 +464,39 @@ function getNews() { return JSON.parse(localStorage.getItem('apexNews') || '[]')
 function saveNews(arr) { localStorage.setItem('apexNews', JSON.stringify(arr)); }
 function getPosts() { return JSON.parse(localStorage.getItem('apexPosts') || '[]'); }
 function savePosts(arr) { localStorage.setItem('apexPosts', JSON.stringify(arr)); }
+
+/* ── Load from Supabase ── */
+async function syncFromDB() {
+  if (!window.ApexCourts) return;
+  try {
+    const [dbNews, dbPosts] = await Promise.all([
+      ApexCourts.getNews(),
+      ApexCourts.getCommunityPosts(),
+    ]);
+    if (dbNews?.length) {
+      saveNews(dbNews.map(n => ({
+        id: n.id, title: n.title, content: n.content,
+        author: n.profiles ? `${n.profiles.first_name} ${n.profiles.last_name}`.trim() : 'Admin',
+        date: n.published_at,
+      })));
+    }
+    if (dbPosts?.length) {
+      savePosts(dbPosts.map(p => ({
+        id: p.id,
+        author: p.author_name || 'Member',
+        sport: p.sport_tag,
+        text: p.text_content,
+        photo: p.photo_url,
+        likes: p.likes_count || 0,
+        likedBy: [],
+        date: p.created_at,
+        authorId: p.author_id,
+      })));
+    }
+  } catch (e) {
+    console.warn('[Community] Supabase sync error:', e.message);
+  }
+}
 
 /* ── SEED DEFAULT NEWS ── */
 function seedNews() {
@@ -755,6 +790,13 @@ renderNews();
 renderComposer();
 renderPosts();
 renderSidebar();
+
+// Sync from Supabase then re-render
+syncFromDB().then(() => {
+  renderNews();
+  renderPosts();
+  renderSidebar();
+});
 </script>
 </body>
 </html>

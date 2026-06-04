@@ -64,16 +64,31 @@ document.querySelectorAll('.btn-primary, .nav-cta').forEach(btn => {
 
 // ─── AVAILABILITY GRID ───
 const TIMES    = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
-const DZ_TIMES = ['8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];  // Drill Zone hours
-const COURTS   = { pickleball: 6, badminton: 6, drillzone: 1 };
+const DZ_TIMES = ['8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
+const COURTS   = { pickleball: 4, badminton: 4, drillzone: 1 };
 
+// ── Time helpers ─────────────────────────────────────────────
+// '8AM' → '08:00', '2PM' → '14:00'
+function labelTo24(t) {
+  let h = parseInt(t);
+  if (t.includes('PM') && h !== 12) h += 12;
+  if (t.includes('AM') && h === 12) h = 0;
+  return String(h).padStart(2,'0') + ':00';
+}
+// '08:00:00' → '8AM'
+function pgTimeToLabel(pg) {
+  let h = parseInt(pg.split(':')[0]);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return h + suffix;
+}
+
+// ── Fallback: seeded fake data (used if Supabase unavailable) ─
 function getDaySlots(sport) {
   const seed = new Date().getDate() + (sport === 'pickleball' ? 0 : sport === 'badminton' ? 100 : 200);
   const rng  = n => { const x = Math.sin(n + seed) * 10000; return x - Math.floor(x); };
-  const slots = {};
-  const n = COURTS[sport];
-  /* Drill Zone uses 30-min blocks (show as half-open per slot) */
-  const isDZ = sport === 'drillzone';
+  const slots = {}, n = COURTS[sport], isDZ = sport === 'drillzone';
   const timeArr = isDZ ? DZ_TIMES : TIMES;
   for (let c = 1; c <= n; c++) {
     slots[c] = [];
@@ -87,15 +102,55 @@ function getDaySlots(sport) {
   return slots;
 }
 
-function renderAvailability(sport) {
+// ── Build slot map from Supabase bookings ─────────────────────
+// returns { courtNum: { '8AM': 'booked'|'mine', ... } }
+function buildSlotMap(bookings, myUserId, timeArr) {
+  const map = {};
+  bookings.forEach(b => {
+    const cNum = b.court_number;
+    if (!map[cNum]) map[cNum] = {};
+    const label = pgTimeToLabel(b.start_time);
+    if (timeArr.includes(label)) {
+      map[cNum][label] = (b.booked_by && b.booked_by === myUserId) ? 'mine' : 'booked';
+    }
+  });
+  return map;
+}
+
+async function renderAvailability(sport) {
   const grid = document.getElementById('availGrid');
   if (!grid) return;
   const isDZ    = sport === 'drillzone';
   const timeArr = isDZ ? DZ_TIMES : TIMES;
-  const slots   = getDaySlots(sport);
   const n       = COURTS[sport];
   const label   = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
   const now     = new Date().getHours();
+
+  // ── Try Supabase, fall back to fake data ──────────────────
+  let slotMap = null;
+  let myUserId = null;
+  if (window.ApexCourts) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const dbSport = sport === 'drillzone' ? 'drillzone' : sport;
+      const [bookings, user] = await Promise.all([
+        ApexCourts.getAvailability(dbSport, today),
+        ApexCourts.getCurrentUser().catch(() => null),
+      ]);
+      myUserId = user?.id;
+      slotMap  = buildSlotMap(bookings, myUserId, timeArr);
+    } catch (e) {
+      console.warn('[Availability] Supabase error, using fallback:', e.message);
+    }
+  }
+
+  // Build slots array (Supabase or fallback)
+  const slots = {};
+  for (let c = 1; c <= n; c++) {
+    slots[c] = timeArr.map(t =>
+      slotMap ? (slotMap[c]?.[t] || 'open') : getDaySlots(sport)[c][timeArr.indexOf(t)]
+    );
+  }
 
   // Time header row
   let html = `<div style="display:flex;gap:4px;margin-bottom:8px">
@@ -154,7 +209,7 @@ function renderAvailability(sport) {
   });
 }
 
-function isToday() { return true; } // simplification
+function isToday() { return true; }
 
 function switchSport(sport, tabEl) {
   document.querySelectorAll('.avail-tab').forEach(t => {
@@ -170,6 +225,18 @@ function switchSport(sport, tabEl) {
 const todayEl = document.getElementById('todayDate');
 if (todayEl) todayEl.textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 renderAvailability('pickleball');
+
+// ── Real-time: refresh grid when bookings change ─────────────
+if (window.ApexCourts) {
+  const today = new Date().toISOString().split('T')[0];
+  ApexCourts.subscribeAvailability('pickleball', today, () => {
+    const active = document.querySelector('.avail-tab.active');
+    if (active) {
+      const sport = active.onclick?.toString().match(/'(\w+)'/)?.[1] || 'pickleball';
+      renderAvailability(sport);
+    }
+  });
+}
 
 // ─── TESTIMONIALS — infinite marquee ───
 const TESTIMONIALS = [

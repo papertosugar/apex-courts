@@ -202,6 +202,8 @@
     #opToast { position: fixed; bottom: 24px; right: 24px; z-index: 3000; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); padding: 14px 20px; border-radius: 12px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; font-size: 14px; font-weight: 600; max-width: 320px; }
     #opToast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 </head>
 <body>
 
@@ -500,10 +502,32 @@ if (currentRole === 'Admin') {
   document.getElementById('adminCreateBtn').style.display = 'inline-flex';
 }
 
-/* ── DATA ── */
+/* ── DATA ── (Supabase first, localStorage fallback) */
 const OP_KEY = 'apexOpenPlay';
 function getSessions() { return JSON.parse(localStorage.getItem(OP_KEY) || '[]'); }
 function saveSessions(arr) { localStorage.setItem(OP_KEY, JSON.stringify(arr)); }
+
+async function loadSessionsFromDB() {
+  if (!window.ApexCourts) return null;
+  try {
+    const rows = await ApexCourts.getOpenPlaySessions();
+    // Map Supabase rows → local format
+    return rows.map(r => ({
+      id: r.id, type: r.session_type, sport: r.sport,
+      date: r.session_date, time: r.session_time,
+      maxPlayers: r.max_players, minPlayers: r.min_players,
+      notes: r.notes || '', status: r.status,
+      price: parseFloat(r.price_per_person),
+      registrations: Array.from({ length: r.registered_count || 0 }, (_, i) => ({ name: `Player ${i+1}` })),
+      registeredCount: r.registered_count || 0,
+      spotsLeft: r.spots_left || r.max_players,
+      createdAt: r.created_at,
+    }));
+  } catch (e) {
+    console.warn('[OpenPlay] Supabase error:', e.message);
+    return null;
+  }
+}
 
 /* ── SEED DEMO SESSIONS ── */
 function seedSessions() {
@@ -822,10 +846,25 @@ function showToast(msg, isError) {
 }
 
 /* ── INIT ── */
-seedSessions();
-purgeOld();
-updateStatuses();
-render();
+(async () => {
+  const dbSessions = await loadSessionsFromDB();
+  if (dbSessions && dbSessions.length > 0) {
+    saveSessions(dbSessions);           // sync DB data into localStorage cache
+  } else {
+    seedSessions();                     // fallback: seed demo data
+  }
+  purgeOld();
+  updateStatuses();
+  render();
+
+  // Real-time: refresh when sessions/registrations change
+  if (window.ApexCourts) {
+    ApexCourts.subscribeOpenPlay(async () => {
+      const fresh = await loadSessionsFromDB();
+      if (fresh) { saveSessions(fresh); render(); }
+    });
+  }
+})();
 </script>
 </body>
 </html>

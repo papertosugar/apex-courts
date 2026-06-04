@@ -147,6 +147,8 @@
       .auth-header, .auth-body, .auth-footer { padding-left: 24px; padding-right: 24px; }
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 </head>
 <body>
 
@@ -302,53 +304,70 @@ const STAFF_ACCOUNTS = [
   { username: 'staff1', password: 'staff123', name: 'Staff Member', role: 'POS Staff' },
 ];
 
-function doLogin() {
+async function doLogin() {
   const contact  = document.getElementById('contactInput').value.trim();
   const password = document.getElementById('passwordInput').value;
 
   document.getElementById('errorMsg').classList.remove('show');
-
-  if (!contact || !password) {
-    showError('Please enter your email/phone and password.');
-    return;
-  }
+  if (!contact || !password) { showError('Please enter your email/phone and password.'); return; }
 
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = 'Signing in…';
 
-  setTimeout(() => {
+  try {
+    // ① Try Supabase Auth first (members + staff accounts in Supabase)
+    if (window.ApexCourts) {
+      const { session } = await ApexCourts.signIn(contact, password);
+      if (session) {
+        const user = await ApexCourts.getCurrentUser();
+        const role     = user?.profile?.role || 'member';
+        const fullName = `${user?.profile?.first_name || ''} ${user?.profile?.last_name || ''}`.trim() || contact;
+        const roleLabel = role === 'admin' ? 'Admin' : role === 'pos_staff' ? 'POS Staff' : 'member';
+        sessionStorage.setItem('apexUser', fullName);
+        sessionStorage.setItem('apexRole', roleLabel);
+        sessionStorage.setItem('apexUserId', user.id);
+        successRole = roleLabel;
+        showSuccessPopup(fullName, roleLabel);
+        return;
+      }
+    }
+  } catch (err) {
+    // Supabase auth failed — fall through to legacy check
+  }
+
+  // ② Legacy: hardcoded staff credentials (local dev fallback)
+  const staffMatch = STAFF_ACCOUNTS.find(a =>
+    a.username.toLowerCase() === contact.toLowerCase() && a.password === password
+  );
+  if (staffMatch) {
+    sessionStorage.setItem('apexUser', staffMatch.name);
+    sessionStorage.setItem('apexRole', staffMatch.role);
+    successRole = staffMatch.role;
     btn.disabled = false;
     btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    showSuccessPopup(staffMatch.name, staffMatch.role);
+    return;
+  }
 
-    // Check staff accounts first
-    const staffMatch = STAFF_ACCOUNTS.find(a =>
-      a.username.toLowerCase() === contact.toLowerCase() && a.password === password
-    );
-    if (staffMatch) {
-      sessionStorage.setItem('apexUser', staffMatch.name);
-      sessionStorage.setItem('apexRole', staffMatch.role);
-      successRole = staffMatch.role;
-      showSuccessPopup(staffMatch.name, staffMatch.role);
-      return;
-    }
+  // ③ Legacy: localStorage member accounts (local dev fallback)
+  const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
+  const member = accounts.find(a =>
+    a.contact?.toLowerCase() === contact.toLowerCase() && a.password === password
+  );
+  if (member) {
+    const fullName = (member.firstName || '') + ' ' + (member.lastName || '');
+    sessionStorage.setItem('apexUser', fullName.trim() || contact);
+    sessionStorage.removeItem('apexRole');
+    successRole = null;
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    showSuccessPopup(fullName.trim(), 'member');
+    return;
+  }
 
-    // Check member accounts in localStorage
-    const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
-    const member = accounts.find(a =>
-      a.contact.toLowerCase() === contact.toLowerCase() && a.password === password
-    );
-    if (member) {
-      const fullName = member.firstName + ' ' + member.lastName;
-      sessionStorage.setItem('apexUser', fullName);
-      sessionStorage.removeItem('apexRole');
-      successRole = null;
-      showSuccessPopup(fullName, 'member');
-      return;
-    }
-
-    // Login failed
-    showFailPopup();
-  }, 600);
+  btn.disabled = false;
+  btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+  showFailPopup();
 }
 
 function showSuccessPopup(name, role) {

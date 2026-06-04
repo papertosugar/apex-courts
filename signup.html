@@ -188,6 +188,8 @@
       .otp-box { width: 40px; height: 50px; font-size: 18px; }
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 </head>
 <body>
 
@@ -483,32 +485,48 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ── VERIFY OTP ── */
-function verifyOtp() {
+async function verifyOtp() {
   const entered = Array.from(document.querySelectorAll('.otp-box')).map(b => b.value).join('');
-  const stored = sessionStorage.getItem('apexPendingOtp');
+  const stored  = sessionStorage.getItem('apexPendingOtp');
 
   if (entered.length < 6) { showError('Please enter all 6 digits.'); return; }
-  if (entered !== stored) { showError('Incorrect code. Please try again.'); return; }
+  if (entered !== stored)  { showError('Incorrect code. Please try again.'); return; }
 
-  // Save account (demo: localStorage, no passwords stored in plain text — just contact + name)
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName  = document.getElementById('lastName').value.trim();
+  const contact   = pendingContact || sessionStorage.getItem('apexPendingContact');
+  const password  = document.getElementById('password').value;
+
+  // ── Try Supabase signup ─────────────────────────────────────
+  if (window.ApexCourts) {
+    try {
+      // Use email if contact looks like an email, else use phone
+      const isEmail = contact.includes('@');
+      await ApexCourts.signUp({
+        email:     isEmail ? contact : `${contact.replace(/\D/g,'')}@apex-courts.local`,
+        phone:     isEmail ? undefined : contact,
+        password,
+        firstName,
+        lastName,
+      });
+      // Sign in immediately after signup
+      await ApexCourts.signIn(
+        isEmail ? contact : `${contact.replace(/\D/g,'')}@apex-courts.local`,
+        password
+      );
+    } catch (e) {
+      console.warn('[Signup] Supabase error, saving locally:', e.message);
+    }
+  }
+
+  // ── Always save to localStorage as fallback ──────────────────
   const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
-  const newAccount = {
-    contact: pendingContact || sessionStorage.getItem('apexPendingContact'),
-    firstName: document.getElementById('firstName').value.trim(),
-    lastName: document.getElementById('lastName').value.trim(),
-    password: document.getElementById('password').value, // stored for demo login
-    method: contactMethod,
-    role: 'member',
-    createdAt: new Date().toISOString(),
-  };
-  accounts.push(newAccount);
+  accounts.push({ contact, firstName, lastName, password, method: contactMethod, role: 'member', createdAt: new Date().toISOString() });
   localStorage.setItem('apexAccounts', JSON.stringify(accounts));
 
-  // Set session
-  sessionStorage.setItem('apexUser', newAccount.firstName + ' ' + newAccount.lastName);
+  sessionStorage.setItem('apexUser', `${firstName} ${lastName}`);
   sessionStorage.removeItem('apexPendingOtp');
   sessionStorage.removeItem('apexPendingContact');
-
   setStep(3);
 }
 
