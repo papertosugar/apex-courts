@@ -6,8 +6,8 @@
    1. Copy your Project URL + anon key from
       Supabase Dashboard → Settings → API
    2. Set them in your Vercel environment variables:
-        SUPABASE_URL      = https://xxxx.supabase.co
-        SUPABASE_ANON_KEY = eyJhb...
+        SUPABASE_URL      = https://qughntfplchllsiaiteu.supabase.co/rest/v1/
+        SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1Z2hudGZwbGNobGxzaWFpdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODI4NzgsImV4cCI6MjA5NjE1ODg3OH0.MFspR7dJ0cMN1ayq6fZxruk9Nv2yKJQzxvzJy96FBBI
    3. This file reads them from window.__ENV__ (injected by
       Vercel Edge Config, or set manually below for local dev).
    ============================================================ */
