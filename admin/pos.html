@@ -665,7 +665,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       Admin Dashboard
     </a>
-    <button class="pos-logout" onclick="sessionStorage.clear();window.location.href='../index.html'">Logout</button>
+    <button class="pos-logout" onclick="localStorage.removeItem('apexUser');localStorage.removeItem('apexRole');localStorage.removeItem('apexUserId');window.location.href='../index.html'">Logout</button>
   </div>
 </div>
 
@@ -1294,12 +1294,12 @@
 <script>
 // ── Auth guard — Admin/Staff only ──
 (function() {
-  const role = sessionStorage.getItem('apexRole');
+  const role = localStorage.getItem('apexRole');
   if (!role || !['Admin','Staff','admin','pos_staff','POS Staff'].includes(role)) {
     window.location.href = '../index.html';
     return;
   }
-  const u = sessionStorage.getItem('apexUser') || 'Staff';
+  const u = localStorage.getItem('apexUser') || 'Staff';
   const el = document.getElementById('posUserLabel');
   if (el) el.textContent = u.split(' ')[0];
 })();

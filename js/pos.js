@@ -18,9 +18,9 @@ const STUDIO_CONFIG = {
 
 // ─── AUTH GUARD ───
 (function() {
-  const role = sessionStorage.getItem('apexRole');
+  const role = localStorage.getItem('apexRole');
   if (!role) { window.location.href = '../index.html'; return; }
-  const user = sessionStorage.getItem('apexUser') || 'Staff';
+  const user = localStorage.getItem('apexUser') || 'Staff';
   const el = document.getElementById('posUserLabel');
   if (el) el.textContent = user.split(' ')[0] + ' (' + role + ')';
 
@@ -52,7 +52,7 @@ function getActivityLog() { return JSON.parse(localStorage.getItem('apexActivity
 function logActivity(action, bookingId, details) {
   const log = getActivityLog();
   log.unshift({ id: 'LOG-' + Date.now(), action, bookingId,
-    staffName: sessionStorage.getItem('apexUser') || 'Staff',
+    staffName: localStorage.getItem('apexUser') || 'Staff',
     details, timestamp: new Date().toISOString() });
   localStorage.setItem('apexActivityLog', JSON.stringify(log.slice(0, 200)));
 }
@@ -1093,7 +1093,7 @@ function updateLiveSummary() {
   if (avlEl) avlEl.textContent = avl;
 
   // Today's revenue — Admin only
-  const role = sessionStorage.getItem('apexRole');
+  const role = localStorage.getItem('apexRole');
   const isAdmin = role === 'Admin' || role === 'admin';
   const revPanel = document.getElementById('revenuePanel');
   if (revPanel) revPanel.style.display = isAdmin ? 'block' : 'none';
@@ -1173,7 +1173,7 @@ function voidTransaction() {
   _currentReceiptData = null;
   closeReceipt();
   showToast(`⚠️ Transaction ${d.id} voided`, 'error');
-  logActivity('void', d.id, `Transaction voided by ${sessionStorage.getItem('apexUser') || 'Staff'}`);
+  logActivity('void', d.id, `Transaction voided by ${localStorage.getItem('apexUser') || 'Staff'}`);
 }
 
 // ═══════════════════════════════════════
@@ -1234,10 +1234,10 @@ function openShiftClose() {
   if (!modal) return;
   const today   = new Date().toISOString().split('T')[0];
   const dateEl  = document.getElementById('shiftCloseDate');
-  const isAdmin = ['Admin','admin'].includes(sessionStorage.getItem('apexRole'));
+  const isAdmin = ['Admin','admin'].includes(localStorage.getItem('apexRole'));
   if (dateEl) dateEl.textContent =
     new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) +
-    ' · ' + (sessionStorage.getItem('apexUser') || 'Staff');
+    ' · ' + (localStorage.getItem('apexUser') || 'Staff');
 
   const bookings = getBookings().filter(b =>
     b.date === today && b.status !== 'cancelled' && b.status !== 'voided'
@@ -1377,7 +1377,7 @@ function saveInventoryCheck() {
   const record = {
     date:      new Date().toISOString().split('T')[0],
     time:      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
-    staff:     sessionStorage.getItem('apexUser') || 'Staff',
+    staff:     localStorage.getItem('apexUser') || 'Staff',
     equipment: equip,
     beverages: stock,
   };
@@ -1403,7 +1403,7 @@ function printShiftSummary() {
   });
   const grand = Object.values(byPM).reduce((s,v)=>s+v,0);
   const dateStr = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  const staff   = sessionStorage.getItem('apexUser') || 'Staff';
+  const staff   = localStorage.getItem('apexUser') || 'Staff';
 
   const p = new ESCPOSBuilder();
   p.init();
@@ -1657,7 +1657,7 @@ function makeReceiptData(type, params) {
     id:       params.id || ('APX-' + Math.floor(Math.random()*9000+1000)),
     date:     now.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }),
     time:     now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }),
-    cashier:  sessionStorage.getItem('apexUser') || 'Staff',
+    cashier:  localStorage.getItem('apexUser') || 'Staff',
     paymentMethod: params.paymentMethod || 'cash',
     ...params,
   };
@@ -1801,7 +1801,7 @@ function openReceiptHistory() {
   const hist  = JSON.parse(localStorage.getItem('apexReceiptHistory') || '[]')
     .filter(h => h.data?.date === today || h.date === today);
 
-  const isAdmin = ['Admin','admin'].includes(sessionStorage.getItem('apexRole'));
+  const isAdmin = ['Admin','admin'].includes(localStorage.getItem('apexRole'));
 
   if (!hist.length) {
     list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-dim)">No receipts today</div>';
@@ -2051,7 +2051,7 @@ function toggleLiveSummary() {
   if (occEl) occEl.textContent = occ;
   if (avlEl) avlEl.textContent = avl;
 
-  const role    = sessionStorage.getItem('apexRole');
+  const role    = localStorage.getItem('apexRole');
   const isAdmin = role === 'Admin' || role === 'admin';
   const revMob  = document.getElementById('revenuePanel-mob');
   if (revMob) revMob.style.display = isAdmin ? 'block' : 'none';

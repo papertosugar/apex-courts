@@ -251,24 +251,9 @@
       </a>
     </div>
 
-    <!-- Mobile-only stat strip (scrollable) -->
-    <div class="hero-stat-row-mobile" role="list" aria-label="Venue statistics">
-      <div class="hero-stat" role="listitem">
-        <div class="hero-stat-num">9</div>
-        <div class="hero-stat-label">Indoor Courts</div>
-      </div>
-      <div class="hero-stat" role="listitem">
-        <div class="hero-stat-num">98%</div>
-        <div class="hero-stat-label">Satisfaction</div>
-      </div>
-      <div class="hero-stat" role="listitem">
-        <div class="hero-stat-num" aria-label="3 thousand plus">3K+</div>
-        <div class="hero-stat-label">Members</div>
-      </div>
-    </div>
   </div>
 
-  <!-- Right column — court schematic + stats (desktop only) -->
+  <!-- Right column — court schematic + stats -->
   <div class="hero-right" aria-hidden="true">
     <div class="court-schematic" style="padding:0;overflow:hidden;background:transparent">
       <canvas id="courtCanvas" style="width:100%;height:auto;display:block" aria-label="Live isometric court occupancy — 4 pickleball courts left, 4 badminton courts right"></canvas>
@@ -749,11 +734,10 @@
      Order = playback order.
   ────────────────────────────────────────────── */
   const VIDEOS = [
-    'images/배경.mp4',
-    'images/배경 2.mp4',
-    'images/112.mp4',
+    'images/videos/배경 2.mp4',
+    'images/videos/112.mp4',
     // 추가하려면 여기에 경로 넣으면 됩니다:
-    // 'images/videos/clip4.mp4',
+    // 'images/videos/clip3.mp4',
   ];
   /* ─────────────────────────────────────────────── */
 
@@ -990,16 +974,18 @@
   const OY  = MY;
   function ts(wx, wy) { return { x: OX + (wx - wy) * TW, y: OY + (wx + wy) * TH }; }
 
+  // active:true = court in use (ball animation). Connect to Supabase bookings for live data.
+  // Currently all false = no live bookings. Set active:true per court when booking exists.
   const COURTS = [
-    { id:'P1', wx:0,   wy:0,   ww:1.9, wh:3.1, type:'pb', active:true  },
-    { id:'P2', wx:2.2, wy:0,   ww:1.9, wh:3.1, type:'pb', active:true  },
+    { id:'P1', wx:0,   wy:0,   ww:1.9, wh:3.1, type:'pb', active:false },
+    { id:'P2', wx:2.2, wy:0,   ww:1.9, wh:3.1, type:'pb', active:false },
     { id:'P3', wx:0,   wy:3.5, ww:1.9, wh:3.1, type:'pb', active:false },
-    { id:'P4', wx:2.2, wy:3.5, ww:1.9, wh:3.1, type:'pb', active:true  },
-    { id:'DZ', wx:4.3, wy:1.4, ww:1.9, wh:2.8, type:'dz', active:true  },
-    { id:'B1', wx:6.4, wy:0,   ww:1.9, wh:3.1, type:'bd', active:true  },
+    { id:'P4', wx:2.2, wy:3.5, ww:1.9, wh:3.1, type:'pb', active:false },
+    { id:'DZ', wx:4.3, wy:1.4, ww:1.9, wh:2.8, type:'dz', active:false },
+    { id:'B1', wx:6.4, wy:0,   ww:1.9, wh:3.1, type:'bd', active:false },
     { id:'B2', wx:8.4, wy:0,   ww:1.9, wh:3.1, type:'bd', active:false },
-    { id:'B3', wx:6.4, wy:3.5, ww:1.9, wh:3.1, type:'bd', active:true  },
-    { id:'B4', wx:8.4, wy:3.5, ww:1.9, wh:3.1, type:'bd', active:true  },
+    { id:'B3', wx:6.4, wy:3.5, ww:1.9, wh:3.1, type:'bd', active:false },
+    { id:'B4', wx:8.4, wy:3.5, ww:1.9, wh:3.1, type:'bd', active:false },
   ];
 
   /* Drill Zone: machine at bottom-center fires toward 7 target positions */

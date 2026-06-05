@@ -524,7 +524,7 @@ async function verifyOtp() {
   accounts.push({ contact, firstName, lastName, password, method: contactMethod, role: 'member', createdAt: new Date().toISOString() });
   localStorage.setItem('apexAccounts', JSON.stringify(accounts));
 
-  sessionStorage.setItem('apexUser', `${firstName} ${lastName}`);
+  localStorage.setItem('apexUser', `${firstName} ${lastName}`);
   sessionStorage.removeItem('apexPendingOtp');
   sessionStorage.removeItem('apexPendingContact');
   setStep(3);

@@ -275,7 +275,7 @@ let successRole = null;
   if (p.get('redirect')) redirectTo = p.get('redirect');
 
   // If already logged in, redirect immediately
-  if (sessionStorage.getItem('apexUser')) {
+  if (localStorage.getItem('apexUser')) {
     window.location.href = redirectTo;
   }
 })();
@@ -323,9 +323,9 @@ async function doLogin() {
         const role     = user?.profile?.role || 'member';
         const fullName = `${user?.profile?.first_name || ''} ${user?.profile?.last_name || ''}`.trim() || contact;
         const roleLabel = role === 'admin' ? 'Admin' : role === 'pos_staff' ? 'POS Staff' : 'member';
-        sessionStorage.setItem('apexUser', fullName);
-        sessionStorage.setItem('apexRole', roleLabel);
-        sessionStorage.setItem('apexUserId', user.id);
+        localStorage.setItem('apexUser', fullName);
+        localStorage.setItem('apexRole', roleLabel);
+        localStorage.setItem('apexUserId', user.id);
         successRole = roleLabel;
         showSuccessPopup(fullName, roleLabel);
         return;
@@ -340,8 +340,8 @@ async function doLogin() {
     a.username.toLowerCase() === contact.toLowerCase() && a.password === password
   );
   if (staffMatch) {
-    sessionStorage.setItem('apexUser', staffMatch.name);
-    sessionStorage.setItem('apexRole', staffMatch.role);
+    localStorage.setItem('apexUser', staffMatch.name);
+    localStorage.setItem('apexRole', staffMatch.role);
     successRole = staffMatch.role;
     btn.disabled = false;
     btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
@@ -356,8 +356,8 @@ async function doLogin() {
   );
   if (member) {
     const fullName = (member.firstName || '') + ' ' + (member.lastName || '');
-    sessionStorage.setItem('apexUser', fullName.trim() || contact);
-    sessionStorage.removeItem('apexRole');
+    localStorage.setItem('apexUser', fullName.trim() || contact);
+    localStorage.removeItem('apexRole');
     successRole = null;
     btn.disabled = false;
     btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
@@ -381,7 +381,7 @@ function showSuccessPopup(name, role) {
 }
 
 function goToDestination() {
-  const role = sessionStorage.getItem('apexRole');
+  const role = localStorage.getItem('apexRole');
   if (role === 'Admin') {
     window.location.href = 'admin/dashboard.html';
   } else if (role === 'POS Staff') {

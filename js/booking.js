@@ -2,7 +2,7 @@
 
 // ─── AUTH GUARD ───
 (function() {
-  const user = sessionStorage.getItem('apexUser');
+  const user = localStorage.getItem('apexUser');
   if (!user) {
     window.location.href = 'login.html?redirect=book.html';
   }
@@ -655,7 +655,7 @@ async function finalizePayment() {
 
   // ── localStorage fallback ────────────────────────────────────
   const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
-  const user = sessionStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
+  const user = localStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
   bookings.push({
     id: code, userName: user, sport: state.sport,
     slots: state.selectedSlots.map(s => ({

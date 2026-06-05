@@ -725,8 +725,8 @@
 <script>
 // Show logged-in user in nav
 (function() {
-  const user = sessionStorage.getItem('apexUser');
-  const role = sessionStorage.getItem('apexRole');
+  const user = localStorage.getItem('apexUser');
+  const role = localStorage.getItem('apexRole');
   const userEl = document.getElementById('bookNavUser');
   const roleEl = document.getElementById('bookNavRole');
   if (userEl && user) userEl.textContent = 'Hi, ' + user.split(' ')[0];

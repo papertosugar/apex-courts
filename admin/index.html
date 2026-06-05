@@ -125,12 +125,12 @@ function login() {
   const pin = document.getElementById('pin').value;
   const err = document.getElementById('errorMsg');
   if (pin === '1234') {
-    sessionStorage.setItem('apexRole', 'admin');
-    sessionStorage.setItem('apexUser', document.getElementById('username').value || 'Admin');
+    localStorage.setItem('apexRole', 'admin');
+    localStorage.setItem('apexUser', document.getElementById('username').value || 'Admin');
     window.location.href = 'dashboard.html';
   } else if (pin === '5678') {
-    sessionStorage.setItem('apexRole', 'pos');
-    sessionStorage.setItem('apexUser', document.getElementById('username').value || 'POS Staff');
+    localStorage.setItem('apexRole', 'pos');
+    localStorage.setItem('apexUser', document.getElementById('username').value || 'POS Staff');
     window.location.href = 'pos.html';
   } else {
     err.style.display = 'block';

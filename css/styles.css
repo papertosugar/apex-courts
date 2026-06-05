@@ -244,8 +244,7 @@ h1, h2, h3,
   animation: slide-up var(--dur-slow) 80ms var(--ease-out) both;
 }
 .hero-title .outline-text {
-  -webkit-text-stroke: 1px var(--cream);
-  color: transparent;
+  color: rgba(238,240,245,0.35);
 }
 .hero-title .gold-text { color: var(--gold); }
 
@@ -855,18 +854,19 @@ footer {
     gap: var(--s4); min-height: auto;
   }
   #hero::before { display: none; }
-  .hero-right { display: none; }
+  /* Mobile: hide canvas, but show stat row from hero-right */
+  .hero-right { display: block; order: 1; }
+  .court-schematic { display: none; }
   .hero-title { font-size: clamp(56px, 14vw, 88px); }
   .hero-body  { font-size: var(--text-base); max-width: 100%; }
-  .hero-stat-row { display: none; }
-  .hero-stat-row-mobile {
+  .hero-stat-row {
     display: flex; gap: var(--s2); overflow-x: auto;
-    padding-bottom: 6px; margin-top: var(--s4);
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    padding-bottom: 6px; margin-top: var(--s3);
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    justify-content: flex-start;
   }
-  .hero-stat-row-mobile::-webkit-scrollbar { display: none; }
-  .hero-stat-row-mobile .hero-stat { flex-shrink: 0; min-width: 120px; }
+  .hero-stat-row::-webkit-scrollbar { display: none; }
+  .hero-stat-row .hero-stat { flex-shrink: 0; min-width: 100px; }
 
   /* ── SECTIONS ── */
   .section { padding: var(--s5) 5%; }

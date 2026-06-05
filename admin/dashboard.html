@@ -114,7 +114,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       Switch to POS
     </a>
-    <button style="padding:6px 14px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#f87171;font-size:12px;font-weight:600;cursor:pointer" onclick="sessionStorage.clear();window.location.href='../index.html'">Logout</button>
+    <button style="padding:6px 14px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#f87171;font-size:12px;font-weight:600;cursor:pointer" onclick="localStorage.removeItem('apexUser');localStorage.removeItem('apexRole');localStorage.removeItem('apexUserId');window.location.href='../index.html'">Logout</button>
   </div>
 </div>
 <div class="layout">
@@ -410,11 +410,11 @@
 
 // ── Auth guard ──
 (function() {
-  const role = sessionStorage.getItem('apexRole');
+  const role = localStorage.getItem('apexRole');
   if (!role || !['Admin','Staff','admin','pos_staff'].includes(role)) {
     window.location.href = '../index.html'; return;
   }
-  const u = sessionStorage.getItem('apexUser') || 'Admin';
+  const u = localStorage.getItem('apexUser') || 'Admin';
   document.getElementById('dashUser').textContent = u;
   const h = new Date().getHours();
   const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';

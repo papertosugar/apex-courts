@@ -495,8 +495,8 @@
 <script src="js/main.js"></script>
 <script>
 /* ── AUTH & ROLE ── */
-const currentUser = sessionStorage.getItem('apexUser');
-const currentRole = sessionStorage.getItem('apexRole');
+const currentUser = localStorage.getItem('apexUser');
+const currentRole = localStorage.getItem('apexRole');
 
 if (currentRole === 'Admin') {
   document.getElementById('adminCreateBtn').style.display = 'inline-flex';
