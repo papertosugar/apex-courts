@@ -724,13 +724,35 @@
      Paths are relative to index.html.
      Order = playback order.
   ────────────────────────────────────────────── */
-  const VIDEOS = [
+  // Local videos (fallback if Supabase bucket has none)
+  const LOCAL_VIDEOS = [
     'images/videos/배경 2.mp4',
     'images/videos/112.mp4',
-    // 추가하려면 여기에 경로 넣으면 됩니다:
-    // 'images/videos/clip3.mp4',
   ];
+  let VIDEOS = [...LOCAL_VIDEOS];   // will be replaced by Supabase list if available
   /* ─────────────────────────────────────────────── */
+
+  const SUPABASE_URL_BASE = 'https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/public/slides';
+
+  // Fetch all files from "slides" bucket → split into videos / images
+  async function loadMediaFromSupabase() {
+    if (!window.ApexCourts?.supabase) return { videos: [], images: [] };
+    try {
+      const { data, error } = await ApexCourts.supabase.storage
+        .from('slides').list('', { limit: 50, sortBy: { column: 'name', order: 'asc' } });
+      if (error || !data?.length) return { videos: [], images: [] };
+      const videos = data
+        .filter(f => /\.(mp4|mov|webm)$/i.test(f.name))
+        .map(f => `${SUPABASE_URL_BASE}/${encodeURIComponent(f.name)}`);
+      const images = data
+        .filter(f => /\.(jpe?g|png|webp|avif|gif)$/i.test(f.name))
+        .map(f => `${SUPABASE_URL_BASE}/${encodeURIComponent(f.name)}`);
+      return { videos, images };
+    } catch (e) {
+      console.warn('[Media] Supabase load failed:', e.message);
+      return { videos: [], images: [] };
+    }
+  }
 
   const dotsEl      = document.querySelector('.slide-dots');
   const progressBar = document.getElementById('slideProgress');
@@ -920,10 +942,20 @@
   /* ══════════════════════════════════════════════════════
      DEFERRED START — wait for window.load, then idle
   ══════════════════════════════════════════════════════ */
-  function launchWhenIdle() {
+  async function launchWhenIdle() {
+    // Load from Supabase "slides" bucket first
+    const { videos: sbVideos, images: sbImages } = await loadMediaFromSupabase();
+
+    // Supabase videos override local ones; fallback to local if none
+    if (sbVideos.length > 0) VIDEOS = sbVideos;
+
     if (VIDEOS.length > 0) {
       startVideoMode();
+      // Slideshow will also start in background for when video ends (optional)
+      if (sbImages.length > 0) window._slideshowImages = sbImages;
     } else {
+      // No videos — show image slideshow
+      window._slideshowImages = sbImages;
       startSlideshow();
     }
   }
@@ -974,8 +1006,10 @@
     const INTERVAL  = 5000;
     let current = 0;
 
-    // ── Load slide URLs from Supabase ──────────────────────
-    let urls = await fetchSlideUrls();
+    // Use pre-fetched images (from launchWhenIdle) or fetch now
+    let urls = window._slideshowImages?.length
+      ? window._slideshowImages
+      : await fetchSlideUrls();
 
     // ── Fallback: dark gradient placeholder ───────────────
     if (!urls.length) {
