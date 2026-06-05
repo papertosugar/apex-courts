@@ -185,7 +185,7 @@
        Videos crossfade automatically. No HTML changes needed.
   -->
   <div class="hero-video-wrap" id="heroVideoWrap" aria-hidden="true">
-    <video id="heroVideoA" muted playsinline preload="auto" aria-hidden="true"></video>
+    <video id="heroVideoA" muted playsinline preload="none" aria-hidden="true"></video>
     <video id="heroVideoB" muted playsinline preload="none" aria-hidden="true"></video>
   </div>
 
@@ -750,55 +750,42 @@
   const vidB        = document.getElementById('heroVideoB');
   const hero        = document.getElementById('hero');
 
-  let vidCurrent = 0;          // index into VIDEOS
-  let activeEl   = vidA;       // currently playing element
-  let standbyEl  = vidB;       // preloading next
-  let videoMode  = false;
+  let vidCurrent     = 0;
+  let activeEl       = vidA;
+  let standbyEl      = vidB;
+  let videoMode      = false;
   let slideshowTimer = null;
-  let slideshowActive = true;
+  let nextPreloaded  = false;   // guard — only preload next once per clip
 
-  /* ══════════════════════════
-     VIDEO ENGINE
-  ══════════════════════════ */
-  function vidNext(idx) {
-    vidCurrent = ((idx === undefined ? vidCurrent + 1 : idx) + VIDEOS.length) % VIDEOS.length;
-    const nextSrc = VIDEOS[vidCurrent];
+  /* ══════════════════════════════════════════════════════
+     OPTIMIZED VIDEO ENGINE
+     - Deferred start (window.load + requestIdleCallback)
+     - preload="none" → switched to auto only when needed
+     - Next clip pre-fetched only at 70 % of current clip
+     - Page Visibility API: pause when tab hidden
+     - Intersection Observer: pause when hero off-screen
+  ══════════════════════════════════════════════════════ */
 
-    // Swap roles
-    const incoming = standbyEl;
-    const outgoing = activeEl;
-    activeEl  = incoming;
-    standbyEl = outgoing;
+  // ── Page Visibility: pause/resume on tab switch ──────
+  document.addEventListener('visibilitychange', () => {
+    if (!videoMode) return;
+    if (document.hidden) {
+      activeEl.pause();
+    } else {
+      activeEl.play().catch(() => {});
+    }
+  });
 
-    // Load & play incoming
-    incoming.src = nextSrc;
-    incoming.load();
-    incoming.addEventListener('canplay', function onReady() {
-      incoming.removeEventListener('canplay', onReady);
-      incoming.play().catch(() => {});
-      incoming.classList.add('vid-active');
-      // Fade out outgoing after a brief overlap
-      setTimeout(() => {
-        outgoing.classList.remove('vid-active');
-        outgoing.pause();
-        // Preload the one after next
-        const afterNext = (vidCurrent + 1) % VIDEOS.length;
-        if (afterNext !== vidCurrent) {
-          outgoing.src = VIDEOS[afterNext];
-          outgoing.preload = 'auto';
-          outgoing.load();
-        }
-      }, 800);
-      // Update dots
-      updateVideoDots();
-      // Restart progress bar
-      startVideoProgress(incoming);
-    }, { once: true });
-
-    incoming.addEventListener('error', function () {
-      // This clip failed — skip to next
-      vidNext(vidCurrent + 1);
-    }, { once: true });
+  // ── Intersection Observer: pause when hero scrolls off ──
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      if (!videoMode) return;
+      if (entries[0].isIntersecting) {
+        activeEl.play().catch(() => {});
+      } else {
+        activeEl.pause();
+      }
+    }, { threshold: 0.1 }).observe(hero);
   }
 
   function updateVideoDots() {
@@ -808,18 +795,21 @@
     });
   }
 
-  function startVideoProgress(vid) {
-    if (!progressBar) return;
-    progressBar.style.transition = 'none';
-    progressBar.style.width = '0%';
+  // ── Pre-fetch next clip into standby at 70 % ─────────
+  function scheduleNextPreload(vid) {
+    nextPreloaded = false;
     function onTimeUpdate() {
-      if (!vid.duration || vid !== activeEl) {
-        vid.removeEventListener('timeupdate', onTimeUpdate);
-        return;
+      if (vid !== activeEl) { vid.removeEventListener('timeupdate', onTimeUpdate); return; }
+      if (!vid.duration) return;
+      if (!nextPreloaded && vid.currentTime / vid.duration > 0.70) {
+        nextPreloaded = true;
+        const nextIdx = (vidCurrent + 1) % VIDEOS.length;
+        if (VIDEOS.length > 1) {
+          standbyEl.src     = VIDEOS[nextIdx];
+          standbyEl.preload = 'auto';
+          standbyEl.load();
+        }
       }
-      const pct = (vid.currentTime / vid.duration) * 100;
-      progressBar.style.transition = 'none';
-      progressBar.style.width = pct + '%';
     }
     vid.addEventListener('timeupdate', onTimeUpdate);
     vid.addEventListener('ended', function onEnded() {
@@ -829,7 +819,24 @@
     }, { once: true });
   }
 
+  // ── Progress bar ──────────────────────────────────────
+  function startVideoProgress(vid) {
+    if (!progressBar) return;
+    progressBar.style.width = '0%';
+    // Use requestAnimationFrame throttle instead of every timeupdate
+    let rafId = null;
+    function tick() {
+      if (vid !== activeEl) { rafId = null; return; }
+      if (vid.duration) {
+        progressBar.style.width = (vid.currentTime / vid.duration * 100) + '%';
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
   function buildVideoDots() {
+    if (!dotsEl) return;
     dotsEl.innerHTML = '';
     VIDEOS.forEach((_, i) => {
       const dot = document.createElement('button');
@@ -841,16 +848,55 @@
     dotsEl.style.display = VIDEOS.length > 1 ? 'flex' : 'none';
   }
 
+  function vidNext(idx) {
+    vidCurrent = ((idx === undefined ? vidCurrent + 1 : idx) + VIDEOS.length) % VIDEOS.length;
+
+    const incoming = standbyEl;
+    const outgoing = activeEl;
+    activeEl  = incoming;
+    standbyEl = outgoing;
+
+    // If standby already loaded this clip, just play; else load now
+    function playIncoming() {
+      incoming.play().catch(() => {});
+      incoming.classList.add('vid-active');
+      setTimeout(() => {
+        outgoing.classList.remove('vid-active');
+        outgoing.pause();
+        outgoing.removeAttribute('src');   // free memory
+        outgoing.load();
+      }, 900);
+      updateVideoDots();
+      startVideoProgress(incoming);
+      scheduleNextPreload(incoming);
+    }
+
+    if (incoming.readyState >= 3) {          // HAVE_FUTURE_DATA — already buffered
+      playIncoming();
+    } else {
+      if (!incoming.src || incoming.src === location.href) {
+        incoming.src     = VIDEOS[vidCurrent];
+        incoming.preload = 'auto';
+        incoming.load();
+      }
+      incoming.addEventListener('canplay', function onReady() {
+        incoming.removeEventListener('canplay', onReady);
+        playIncoming();
+      }, { once: true });
+      incoming.addEventListener('error', function () {
+        vidNext(vidCurrent + 1);   // skip broken clip
+      }, { once: true });
+    }
+  }
+
   function startVideoMode() {
-    videoMode      = true;
-    slideshowActive = false;
-    if (slideshowTimer) clearInterval(slideshowTimer);
+    videoMode = true;
     document.getElementById('heroSlideshow').style.opacity = '0';
     if (progressBar) progressBar.style.display = 'block';
     muteBtn.style.display = 'flex';
     buildVideoDots();
-    // Load first video into A
-    vidA.src = VIDEOS[0];
+
+    vidA.src     = VIDEOS[0];
     vidA.preload = 'auto';
     vidA.load();
     vidA.addEventListener('canplay', function onFirst() {
@@ -858,42 +904,51 @@
       vidA.classList.add('vid-active');
       vidA.play().catch(() => {});
       startVideoProgress(vidA);
-      // Preload second into B
-      if (VIDEOS.length > 1) {
-        vidB.src = VIDEOS[1];
-        vidB.preload = 'auto';
-        vidB.load();
-      }
+      scheduleNextPreload(vidA);
       updateVideoDots();
     }, { once: true });
     vidA.addEventListener('error', function () {
-      // First video failed — try next
       if (VIDEOS.length > 1) { vidCurrent = 0; vidNext(1); }
     }, { once: true });
   }
 
-  /* Mute toggle — affects whichever element is active */
+  /* Mute toggle */
   muteBtn.addEventListener('click', () => {
     const muted = !activeEl.muted;
-    vidA.muted = muted;
-    vidB.muted = muted;
+    vidA.muted = vidB.muted = muted;
     iconMuted.style.display   = muted ? '' : 'none';
     iconUnmuted.style.display = muted ? 'none' : '';
   });
 
-  // ── Keyboard prev/next ──
   hero.addEventListener('keydown', e => {
     if (!videoMode) return;
     if (e.key === 'ArrowRight') vidNext();
     if (e.key === 'ArrowLeft')  vidNext(vidCurrent - 1);
   });
 
-  /* ══════════════════════════
-     START: VIDEO or SLIDESHOW
-  ══════════════════════════ */
-  if (VIDEOS.length > 0) {
-    startVideoMode();
-  } else {
+  /* ══════════════════════════════════════════════════════
+     DEFERRED START — wait for window.load, then idle
+  ══════════════════════════════════════════════════════ */
+  function launchWhenIdle() {
+    if (VIDEOS.length > 0) {
+      startVideoMode();
+    } else {
+      startSlideshow();
+    }
+  }
+
+  window.addEventListener('load', () => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(launchWhenIdle, { timeout: 2500 });
+    } else {
+      setTimeout(launchWhenIdle, 800);
+    }
+  });
+
+  /* ══════════════════════════════════════════════════════
+     SLIDESHOW fallback (no videos)
+  ══════════════════════════════════════════════════════ */
+  function startSlideshow() {
     /* ── SLIDESHOW (fallback when VIDEOS is empty) ── */
     const slides = document.querySelectorAll('.hero-slide');
     if (!slides.length) return;
