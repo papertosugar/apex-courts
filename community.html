@@ -439,7 +439,32 @@ const currentUser = localStorage.getItem('apexUser');
 const currentRole = localStorage.getItem('apexRole');
 let currentFilter = '';
 let selectedSport = '';
-let photoDataUrl = null;
+let photoDataUrl  = null;   // compressed base64 (fallback only)
+let selectedBlob  = null;   // compressed Blob for Supabase upload
+let previewObjUrl = null;   // object URL for preview (revoked after use)
+
+/* ─── CLIENT-SIDE IMAGE COMPRESSION ──────────────────────────────
+   Resizes to max 1080px wide & converts to WebP at 82% quality.
+   Typical result: 3 MB photo → ~150–300 KB  (10–20× smaller)
+─────────────────────────────────────────────────────────────────── */
+async function compressImage(file, maxWidth = 1080, quality = 0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width  * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => resolve(blob || file), 'image/webp', quality);
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+}
 
 /* ── NAV USER ── */
 (function() {
@@ -646,29 +671,82 @@ function selectPostSport(sport, el) {
   el.classList.add('selected');
 }
 
-function handlePhotoSelect(e) {
+async function handlePhotoSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+
+  const preview = document.getElementById('photoPreviewWrap');
+  const imgEl   = document.getElementById('photoPreviewImg');
+  preview.style.display = 'block';
+  imgEl.style.opacity = '0.4';
+  imgEl.src = '';
+
+  // Compress in background — never blocks UI
+  const compressed = await compressImage(file);
+  selectedBlob = compressed;
+
+  // Revoke previous object URL to free memory
+  if (previewObjUrl) URL.revokeObjectURL(previewObjUrl);
+  previewObjUrl = URL.createObjectURL(compressed);
+  imgEl.src = previewObjUrl;
+  imgEl.style.opacity = '1';
+
+  // Also store small base64 for localStorage fallback
   const reader = new FileReader();
-  reader.onload = ev => {
-    photoDataUrl = ev.target.result;
-    const preview = document.getElementById('photoPreviewWrap');
-    const img = document.getElementById('photoPreviewImg');
-    img.src = photoDataUrl;
-    preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+  reader.onload = ev => { photoDataUrl = ev.target.result; };
+  reader.readAsDataURL(compressed);
 }
 
 function removePhoto() {
-  photoDataUrl = null;
+  selectedBlob = null; photoDataUrl = null;
+  if (previewObjUrl) { URL.revokeObjectURL(previewObjUrl); previewObjUrl = null; }
   document.getElementById('photoPreviewWrap').style.display = 'none';
   document.getElementById('photoInput').value = '';
 }
 
-function submitPost() {
+async function submitPost() {
   const text = document.getElementById('postText')?.value.trim();
-  if (!text && !photoDataUrl) { showToast('Please write something first.'); return; }
+  if (!text && !selectedBlob) { showToast('Please write something first.'); return; }
+
+  const btn = document.querySelector('.post-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+
+  const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = 'Post'; } };
+
+  // ── Try Supabase Storage first ──────────────────────────────
+  if (window.ApexCourts && currentUser) {
+    try {
+      const fileObj = selectedBlob
+        ? new File([selectedBlob], `photo_${Date.now()}.webp`, { type: 'image/webp' })
+        : null;
+      const post = await ApexCourts.createPost({
+        sportTag: selectedSport,
+        text: text || '',
+        photoFile: fileObj,
+      });
+      // Save lightweight record (URL only, no base64)
+      const posts = getPosts();
+      posts.unshift({
+        id: post.id,
+        author: currentUser,
+        sport: selectedSport,
+        text: text || '',
+        photo: post.photo_url || null,
+        likes: 0, likedBy: [],
+        date: new Date().toISOString(),
+      });
+      savePosts(posts);
+      _resetComposer();
+      renderPosts();
+      showToast('Your post is live!');
+      resetBtn(); return;
+    } catch (err) {
+      console.warn('[Community] Supabase upload failed, using local fallback:', err.message);
+    }
+  }
+
+  // ── Fallback: compressed base64 in localStorage ─────────────
+  // photoDataUrl is already compressed (~150–300 KB), not the raw 3 MB original
   const posts = getPosts();
   posts.unshift({
     id: 'P' + Date.now(),
@@ -676,16 +754,30 @@ function submitPost() {
     sport: selectedSport,
     text: text || '',
     photo: photoDataUrl || null,
-    likes: 0,
-    likedBy: [],
+    likes: 0, likedBy: [],
     date: new Date().toISOString(),
   });
-  savePosts(posts);
-  photoDataUrl = null;
-  selectedSport = '';
-  renderComposer();
+  // Guard: keep localStorage from exceeding ~4 MB of post data
+  try {
+    savePosts(posts);
+  } catch (e) {
+    // localStorage full — drop oldest posts with photos until it fits
+    let trimmed = posts;
+    while (trimmed.length > 1) {
+      trimmed = trimmed.filter((p, i) => i === 0 || !p.photo);
+      try { savePosts(trimmed); break; } catch (_) { trimmed.pop(); }
+    }
+  }
+  _resetComposer();
   renderPosts();
   showToast('Your post is live!');
+  resetBtn();
+}
+
+function _resetComposer() {
+  selectedBlob = null; photoDataUrl = null; selectedSport = '';
+  if (previewObjUrl) { URL.revokeObjectURL(previewObjUrl); previewObjUrl = null; }
+  renderComposer();
 }
 
 function renderPosts(filter) {
@@ -719,7 +811,7 @@ function renderPosts(filter) {
         ${sportLabel ? `<span class="post-sport-tag">${sportLabel}</span>` : ''}
       </div>
       ${p.text ? `<div class="post-text">${p.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>` : ''}
-      ${p.photo ? `<div class="post-image"><img src="${p.photo}" alt="Post image" loading="lazy" /></div>` : ''}
+      ${p.photo ? `<div class="post-image"><img src="${p.photo}" alt="Post image" loading="lazy" decoding="async" width="600" style="aspect-ratio:auto" /></div>` : ''}
       <div class="post-footer">
         <button class="post-like-btn ${isLiked?'liked':''}" onclick="toggleLike('${p.id}',this)" aria-label="Like post">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="${isLiked?'#f87171':'none'}" stroke="${isLiked?'#f87171':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
