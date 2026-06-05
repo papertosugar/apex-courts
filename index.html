@@ -172,6 +172,29 @@
   }
   .hero-mute-btn:hover { border-color: var(--gold); color: var(--gold); }
   .hero-mute-btn svg { pointer-events: none; }
+  /* ── NAV ARROWS ── */
+  .hero-nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 10; width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(9,9,11,0.55); backdrop-filter: blur(8px);
+    border: 1px solid rgba(238,240,245,0.15);
+    color: rgba(238,240,245,0.9); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .hero-nav-btn:hover {
+    background: rgba(0,194,168,0.25);
+    border-color: rgba(0,194,168,0.5);
+    transform: translateY(-50%) scale(1.08);
+  }
+  .hero-nav-prev { left: 24px; }
+  .hero-nav-next { right: 24px; }
+  @media(max-width:768px) {
+    .hero-nav-prev { left: 12px; }
+    .hero-nav-next { right: 12px; }
+    .hero-nav-btn  { width: 40px; height: 40px; }
+  }
+
   /* Hero content must sit above everything */
   #hero .hero-left, #hero .hero-right { position: relative; z-index: 2; }
 </style>
@@ -180,36 +203,40 @@
 <main id="main">
 <section id="hero" aria-labelledby="hero-heading">
 
-  <!-- ── MULTI-VIDEO BACKGROUND (A/B ping-pong) ──
-       Edit the VIDEOS array in the JS section below to add/remove clips.
-       Videos crossfade automatically. No HTML changes needed.
-  -->
+  <!-- ── UNIFIED MEDIA BACKGROUND (video + image, mixed) ── -->
   <div class="hero-video-wrap" id="heroVideoWrap" aria-hidden="true">
     <video id="heroVideoA" muted playsinline preload="none" aria-hidden="true"></video>
     <video id="heroVideoB" muted playsinline preload="none" aria-hidden="true"></video>
+    <!-- Image layer for photo slides -->
+    <div id="heroImgSlide" style="position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease-in-out;z-index:0">
+      <img id="heroImgEl" alt="" decoding="async"
+           style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" />
+    </div>
   </div>
 
-  <!-- ── MUTE / UNMUTE BUTTON (shown only when video is active) ── -->
-  <button class="hero-mute-btn" id="heroMuteBtn" aria-label="Toggle video sound">
-    <!-- Speaker-off (default state) -->
+  <!-- ── NAV ARROWS ── -->
+  <button class="hero-nav-btn hero-nav-prev" id="heroNavPrev" aria-label="Previous slide" style="display:none">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="hero-nav-btn hero-nav-next" id="heroNavNext" aria-label="Next slide" style="display:none">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+
+  <!-- ── MUTE BUTTON (video only) ── -->
+  <button class="hero-mute-btn" id="heroMuteBtn" aria-label="Toggle video sound" style="display:none">
     <svg id="iconMuted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
       <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
     </svg>
-    <!-- Speaker-on -->
     <svg id="iconUnmuted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none">
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
       <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
     </svg>
   </button>
 
-  <!-- Background Slideshow (used when no video is set) -->
-  <div class="hero-slideshow" id="heroSlideshow" aria-hidden="true">
-    <!-- Slides built dynamically from Supabase Storage bucket "slides" -->
-    <div class="slide-progress" id="slideProgress"></div>
-  </div>
-  <!-- Slide navigation dots -->
-  <div class="slide-dots" role="tablist" aria-label="Slideshow navigation"></div>
+  <!-- Progress bar + dots -->
+  <div class="slide-progress" id="slideProgress" style="display:none"></div>
+  <div class="slide-dots" id="slideDots" role="tablist" aria-label="Media navigation" style="display:none"></div>
 
   <!-- Left column -->
   <div class="hero-left">
@@ -703,388 +730,280 @@
 <script src="js/main.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
-   HERO BACKGROUND CONTROLLER  — Multi-Video + Slideshow Fallback
-   ══════════════════════════════════════════════════════════════
-
-   ▸ VIDEO MODE
-     Edit the VIDEOS array below. Add as many .mp4 paths as you want.
-     Videos play one after another, crossfading between clips (A/B ping-pong).
-     Dots appear for navigation. Progress bar tracks current video.
-     If the array is empty or all files fail to load → slideshow fallback.
-
-   ▸ SLIDESHOW FALLBACK
-     When no videos are present. Uses the background-image slides in the HTML.
-     Place  .jpg / .webp  files in  images/slides/  and update the URLs above.
-
-   ════════════════════════════════════════════════════════════ */
+   HERO UNIFIED MEDIA CONTROLLER
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Loads ALL files from Supabase Storage bucket "slides":
+     • .mp4 / .mov / .webm → video (A/B crossfade)
+     • .jpg / .png / .webp  → image (fade overlay)
+   Mixed in filename order → videos and photos interleaved.
+   Arrow buttons + dot navigation. Mute button on video items.
+   Fallback: local videos if bucket empty / Supabase offline.
+══════════════════════════════════════════════════════════════ */
 (function () {
+  'use strict';
 
-  /* ──────────────────────────────────────────────
-     ★ EDIT THIS LIST to add / remove videos ★
-     Paths are relative to index.html.
-     Order = playback order.
-  ────────────────────────────────────────────── */
-  // Local videos (fallback if Supabase bucket has none)
-  const LOCAL_VIDEOS = [
-    'images/videos/배경 2.mp4',
-    'images/videos/112.mp4',
+  const SUPABASE_PUB = 'https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/public/slides';
+  const LOCAL_FALLBACK = [
+    { type: 'video', url: 'images/videos/배경 2.mp4' },
+    { type: 'video', url: 'images/videos/112.mp4' },
   ];
-  let VIDEOS = [...LOCAL_VIDEOS];   // will be replaced by Supabase list if available
-  /* ─────────────────────────────────────────────── */
 
-  const SUPABASE_URL_BASE = 'https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/public/slides';
-
-  // Fetch all files from "slides" bucket → split into videos / images
-  async function loadMediaFromSupabase() {
-    if (!window.ApexCourts?.supabase) return { videos: [], images: [] };
-    try {
-      const { data, error } = await ApexCourts.supabase.storage
-        .from('slides').list('', { limit: 50, sortBy: { column: 'name', order: 'asc' } });
-      if (error || !data?.length) return { videos: [], images: [] };
-      const videos = data
-        .filter(f => /\.(mp4|mov|webm)$/i.test(f.name))
-        .map(f => `${SUPABASE_URL_BASE}/${encodeURIComponent(f.name)}`);
-      const images = data
-        .filter(f => /\.(jpe?g|png|webp|avif|gif)$/i.test(f.name))
-        .map(f => `${SUPABASE_URL_BASE}/${encodeURIComponent(f.name)}`);
-      return { videos, images };
-    } catch (e) {
-      console.warn('[Media] Supabase load failed:', e.message);
-      return { videos: [], images: [] };
-    }
-  }
-
-  const dotsEl      = document.querySelector('.slide-dots');
-  const progressBar = document.getElementById('slideProgress');
-  const muteBtn     = document.getElementById('heroMuteBtn');
-  const iconMuted   = document.getElementById('iconMuted');
+  // ── DOM refs ─────────────────────────────────────────────
+  const vidA      = document.getElementById('heroVideoA');
+  const vidB      = document.getElementById('heroVideoB');
+  const imgSlide  = document.getElementById('heroImgSlide');
+  const imgEl     = document.getElementById('heroImgEl');
+  const muteBtn   = document.getElementById('heroMuteBtn');
+  const iconMuted = document.getElementById('iconMuted');
   const iconUnmuted = document.getElementById('iconUnmuted');
-  const vidA        = document.getElementById('heroVideoA');
-  const vidB        = document.getElementById('heroVideoB');
-  const hero        = document.getElementById('hero');
+  const progressBar = document.getElementById('slideProgress');
+  const dotsEl    = document.getElementById('slideDots');
+  const prevBtn   = document.getElementById('heroNavPrev');
+  const nextBtn   = document.getElementById('heroNavNext');
+  const hero      = document.getElementById('hero');
 
-  let vidCurrent     = 0;
-  let activeEl       = vidA;
-  let standbyEl      = vidB;
-  let videoMode      = false;
-  let slideshowTimer = null;
-  let nextPreloaded  = false;   // guard — only preload next once per clip
+  // ── State ────────────────────────────────────────────────
+  let MEDIA    = [];          // [{type:'video'|'image', url}]
+  let current  = 0;          // index into MEDIA
+  let activeVid  = vidA;
+  let standbyVid = vidB;
+  let imageTimer = null;     // auto-advance timer for images
+  let nextPreloaded = false;
+  const IMAGE_DURATION = 5000;
 
-  /* ══════════════════════════════════════════════════════
-     OPTIMIZED VIDEO ENGINE
-     - Deferred start (window.load + requestIdleCallback)
-     - preload="none" → switched to auto only when needed
-     - Next clip pre-fetched only at 70 % of current clip
-     - Page Visibility API: pause when tab hidden
-     - Intersection Observer: pause when hero off-screen
-  ══════════════════════════════════════════════════════ */
-
-  // ── Page Visibility: pause/resume on tab switch ──────
-  document.addEventListener('visibilitychange', () => {
-    if (!videoMode) return;
-    if (document.hidden) {
-      activeEl.pause();
-    } else {
-      activeEl.play().catch(() => {});
-    }
-  });
-
-  // ── Intersection Observer: pause when hero scrolls off ──
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(entries => {
-      if (!videoMode) return;
-      if (entries[0].isIntersecting) {
-        activeEl.play().catch(() => {});
-      } else {
-        activeEl.pause();
-      }
-    }, { threshold: 0.1 }).observe(hero);
-  }
-
-  function updateVideoDots() {
-    if (!dotsEl) return;
-    Array.from(dotsEl.children).forEach((d, i) => {
-      d.classList.toggle('active', i === vidCurrent);
-    });
-  }
-
-  // ── Pre-fetch next clip into standby at 70 % ─────────
-  function scheduleNextPreload(vid) {
-    nextPreloaded = false;
-    function onTimeUpdate() {
-      if (vid !== activeEl) { vid.removeEventListener('timeupdate', onTimeUpdate); return; }
-      if (!vid.duration) return;
-      if (!nextPreloaded && vid.currentTime / vid.duration > 0.70) {
-        nextPreloaded = true;
-        const nextIdx = (vidCurrent + 1) % VIDEOS.length;
-        if (VIDEOS.length > 1) {
-          standbyEl.src     = VIDEOS[nextIdx];
-          standbyEl.preload = 'auto';
-          standbyEl.load();
+  // ── Fetch media from Supabase ────────────────────────────
+  async function loadMedia() {
+    if (window.ApexCourts?.supabase) {
+      try {
+        const { data, error } = await ApexCourts.supabase.storage
+          .from('slides').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+        if (!error && data?.length) {
+          const items = data
+            .filter(f => /\.(mp4|mov|webm|jpe?g|png|webp|avif|gif)$/i.test(f.name))
+            .map(f => ({
+              type: /\.(mp4|mov|webm)$/i.test(f.name) ? 'video' : 'image',
+              url:  `${SUPABASE_PUB}/${encodeURIComponent(f.name)}`,
+            }));
+          if (items.length) return items;
         }
-      }
+      } catch (e) { console.warn('[Media]', e.message); }
     }
-    vid.addEventListener('timeupdate', onTimeUpdate);
-    vid.addEventListener('ended', function onEnded() {
-      vid.removeEventListener('timeupdate', onTimeUpdate);
-      vid.removeEventListener('ended', onEnded);
-      vidNext();
-    }, { once: true });
+    return LOCAL_FALLBACK;
   }
 
-  // ── Progress bar ──────────────────────────────────────
+  // ── Dots ─────────────────────────────────────────────────
+  function buildDots() {
+    if (!dotsEl || MEDIA.length <= 1) return;
+    dotsEl.innerHTML = '';
+    MEDIA.forEach((m, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'slide-dot' + (i === 0 ? ' active' : '');
+      btn.setAttribute('aria-label', (m.type === 'video' ? 'Video' : 'Photo') + ' ' + (i + 1));
+      btn.addEventListener('click', () => goTo(i));
+      dotsEl.appendChild(btn);
+    });
+    dotsEl.style.display = 'flex';
+  }
+
+  function updateDots() {
+    if (!dotsEl) return;
+    Array.from(dotsEl.children).forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  // ── Progress bar ─────────────────────────────────────────
+  function startImageProgress() {
+    if (!progressBar) return;
+    progressBar.style.display = 'block';
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      progressBar.style.transition = `width ${IMAGE_DURATION}ms linear`;
+      progressBar.style.width = '100%';
+    }));
+  }
+
   function startVideoProgress(vid) {
     if (!progressBar) return;
+    progressBar.style.display = 'block';
+    progressBar.style.transition = 'none';
     progressBar.style.width = '0%';
-    // Use requestAnimationFrame throttle instead of every timeupdate
-    let rafId = null;
+    let raf;
     function tick() {
-      if (vid !== activeEl) { rafId = null; return; }
-      if (vid.duration) {
-        progressBar.style.width = (vid.currentTime / vid.duration * 100) + '%';
-      }
-      rafId = requestAnimationFrame(tick);
+      if (vid !== activeVid) return;
+      if (vid.duration) progressBar.style.width = (vid.currentTime / vid.duration * 100) + '%';
+      raf = requestAnimationFrame(tick);
     }
-    rafId = requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
   }
 
-  function buildVideoDots() {
-    if (!dotsEl) return;
-    dotsEl.innerHTML = '';
-    VIDEOS.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('aria-label', 'Go to video ' + (i + 1));
-      dot.addEventListener('click', () => vidNext(i));
-      dotsEl.appendChild(dot);
-    });
-    dotsEl.style.display = VIDEOS.length > 1 ? 'flex' : 'none';
+  // ── Show IMAGE ───────────────────────────────────────────
+  function showImage(item) {
+    clearTimeout(imageTimer);
+    muteBtn.style.display = 'none';
+
+    imgEl.src = item.url;
+    imgEl.onload = () => {
+      // Fade out any playing video
+      activeVid.classList.remove('vid-active');
+      activeVid.pause();
+      // Fade in image
+      imgSlide.style.opacity = '1';
+      imgSlide.style.zIndex  = '2';
+      startImageProgress();
+      imageTimer = setTimeout(() => goTo((current + 1) % MEDIA.length), IMAGE_DURATION);
+    };
+    imgEl.onerror = () => goTo((current + 1) % MEDIA.length);
   }
 
-  function vidNext(idx) {
-    vidCurrent = ((idx === undefined ? vidCurrent + 1 : idx) + VIDEOS.length) % VIDEOS.length;
+  // ── Show VIDEO ───────────────────────────────────────────
+  function showVideo(item, isFirst) {
+    clearTimeout(imageTimer);
+    muteBtn.style.display = 'flex';
 
-    const incoming = standbyEl;
-    const outgoing = activeEl;
-    activeEl  = incoming;
-    standbyEl = outgoing;
+    const incoming = standbyVid;
+    const outgoing = activeVid;
+    if (!isFirst) { activeVid = incoming; standbyVid = outgoing; }
 
-    // If standby already loaded this clip, just play; else load now
     function playIncoming() {
       incoming.play().catch(() => {});
       incoming.classList.add('vid-active');
+      // Fade out image layer
+      imgSlide.style.opacity = '0';
+      imgSlide.style.zIndex  = '0';
       setTimeout(() => {
         outgoing.classList.remove('vid-active');
         outgoing.pause();
-        outgoing.removeAttribute('src');   // free memory
+        outgoing.removeAttribute('src');
         outgoing.load();
       }, 900);
-      updateVideoDots();
       startVideoProgress(incoming);
-      scheduleNextPreload(incoming);
+      // Preload next at 70 %
+      nextPreloaded = false;
+      incoming.addEventListener('timeupdate', function preloader() {
+        if (incoming !== activeVid) { incoming.removeEventListener('timeupdate', preloader); return; }
+        if (!nextPreloaded && incoming.duration && incoming.currentTime / incoming.duration > 0.70) {
+          nextPreloaded = true;
+          const ni = (current + 1) % MEDIA.length;
+          if (MEDIA[ni].type === 'video') {
+            standbyVid.src = MEDIA[ni].url;
+            standbyVid.preload = 'auto';
+            standbyVid.load();
+          }
+        }
+      });
+      incoming.addEventListener('ended', () => goTo((current + 1) % MEDIA.length), { once: true });
     }
 
-    if (incoming.readyState >= 3) {          // HAVE_FUTURE_DATA — already buffered
+    if (!incoming.src || incoming.src === location.href) {
+      incoming.src = item.url;
+      incoming.preload = 'auto';
+      incoming.load();
+    }
+    if (incoming.readyState >= 3) {
       playIncoming();
     } else {
-      if (!incoming.src || incoming.src === location.href) {
-        incoming.src     = VIDEOS[vidCurrent];
-        incoming.preload = 'auto';
-        incoming.load();
-      }
       incoming.addEventListener('canplay', function onReady() {
         incoming.removeEventListener('canplay', onReady);
         playIncoming();
       }, { once: true });
       incoming.addEventListener('error', function () {
-        vidNext(vidCurrent + 1);   // skip broken clip
+        goTo((current + 1) % MEDIA.length);
       }, { once: true });
     }
   }
 
-  function startVideoMode() {
-    videoMode = true;
-    document.getElementById('heroSlideshow').style.opacity = '0';
-    if (progressBar) progressBar.style.display = 'block';
-    muteBtn.style.display = 'flex';
-    buildVideoDots();
-
-    vidA.src     = VIDEOS[0];
-    vidA.preload = 'auto';
-    vidA.load();
-    vidA.addEventListener('canplay', function onFirst() {
-      vidA.removeEventListener('canplay', onFirst);
-      vidA.classList.add('vid-active');
-      vidA.play().catch(() => {});
-      startVideoProgress(vidA);
-      scheduleNextPreload(vidA);
-      updateVideoDots();
-    }, { once: true });
-    vidA.addEventListener('error', function () {
-      if (VIDEOS.length > 1) { vidCurrent = 0; vidNext(1); }
-    }, { once: true });
+  // ── Go to index ──────────────────────────────────────────
+  function goTo(idx) {
+    current = ((idx % MEDIA.length) + MEDIA.length) % MEDIA.length;
+    const item = MEDIA[current];
+    updateDots();
+    if (item.type === 'video') showVideo(item, false);
+    else                       showImage(item);
   }
 
-  /* Mute toggle */
-  muteBtn.addEventListener('click', () => {
-    const muted = !activeEl.muted;
-    vidA.muted = vidB.muted = muted;
-    iconMuted.style.display   = muted ? '' : 'none';
-    iconUnmuted.style.display = muted ? 'none' : '';
-  });
+  // ── Arrow buttons ─────────────────────────────────────────
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
 
+  function showArrows() {
+    if (MEDIA.length > 1) {
+      if (prevBtn) prevBtn.style.display = 'flex';
+      if (nextBtn) nextBtn.style.display = 'flex';
+    }
+  }
+
+  // ── Keyboard ─────────────────────────────────────────────
   hero.addEventListener('keydown', e => {
-    if (!videoMode) return;
-    if (e.key === 'ArrowRight') vidNext();
-    if (e.key === 'ArrowLeft')  vidNext(vidCurrent - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+    if (e.key === 'ArrowLeft')  goTo(current - 1);
   });
 
-  /* ══════════════════════════════════════════════════════
-     DEFERRED START — wait for window.load, then idle
-  ══════════════════════════════════════════════════════ */
-  async function launchWhenIdle() {
-    // Load from Supabase "slides" bucket first
-    const { videos: sbVideos, images: sbImages } = await loadMediaFromSupabase();
+  // ── Mute toggle ──────────────────────────────────────────
+  muteBtn.addEventListener('click', () => {
+    const m = !vidA.muted;
+    vidA.muted = vidB.muted = m;
+    iconMuted.style.display   = m ? '' : 'none';
+    iconUnmuted.style.display = m ? 'none' : '';
+  });
 
-    // Supabase videos override local ones; fallback to local if none
-    if (sbVideos.length > 0) VIDEOS = sbVideos;
+  // ── Page Visibility & IntersectionObserver ───────────────
+  document.addEventListener('visibilitychange', () => {
+    if (MEDIA[current]?.type !== 'video') return;
+    document.hidden ? activeVid.pause() : activeVid.play().catch(() => {});
+  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      if (MEDIA[current]?.type !== 'video') return;
+      entries[0].isIntersecting ? activeVid.play().catch(() => {}) : activeVid.pause();
+    }, { threshold: 0.1 }).observe(hero);
+  }
 
-    if (VIDEOS.length > 0) {
-      startVideoMode();
-      // Slideshow will also start in background for when video ends (optional)
-      if (sbImages.length > 0) window._slideshowImages = sbImages;
+  // ── Init ─────────────────────────────────────────────────
+  async function init() {
+    MEDIA = await loadMedia();
+    if (!MEDIA.length) return;
+
+    buildDots();
+    showArrows();
+
+    const first = MEDIA[0];
+    current = 0;
+    updateDots();
+
+    if (first.type === 'video') {
+      // Use vidA directly for first clip
+      vidA.src = first.url;
+      vidA.preload = 'auto';
+      vidA.load();
+      vidA.addEventListener('canplay', function onFirst() {
+        vidA.removeEventListener('canplay', onFirst);
+        vidA.classList.add('vid-active');
+        vidA.play().catch(() => {});
+        muteBtn.style.display = 'flex';
+        startVideoProgress(vidA);
+        nextPreloaded = false;
+        vidA.addEventListener('timeupdate', function preloader() {
+          if (vidA !== activeVid) { vidA.removeEventListener('timeupdate', preloader); return; }
+          if (!nextPreloaded && vidA.duration && vidA.currentTime / vidA.duration > 0.70) {
+            nextPreloaded = true;
+            const ni = 1 % MEDIA.length;
+            if (MEDIA[ni].type === 'video') {
+              vidB.src = MEDIA[ni].url; vidB.preload = 'auto'; vidB.load();
+            }
+          }
+        });
+        vidA.addEventListener('ended', () => goTo(1), { once: true });
+      }, { once: true });
+      vidA.addEventListener('error', () => goTo(1), { once: true });
     } else {
-      // No videos — show image slideshow
-      window._slideshowImages = sbImages;
-      startSlideshow();
+      showImage(first);
     }
   }
 
   window.addEventListener('load', () => {
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(launchWhenIdle, { timeout: 2500 });
-    } else {
-      setTimeout(launchWhenIdle, 800);
-    }
+    if ('requestIdleCallback' in window) requestIdleCallback(init, { timeout: 2500 });
+    else setTimeout(init, 800);
   });
-
-  /* ══════════════════════════════════════════════════════
-     SLIDESHOW — images loaded from Supabase Storage
-     Bucket: "slides"  (public)
-     Add/remove photos in Supabase dashboard — no code change needed.
-     Falls back to a dark gradient if bucket is empty or offline.
-  ══════════════════════════════════════════════════════ */
-  const SUPABASE_STORAGE = 'https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/public';
-  const SLIDES_BUCKET    = 'slides';
-
-  async function fetchSlideUrls() {
-    // List files in the "slides" bucket via Supabase Storage API
-    try {
-      const res = await fetch(
-        `https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/list/${SLIDES_BUCKET}`,
-        { method: 'POST',
-          headers: { 'Content-Type': 'application/json',
-                     'apikey': document.querySelector('script[src*="supabase"]') ? '' : '' },
-          body: JSON.stringify({ prefix: '', limit: 20, sortBy: { column: 'name', order: 'asc' } })
-        }
-      );
-      // Use ApexCourts supabase client if available (has the anon key)
-      if (window.ApexCourts?.supabase) {
-        const { data, error } = await ApexCourts.supabase.storage
-          .from(SLIDES_BUCKET).list('', { limit: 20, sortBy: { column: 'name', order: 'asc' } });
-        if (error || !data?.length) return [];
-        return data
-          .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f.name))
-          .map(f => `${SUPABASE_STORAGE}/${SLIDES_BUCKET}/${f.name}`);
-      }
-    } catch (_) {}
-    return [];
-  }
-
-  async function startSlideshow() {
-    const slideshow = document.getElementById('heroSlideshow');
-    const INTERVAL  = 5000;
-    let current = 0;
-
-    // Use pre-fetched images (from launchWhenIdle) or fetch now
-    let urls = window._slideshowImages?.length
-      ? window._slideshowImages
-      : await fetchSlideUrls();
-
-    // ── Fallback: dark gradient placeholder ───────────────
-    if (!urls.length) {
-      slideshow.style.background = 'linear-gradient(135deg,rgba(0,194,168,0.08) 0%,rgba(9,9,11,0) 100%)';
-      return;
-    }
-
-    // ── Build slide elements ───────────────────────────────
-    // Insert before the progress bar
-    const progressEl = document.getElementById('slideProgress');
-    urls.forEach((url, i) => {
-      const div = document.createElement('div');
-      div.className = 'hero-slide' + (i === 0 ? ' active' : '');
-      // Use <img> with loading="lazy" + fetchpriority for first slide
-      const img = document.createElement('img');
-      img.src              = url;
-      img.alt              = '';
-      img.loading          = i === 0 ? 'eager' : 'lazy';
-      img.decoding         = 'async';
-      img.fetchPriority    = i === 0 ? 'high' : 'low';
-      img.style.cssText    = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center';
-      div.appendChild(img);
-      slideshow.insertBefore(div, progressEl);
-    });
-
-    const slides = slideshow.querySelectorAll('.hero-slide');
-    if (!slides.length) return;
-
-    // ── Dots ──────────────────────────────────────────────
-    if (dotsEl) {
-      dotsEl.innerHTML = '';
-      slides.forEach((_, i) => {
-        const dot = document.createElement('button');
-        dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
-        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
-        dot.addEventListener('click', () => { goTo(i); resetTimer(); });
-        dotsEl.appendChild(dot);
-      });
-      dotsEl.style.display = slides.length > 1 ? 'flex' : 'none';
-    }
-
-    function goTo(idx) {
-      slides[current].classList.remove('active');
-      if (dotsEl?.children[current]) dotsEl.children[current].classList.remove('active');
-      current = (idx + slides.length) % slides.length;
-      slides[current].classList.add('active');
-      if (dotsEl?.children[current]) dotsEl.children[current].classList.add('active');
-      startProgress();
-    }
-
-    function startProgress() {
-      if (!progressBar) return;
-      progressBar.style.transition = 'none';
-      progressBar.style.width = '0%';
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        progressBar.style.transition = `width ${INTERVAL}ms linear`;
-        progressBar.style.width = '100%';
-      }));
-    }
-
-    function resetTimer() {
-      clearInterval(slideshowTimer);
-      if (slides.length > 1) slideshowTimer = setInterval(() => goTo(current + 1), INTERVAL);
-    }
-
-    hero.addEventListener('mouseenter', () => clearInterval(slideshowTimer));
-    hero.addEventListener('mouseleave', () => resetTimer());
-    hero.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight') { goTo(current + 1); resetTimer(); }
-      if (e.key === 'ArrowLeft')  { goTo(current - 1); resetTimer(); }
-    });
-
-    startProgress();
-    resetTimer();
-  }
 
 })();
 </script>
