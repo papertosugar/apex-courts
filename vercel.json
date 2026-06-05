@@ -12,6 +12,7 @@
     { "src": "/openplay$",        "dest": "/openplay.html" },
     { "src": "/community$",       "dest": "/community.html" },
     { "src": "/policy$",          "dest": "/policy.html" },
+    { "src": "/auth-callback$",   "dest": "/auth-callback.html" },
     { "src": "/admin$",           "dest": "/admin/dashboard.html" },
     { "src": "/admin/pos$",       "dest": "/admin/pos.html" },
     { "src": "/admin/dashboard$", "dest": "/admin/dashboard.html" },

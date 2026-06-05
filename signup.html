@@ -300,29 +300,35 @@
         <p class="terms-note">By creating an account you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
       </div>
 
-      <!-- ── STEP 2: OTP verification ── -->
+      <!-- ── STEP 2: Check email ── -->
       <div class="step-panel" id="panel2">
-        <p id="otpInstructions" style="font-size:14px;color:var(--cream-muted);margin-bottom:20px;line-height:1.6"></p>
 
-        <div class="form-group">
-          <div class="form-label">Enter 6-digit code</div>
-          <div class="otp-grid" id="otpGrid" role="group" aria-label="One-time password digits">
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
-            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+        <!-- Email icon -->
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="width:72px;height:72px;border-radius:50%;background:rgba(0,194,168,0.1);border:2px solid rgba(0,194,168,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <polyline points="2,4 12,13 22,4"/>
+            </svg>
           </div>
-          <div class="resend-row">Didn't get it? <span class="resend-link" onclick="resendOtp()">Resend code</span></div>
+          <p id="otpInstructions" style="font-size:14px;color:var(--cream-muted);line-height:1.7;margin:0"></p>
         </div>
 
-        <button class="btn-primary-full" onclick="verifyOtp()">
-          Verify &amp; Create Account
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-        <button onclick="goBack()" style="width:100%;margin-top:10px;padding:12px;border-radius:10px;background:transparent;border:1px solid var(--stone-line);color:var(--cream-muted);font-size:14px;cursor:pointer;font-family:inherit;">
-          Back
+        <!-- Steps guide -->
+        <div style="background:rgba(0,194,168,0.05);border:1px solid rgba(0,194,168,0.15);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.06em;color:var(--gold);margin-bottom:10px">HOW TO CONFIRM</div>
+          <ol style="margin:0;padding-left:18px;font-size:13px;color:var(--cream-muted);line-height:2">
+            <li>Open your email inbox</li>
+            <li>Find the email from <strong style="color:var(--cream)">Smash Studio</strong></li>
+            <li>Click the <strong style="color:var(--cream)">"Confirm your email"</strong> link</li>
+            <li>You'll be redirected back and signed in automatically</li>
+          </ol>
+        </div>
+
+        <div class="resend-row" style="margin-bottom:16px">Didn't get it? Check spam, or <span class="resend-link" onclick="resendOtp()">resend the email</span></div>
+
+        <button onclick="goBack()" style="width:100%;padding:12px;border-radius:10px;background:transparent;border:1px solid var(--stone-line);color:var(--cream-muted);font-size:14px;cursor:pointer;font-family:inherit;">
+          ← Go Back
         </button>
       </div>
 
@@ -474,17 +480,16 @@ function proceedToVerify() {
     : document.getElementById('phoneInput').value.trim();
 
   if (!contact) { showError('Please enter your ' + (contactMethod === 'email' ? 'email' : 'phone number') + '.'); return; }
-  if (!otpSent) { showError('Please click "Send Code" to receive your verification code first.'); return; }
+  if (!otpSent) { showError('Please click "Send Code" first to get a verification email.'); return; }
 
-  // Show OTP instructions
+  // Show check-email instructions
   const masked = contactMethod === 'email'
     ? contact.replace(/(.{2})(.+)(@.+)/, '$1****$3')
     : contact.replace(/(.{3})(.+)(.{2})/, '$1****$3');
   document.getElementById('otpInstructions').textContent =
-    'Enter the 6-digit code sent to ' + masked + '. Check your inbox and spam folder.';
+    'We sent a confirmation link to ' + masked + '. Click the link in the email to verify your account.';
 
   setStep(2);
-  document.querySelector('.otp-box').focus();
 }
 
 /* ── OTP INPUT BEHAVIOR ── */
