@@ -36,6 +36,7 @@ async function signUp({ email, phone, password, firstName, lastName }) {
     email,
     password,
     options: {
+      emailRedirectTo: 'https://apex-courts.vercel.app/auth-callback',
       data: { first_name: firstName, last_name: lastName, phone, role: 'member' }
     }
   });
