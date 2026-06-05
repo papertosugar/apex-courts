@@ -205,16 +205,7 @@
 
   <!-- Background Slideshow (used when no video is set) -->
   <div class="hero-slideshow" id="heroSlideshow" aria-hidden="true">
-    <!-- ─────────────────────────────────────────────────────────────────
-         PHOTOS: replace  .svg  with  .jpg/.webp  paths once you have them.
-         Put files in  images/slides/  folder.
-         e.g.  style="background-image:url('images/slides/slide1.jpg')"
-         ─────────────────────────────────────────────────────────────── -->
-    <div class="hero-slide active" style="background-image:url('images/slides/slide1.svg')"></div>
-    <div class="hero-slide" style="background-image:url('images/slides/slide2.svg')"></div>
-    <div class="hero-slide" style="background-image:url('images/slides/slide3.svg')"></div>
-    <div class="hero-slide" style="background-image:url('images/slides/slide4.svg')"></div>
-    <div class="hero-slide" style="background-image:url('images/slides/slide5.svg')"></div>
+    <!-- Slides built dynamically from Supabase Storage bucket "slides" -->
     <div class="slide-progress" id="slideProgress"></div>
   </div>
   <!-- Slide navigation dots -->
@@ -946,29 +937,92 @@
   });
 
   /* ══════════════════════════════════════════════════════
-     SLIDESHOW fallback (no videos)
+     SLIDESHOW — images loaded from Supabase Storage
+     Bucket: "slides"  (public)
+     Add/remove photos in Supabase dashboard — no code change needed.
+     Falls back to a dark gradient if bucket is empty or offline.
   ══════════════════════════════════════════════════════ */
-  function startSlideshow() {
-    /* ── SLIDESHOW (fallback when VIDEOS is empty) ── */
-    const slides = document.querySelectorAll('.hero-slide');
-    if (!slides.length) return;
-    const INTERVAL = 5000;
+  const SUPABASE_STORAGE = 'https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/public';
+  const SLIDES_BUCKET    = 'slides';
+
+  async function fetchSlideUrls() {
+    // List files in the "slides" bucket via Supabase Storage API
+    try {
+      const res = await fetch(
+        `https://qughntfplchllsiaiteu.supabase.co/storage/v1/object/list/${SLIDES_BUCKET}`,
+        { method: 'POST',
+          headers: { 'Content-Type': 'application/json',
+                     'apikey': document.querySelector('script[src*="supabase"]') ? '' : '' },
+          body: JSON.stringify({ prefix: '', limit: 20, sortBy: { column: 'name', order: 'asc' } })
+        }
+      );
+      // Use ApexCourts supabase client if available (has the anon key)
+      if (window.ApexCourts?.supabase) {
+        const { data, error } = await ApexCourts.supabase.storage
+          .from(SLIDES_BUCKET).list('', { limit: 20, sortBy: { column: 'name', order: 'asc' } });
+        if (error || !data?.length) return [];
+        return data
+          .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f.name))
+          .map(f => `${SUPABASE_STORAGE}/${SLIDES_BUCKET}/${f.name}`);
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  async function startSlideshow() {
+    const slideshow = document.getElementById('heroSlideshow');
+    const INTERVAL  = 5000;
     let current = 0;
 
-    slides.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
-      dot.addEventListener('click', () => { goTo(i); resetTimer(); });
-      dotsEl.appendChild(dot);
+    // ── Load slide URLs from Supabase ──────────────────────
+    let urls = await fetchSlideUrls();
+
+    // ── Fallback: dark gradient placeholder ───────────────
+    if (!urls.length) {
+      slideshow.style.background = 'linear-gradient(135deg,rgba(0,194,168,0.08) 0%,rgba(9,9,11,0) 100%)';
+      return;
+    }
+
+    // ── Build slide elements ───────────────────────────────
+    // Insert before the progress bar
+    const progressEl = document.getElementById('slideProgress');
+    urls.forEach((url, i) => {
+      const div = document.createElement('div');
+      div.className = 'hero-slide' + (i === 0 ? ' active' : '');
+      // Use <img> with loading="lazy" + fetchpriority for first slide
+      const img = document.createElement('img');
+      img.src              = url;
+      img.alt              = '';
+      img.loading          = i === 0 ? 'eager' : 'lazy';
+      img.decoding         = 'async';
+      img.fetchPriority    = i === 0 ? 'high' : 'low';
+      img.style.cssText    = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center';
+      div.appendChild(img);
+      slideshow.insertBefore(div, progressEl);
     });
+
+    const slides = slideshow.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
+
+    // ── Dots ──────────────────────────────────────────────
+    if (dotsEl) {
+      dotsEl.innerHTML = '';
+      slides.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', () => { goTo(i); resetTimer(); });
+        dotsEl.appendChild(dot);
+      });
+      dotsEl.style.display = slides.length > 1 ? 'flex' : 'none';
+    }
 
     function goTo(idx) {
       slides[current].classList.remove('active');
-      dotsEl.children[current].classList.remove('active');
+      if (dotsEl?.children[current]) dotsEl.children[current].classList.remove('active');
       current = (idx + slides.length) % slides.length;
       slides[current].classList.add('active');
-      dotsEl.children[current].classList.add('active');
+      if (dotsEl?.children[current]) dotsEl.children[current].classList.add('active');
       startProgress();
     }
 
@@ -984,7 +1038,7 @@
 
     function resetTimer() {
       clearInterval(slideshowTimer);
-      slideshowTimer = setInterval(() => goTo(current + 1), INTERVAL);
+      if (slides.length > 1) slideshowTimer = setInterval(() => goTo(current + 1), INTERVAL);
     }
 
     hero.addEventListener('mouseenter', () => clearInterval(slideshowTimer));
