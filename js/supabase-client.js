@@ -62,6 +62,19 @@ async function verifyOTP(phone, token) {
   return data;
 }
 
+/** Verify email signup OTP (6-digit code sent by Supabase on signUp) */
+async function verifyEmailOTP(email, token) {
+  const { data, error } = await db.auth.verifyOtp({ email, token, type: 'signup' });
+  if (error) throw error;
+  return data;
+}
+
+/** Resend signup confirmation OTP */
+async function resendEmailOTP(email) {
+  const { error } = await db.auth.resend({ type: 'signup', email });
+  if (error) throw error;
+}
+
 /** Sign out */
 async function signOut() {
   await db.auth.signOut();
@@ -350,7 +363,7 @@ function subscribeOpenPlay(onUpdate) {
    ============================================================ */
 window.ApexCourts = {
   // Auth
-  signUp, signIn, sendOTP, verifyOTP, signOut, getCurrentUser,
+  signUp, signIn, sendOTP, verifyOTP, verifyEmailOTP, resendEmailOTP, signOut, getCurrentUser,
   // Availability
   getAvailability, getCourts,
   // Bookings

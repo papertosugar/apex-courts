@@ -353,8 +353,8 @@
 <script>
 /* ── STATE ── */
 let contactMethod = 'email';
-let generatedOtp = null;
 let pendingContact = null;
+let otpSent = false;
 
 /* ── HELPERS ── */
 function showError(msg) {
@@ -401,7 +401,7 @@ function isDuplicate(contact) {
 }
 
 /* ── SEND OTP ── */
-function sendOtp(via) {
+async function sendOtp(via) {
   const value = via === 'email'
     ? document.getElementById('emailInput').value.trim()
     : document.getElementById('phoneInput').value.trim();
@@ -415,24 +415,48 @@ function sendOtp(via) {
     showError('Please enter a valid phone number.'); return;
   }
 
-  if (isDuplicate(value)) {
-    showError('An account with this ' + (via === 'email' ? 'email' : 'phone number') + ' already exists. Try signing in instead.');
-    return;
-  }
-
-  // Generate 6-digit OTP and store in sessionStorage (demo — in production this would be server-sent)
-  generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-  pendingContact = value;
-  sessionStorage.setItem('apexPendingOtp', generatedOtp);
-  sessionStorage.setItem('apexPendingContact', value);
+  // Validate name + password are filled before sending
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName  = document.getElementById('lastName').value.trim();
+  const password  = document.getElementById('password').value;
+  if (!firstName || !lastName) { showError('Please enter your full name before sending a code.'); return; }
+  if (password.length < 8)     { showError('Please set a password (8+ characters) before sending a code.'); return; }
 
   const btn = document.getElementById(via === 'email' ? 'sendEmailOtp' : 'sendPhoneOtp');
   btn.disabled = true;
-  btn.textContent = 'Sent!';
-  setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend'; }, 30000);
+  btn.textContent = 'Sending…';
+  clearMessages();
 
-  // Demo: show code in success bar so user can test
-  showSuccess('Code sent! (Demo: your code is ' + generatedOtp + ')');
+  try {
+    if (via === 'email') {
+      // Real Supabase signUp → sends confirmation email with 6-digit OTP
+      if (!window.ApexCourts) throw new Error('Supabase not loaded');
+      await ApexCourts.signUp({ email: value, password, firstName, lastName });
+      pendingContact = value;
+      otpSent = true;
+      btn.textContent = 'Sent ✓';
+      showSuccess('Verification code sent to ' + value + '. Check your inbox (and spam folder).');
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend'; }, 60000);
+    } else {
+      // Phone OTP via Supabase
+      if (!window.ApexCourts) throw new Error('Supabase not loaded');
+      await ApexCourts.sendOTP(value);
+      pendingContact = value;
+      otpSent = true;
+      btn.textContent = 'Sent ✓';
+      showSuccess('Code sent to ' + value + '.');
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend'; }, 60000);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Send Code';
+    // "User already registered" — prompt to sign in
+    if (e.message && (e.message.includes('already registered') || e.message.includes('already been registered'))) {
+      showError('An account with this email already exists. Try signing in instead.');
+    } else {
+      showError('Failed to send code: ' + (e.message || 'Unknown error'));
+    }
+  }
 }
 
 /* ── STEP 1 → STEP 2 ── */
@@ -449,15 +473,15 @@ function proceedToVerify() {
     ? document.getElementById('emailInput').value.trim()
     : document.getElementById('phoneInput').value.trim();
 
-  if (!contact) { showError('Please enter and verify your ' + (contactMethod === 'email' ? 'email' : 'phone number') + '.'); return; }
-  if (!generatedOtp) { showError('Please send the verification code first.'); return; }
+  if (!contact) { showError('Please enter your ' + (contactMethod === 'email' ? 'email' : 'phone number') + '.'); return; }
+  if (!otpSent) { showError('Please click "Send Code" to receive your verification code first.'); return; }
 
   // Show OTP instructions
   const masked = contactMethod === 'email'
     ? contact.replace(/(.{2})(.+)(@.+)/, '$1****$3')
     : contact.replace(/(.{3})(.+)(.{2})/, '$1****$3');
   document.getElementById('otpInstructions').textContent =
-    'We sent a 6-digit code to ' + masked + '. Enter it below to verify your account.';
+    'Enter the 6-digit code sent to ' + masked + '. Check your inbox and spam folder.';
 
   setStep(2);
   document.querySelector('.otp-box').focus();
@@ -487,51 +511,68 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── VERIFY OTP ── */
 async function verifyOtp() {
   const entered = Array.from(document.querySelectorAll('.otp-box')).map(b => b.value).join('');
-  const stored  = sessionStorage.getItem('apexPendingOtp');
-
   if (entered.length < 6) { showError('Please enter all 6 digits.'); return; }
-  if (entered !== stored)  { showError('Incorrect code. Please try again.'); return; }
 
   const firstName = document.getElementById('firstName').value.trim();
   const lastName  = document.getElementById('lastName').value.trim();
-  const contact   = pendingContact || sessionStorage.getItem('apexPendingContact');
+  const contact   = pendingContact;
   const password  = document.getElementById('password').value;
 
-  // ── Try Supabase signup ─────────────────────────────────────
-  if (window.ApexCourts) {
-    try {
-      // Use email if contact looks like an email, else use phone
-      const isEmail = contact.includes('@');
-      await ApexCourts.signUp({
-        email:     isEmail ? contact : `${contact.replace(/\D/g,'')}@smash-studio.local`,
-        phone:     isEmail ? undefined : contact,
-        password,
-        firstName,
-        lastName,
-      });
-      // Sign in immediately after signup
-      await ApexCourts.signIn(
-        isEmail ? contact : `${contact.replace(/\D/g,'')}@smash-studio.local`,
-        password
-      );
-    } catch (e) {
-      console.warn('[Signup] Supabase error, saving locally:', e.message);
+  if (!contact) { showError('Session expired. Please go back and resend the code.'); return; }
+
+  const btn = document.querySelector('#panel2 .btn-primary-full');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  clearMessages();
+
+  try {
+    if (!window.ApexCourts) throw new Error('Supabase not loaded');
+
+    const isEmail = contact.includes('@');
+    if (isEmail) {
+      // Verify email OTP (type: 'signup' = confirmation code from signUp)
+      const result = await ApexCourts.verifyEmailOTP(contact, entered);
+      const user = result?.user;
+      const fullName = `${firstName} ${lastName}`.trim();
+      localStorage.setItem('apexUser', fullName);
+      localStorage.setItem('apexRole', 'member');
+      if (user?.id) localStorage.setItem('apexUserId', user.id);
+    } else {
+      // Phone OTP
+      const result = await ApexCourts.verifyOTP(contact, entered);
+      const user = result?.user;
+      const fullName = `${firstName} ${lastName}`.trim();
+      localStorage.setItem('apexUser', fullName);
+      localStorage.setItem('apexRole', 'member');
+      if (user?.id) localStorage.setItem('apexUserId', user.id);
+    }
+
+    otpSent = false;
+    setStep(3);
+  } catch (e) {
+    btn.disabled = false;
+    btn.innerHTML = 'Verify &amp; Create Account <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+    if (e.message && (e.message.includes('expired') || e.message.includes('invalid') || e.message.includes('Token'))) {
+      showError('Incorrect or expired code. Please try again or click "Resend code".');
+    } else {
+      showError('Verification failed: ' + (e.message || 'Unknown error'));
     }
   }
-
-  // ── Always save to localStorage as fallback ──────────────────
-  const accounts = JSON.parse(localStorage.getItem('apexAccounts') || '[]');
-  accounts.push({ contact, firstName, lastName, password, method: contactMethod, role: 'member', createdAt: new Date().toISOString() });
-  localStorage.setItem('apexAccounts', JSON.stringify(accounts));
-
-  localStorage.setItem('apexUser', `${firstName} ${lastName}`);
-  sessionStorage.removeItem('apexPendingOtp');
-  sessionStorage.removeItem('apexPendingContact');
-  setStep(3);
 }
 
-function resendOtp() {
-  sendOtp(contactMethod);
+async function resendOtp() {
+  if (!pendingContact) { showError('Please go back and enter your details again.'); return; }
+  clearMessages();
+  try {
+    if (pendingContact.includes('@')) {
+      await ApexCourts.resendEmailOTP(pendingContact);
+    } else {
+      await ApexCourts.sendOTP(pendingContact);
+    }
+    showSuccess('New code sent to ' + pendingContact + '.');
+  } catch (e) {
+    showError('Failed to resend: ' + (e.message || 'Unknown error'));
+  }
 }
 
 function goBack() {
