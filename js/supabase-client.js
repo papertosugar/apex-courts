@@ -1,5 +1,5 @@
 /* ============================================================
-   APEX COURTS — Supabase Client
+   SMASH STUDIO — Supabase Client
    Replaces localStorage data layer with Supabase queries.
 
    Setup:

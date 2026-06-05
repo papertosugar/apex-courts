@@ -3,212 +3,429 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cancellation & Credit Policy — Apex Courts</title>
+  <title>Fair Booking Policy — Smash Studio</title>
+  <meta name="description" content="Smash Studio court booking policy — peak hour limits, cancellation rules, and fair usage guidelines." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <style>
-    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; }
-    .policy-page { max-width: 740px; margin: 0 auto; padding: 56px 5% 100px; }
-    .policy-eyebrow {
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; background: var(--ink); }
+
+    .policy-page { max-width: 800px; margin: 0 auto; padding: 56px 5% 120px; }
+
+    /* Hero */
+    .pol-hero { margin-bottom: 56px; }
+    .pol-eyebrow {
       display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
     }
-    .policy-eyebrow-line { width: 32px; height: 2px; background: var(--gold); }
-    .policy-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
-    .policy-title {
+    .pol-eyebrow-line { width: 32px; height: 2px; background: var(--gold); flex-shrink: 0; }
+    .pol-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+    .pol-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(36px, 6vw, 56px); letter-spacing: 0.02em;
-      line-height: 1; margin-bottom: 12px;
+      font-size: clamp(40px, 7vw, 64px); letter-spacing: 0.02em; line-height: 1;
+      color: var(--cream); margin-bottom: 14px;
     }
-    .policy-updated { font-size: 13px; color: var(--cream-muted); margin-bottom: 48px; }
+    .pol-title span { color: var(--gold); }
+    .pol-lead { font-size: 16px; color: var(--cream-muted); line-height: 1.7; max-width: 580px; }
+    .pol-updated { font-size: 12px; color: var(--cream-dim); margin-top: 14px; letter-spacing: 0.04em; }
 
-    .policy-section { margin-bottom: 48px; }
-    .policy-section-title {
+    /* Section */
+    .pol-section { margin-bottom: 52px; }
+    .pol-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 6px;
+    }
+    .pol-section-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px; letter-spacing: 0.05em; color: var(--gold);
-      margin-bottom: 16px; padding-bottom: 10px;
-      border-bottom: 1px solid var(--stone-line);
+      font-size: 26px; letter-spacing: 0.04em; color: var(--cream);
+      margin-bottom: 20px;
+    }
+    .pol-body { font-size: 15px; color: var(--cream-muted); line-height: 1.75; }
+    .pol-body p { margin-bottom: 12px; }
+    .pol-body ul { padding-left: 20px; }
+    .pol-body li { margin-bottom: 6px; }
+
+    /* Highlight card */
+    .pol-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 16px; padding: 24px 28px; margin-bottom: 20px;
+    }
+    .pol-card-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 14px;
+    }
+    .pol-card-body { font-size: 14px; color: var(--cream-muted); line-height: 1.7; }
+
+    /* Peak hour blocks */
+    .peak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    @media(max-width: 560px) { .peak-grid { grid-template-columns: 1fr; } }
+    @media(max-width: 768px) {
+      .cancel-table, .summary-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .policy-section { padding: 20px 16px !important; }
+    }
+    @media(max-width: 480px) {
+      .policy-header { padding: 80px 4% 40px !important; }
+    }
+    .peak-block {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .peak-block.accent { border-color: rgba(0,194,168,0.25); background: rgba(0,194,168,0.04); }
+    .peak-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .peak-time { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.03em; color: var(--cream); line-height: 1.1; }
+    .peak-days { font-size: 12px; color: var(--cream-muted); margin-top: 4px; }
+
+    /* Limit pills */
+    .limit-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .limit-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 100px; padding: 10px 18px;
+      font-size: 14px; font-weight: 600; color: var(--cream);
+    }
+    .limit-pill .pill-num {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      color: var(--gold); line-height: 1;
     }
 
-    .refund-table {
-      width: 100%; border-collapse: collapse; margin-bottom: 16px;
+    /* Cancellation table */
+    .cancel-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    .cancel-table th {
+      padding: 10px 14px; text-align: left;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--cream-dim); border-bottom: 1px solid var(--stone-line);
     }
-    .refund-table th {
-      text-align: left; padding: 12px 16px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--cream-muted); background: var(--stone);
-      border-bottom: 1px solid var(--stone-line);
+    .cancel-table td {
+      padding: 14px; font-size: 14px; color: var(--cream-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: middle;
     }
-    .refund-table td {
-      padding: 14px 16px; font-size: 14px; color: var(--cream-muted);
-      border-bottom: 1px solid rgba(242,237,228,0.06);
+    .cancel-table tr:last-child td { border-bottom: none; }
+    .cancel-table .refund {
+      font-weight: 700;
     }
-    .refund-table tr:last-child td { border-bottom: none; }
-    .refund-table .window { font-weight: 600; color: var(--cream); }
-    .refund-table .rate {
-      font-weight: 800; font-size: 15px;
-    }
-    .rate-100 { color: #22c55e; }
-    .rate-50  { color: #84cc16; }
-    .rate-30  { color: #eab308; }
-    .rate-10  { color: #f97316; }
-    .rate-0   { color: #f87171; }
+    .refund-100 { color: #4ade80; }
+    .refund-50  { color: #a3e635; }
+    .refund-30  { color: #facc15; }
+    .refund-10  { color: #fb923c; }
+    .refund-0   { color: #f87171; }
 
-    .policy-list {
-      list-style: none; padding: 0; margin: 0;
-      display: flex; flex-direction: column; gap: 10px;
+    /* Examples */
+    .example-list { display: flex; flex-direction: column; gap: 8px; }
+    .example-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--cream-muted); line-height: 1.5;
     }
-    .policy-list li {
-      display: flex; align-items: flex-start; gap: 12px;
-      font-size: 14px; color: var(--cream-muted); line-height: 1.7;
-    }
-    .policy-list li::before {
-      content: '';
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--gold); margin-top: 8px; flex-shrink: 0;
-    }
-    .policy-note {
-      background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2);
-      border-radius: 10px; padding: 16px 20px;
-      font-size: 13px; color: var(--cream-muted); line-height: 1.7;
-      margin-top: 16px;
-    }
-    .policy-note strong { color: var(--gold); }
+    .example-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
 
-    .back-link {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 600; color: var(--gold);
-      text-decoration: none; margin-bottom: 40px;
-      padding: 8px 0; transition: gap 0.2s;
+    /* Summary table */
+    .summary-table { width: 100%; border-collapse: collapse; }
+    .summary-table th {
+      padding: 10px 14px; text-align: left;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--cream-dim); border-bottom: 1px solid var(--stone-line);
+      background: var(--stone);
     }
-    .back-link:hover { gap: 12px; }
+    .summary-table td {
+      padding: 13px 14px; font-size: 13px; color: var(--cream-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .summary-table td:first-child { color: var(--cream); font-weight: 600; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-wrap {
+      border: 1px solid var(--stone-line); border-radius: 14px; overflow: hidden;
+    }
+
+    /* divider */
+    .pol-divider { height: 1px; background: var(--stone-line); margin: 40px 0; }
+
+    /* warning box */
+    .pol-warning {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .pol-warning-icon { color: #f87171; flex-shrink: 0; margin-top: 1px; }
+    .pol-warning-body { font-size: 14px; color: rgba(252,165,165,0.8); line-height: 1.6; }
+    .pol-warning-body strong { color: #fca5a5; }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 </head>
 <body>
 
 <nav id="navbar" class="scrolled">
-  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+  <a href="/" class="nav-logo" aria-label="Smash Studio — Home">
     <div class="nav-logo-mark" aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
-        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+        <path d="M10 2L18 17H2L10 2Z" stroke="#08080C" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#08080C" stroke-width="2"/>
       </svg>
     </div>
-    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+    <span class="nav-wordmark">SMASH <em>STUDIO</em></span>
   </a>
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="/">Home</a></li>
+    <li><a href="/#sports">Sports</a></li>
     <li><a href="book.html" class="nav-cta">Book a Court</a></li>
   </ul>
-  <button class="nav-hamburger" id="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
+  <button class="nav-hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleMenu()">
     <span></span><span></span><span></span>
   </button>
 </nav>
 
-<main id="main" class="policy-page">
+<main class="policy-page">
 
-  <a href="/" class="back-link">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-    Back to Home
-  </a>
-
-  <div class="policy-eyebrow">
-    <div class="policy-eyebrow-line"></div>
-    <span class="policy-eyebrow-text">Player Guidelines</span>
+  <!-- Hero -->
+  <div class="pol-hero">
+    <div class="pol-eyebrow">
+      <div class="pol-eyebrow-line"></div>
+      <span class="pol-eyebrow-text">Court Lab</span>
+    </div>
+    <h1 class="pol-title">FAIR <span>BOOKING</span><br>POLICY</h1>
+    <p class="pol-lead">모든 회원이 피크타임 코트를 공정하게 이용할 수 있도록 설계된 예약 정책입니다. 예약 독점 방지, 신규 회원 접근성 향상, 코트 이용률 극대화를 목표로 합니다.</p>
+    <p class="pol-updated">최종 업데이트 2026년 6월</p>
   </div>
-  <h1 class="policy-title">Cancellation &amp;<br>Credit Policy</h1>
-  <p class="policy-updated">Effective June 2025 · Last updated June 4, 2025</p>
 
-  <!-- Section 1: Refund Schedule -->
-  <div class="policy-section">
-    <div class="policy-section-title">Refund &amp; Credit Schedule</div>
-    <table class="refund-table" role="table" aria-label="Cancellation credit schedule">
-      <thead>
-        <tr>
-          <th>Cancellation Window</th>
-          <th>Credit Refund</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="window">More than 24 hours before</td>
-          <td class="rate rate-100">100%</td>
-          <td>Full credit returned</td>
-        </tr>
-        <tr>
-          <td class="window">12 – 24 hours before</td>
-          <td class="rate rate-50">50%</td>
-          <td>Half credit returned</td>
-        </tr>
-        <tr>
-          <td class="window">6 – 12 hours before</td>
-          <td class="rate rate-30">30%</td>
-          <td>Partial credit returned</td>
-        </tr>
-        <tr>
-          <td class="window">Less than 6 hours before</td>
-          <td class="rate rate-10">10%</td>
-          <td>Minimal credit returned</td>
-        </tr>
-        <tr>
-          <td class="window">No-show</td>
-          <td class="rate rate-0">0%</td>
-          <td>Non-refundable, non-transferable</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="policy-note">
-      <strong>How to cancel:</strong> Log in to your account and cancel from your booking history, or contact the front desk directly. Cancellations must be submitted before the cutoff window — time is calculated from the confirmed booking start time.
+  <!-- 예약 가능 기간 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Booking Window</div>
+    <h2 class="pol-section-title">예약 가능 기간</h2>
+    <div class="pol-card">
+      <div class="pol-card-title">기본 규칙</div>
+      <div class="pol-card-body">
+        <ul style="padding-left:18px;line-height:2">
+          <li>예약은 경기 시작 <strong style="color:var(--cream)">7일 전부터</strong> 오픈됩니다.</li>
+          <li>회원만 예약 가능합니다.</li>
+          <li>예약 시 즉시 결제 또는 크레딧이 차감됩니다.</li>
+        </ul>
+      </div>
     </div>
   </div>
 
-  <!-- Section 2: Credit Rules -->
-  <div class="policy-section">
-    <div class="policy-section-title">Credit Terms</div>
-    <ul class="policy-list" aria-label="Credit rules">
-      <li>Credits are valid for <strong style="color:var(--cream)">90 days</strong> from the date of issue.</li>
-      <li>Credits may be applied to future court bookings, equipment rentals, and eligible Court Lab services.</li>
-      <li>Credits are non-transferable and may not be converted to cash.</li>
-      <li>Multiple credits may be combined toward a single booking.</li>
-      <li>Credits issued as part of a promotional offer may have separate terms and expiry dates.</li>
-    </ul>
-  </div>
-
-  <!-- Section 3: Facility Issues -->
-  <div class="policy-section">
-    <div class="policy-section-title">Facility Disruptions</div>
-    <ul class="policy-list">
-      <li>Apex Courts reserves the right to provide a <strong style="color:var(--cream)">full refund or full credit</strong> in cases of facility issues, safety concerns, or operational disruptions that prevent a session from proceeding.</li>
-      <li>In the event of a partial disruption (e.g., early court closure), a pro-rated credit will be issued for unused time.</li>
-      <li>Disruptions caused by weather, power, or force majeure events will be handled on a case-by-case basis.</li>
-    </ul>
-  </div>
-
-  <!-- Section 4: No-shows -->
-  <div class="policy-section">
-    <div class="policy-section-title">No-Shows &amp; Late Arrivals</div>
-    <ul class="policy-list">
-      <li>No-show reservations are <strong style="color:#f87171">non-refundable and non-transferable</strong>.</li>
-      <li>Courts will be held for <strong style="color:var(--cream)">15 minutes</strong> past the booking start time. After that, the court may be released to walk-in players.</li>
-      <li>Late arrivals do not extend the booking end time — the session ends at the originally confirmed time.</li>
-      <li>If you know you'll be late, please call the front desk — we will hold the court when possible.</li>
-    </ul>
-  </div>
-
-  <!-- Section 5: Modifications -->
-  <div class="policy-section">
-    <div class="policy-section-title">Booking Modifications</div>
-    <ul class="policy-list">
-      <li>Bookings may be rescheduled up to <strong style="color:var(--cream)">12 hours before</strong> the session start time without penalty, subject to availability.</li>
-      <li>Rescheduling within 12 hours will incur a rescheduling fee of <strong style="color:var(--cream)">₱100</strong>.</li>
-      <li>Court type changes (e.g., pickleball to badminton) are treated as a cancellation and re-booking.</li>
-      <li>Duration extensions must be requested at the front desk and are subject to court availability.</li>
-    </ul>
-    <div class="policy-note">
-      <strong>Questions?</strong> Our front desk team is available daily from 7:00 AM to 12:00 AM. Call us at (555) 123-4567 or visit in person.
+  <!-- 피크타임 정의 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Peak Hours Definition</div>
+    <h2 class="pol-section-title">피크타임 정의</h2>
+    <div class="peak-grid">
+      <div class="peak-block accent">
+        <div class="peak-label">평일 (Mon – Fri)</div>
+        <div class="peak-time">16:00<br>– 22:00</div>
+        <div class="peak-days">월요일 ~ 금요일</div>
+      </div>
+      <div class="peak-block accent">
+        <div class="peak-label">주말 (Sat – Sun)</div>
+        <div class="peak-time">16:00<br>– 22:00</div>
+        <div class="peak-days">토요일 ~ 일요일</div>
+      </div>
     </div>
+    <p class="pol-body">해당 시간대는 수요가 집중되는 피크타임으로 분류되며, 예약 횟수 제한이 적용됩니다.</p>
+  </div>
+
+  <!-- 피크타임 예약 제한 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Peak Hour Limits</div>
+    <h2 class="pol-section-title">피크타임 예약 제한</h2>
+    <div class="limit-row">
+      <div class="limit-pill">
+        <div class="pill-num">2</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--cream)">평일 피크타임</div>
+          <div style="font-size:11px;color:var(--cream-muted)">주 최대 2회</div>
+        </div>
+      </div>
+      <div class="limit-pill">
+        <div class="pill-num">1</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--cream)">주말 피크타임</div>
+          <div style="font-size:11px;color:var(--cream-muted)">주 최대 1회</div>
+        </div>
+      </div>
+      <div class="limit-pill" style="border-color:rgba(0,194,168,0.3);background:rgba(0,194,168,0.06)">
+        <div class="pill-num" style="color:var(--gold)">3</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--cream)">총 주간 피크타임</div>
+          <div style="font-size:11px;color:var(--cream-muted)">최대 3회</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pol-card" style="margin-top:20px">
+      <div class="pol-card-title">예시</div>
+      <div class="example-list">
+        <div class="example-item"><span class="example-icon">✅</span> 화요일 19:00 예약</div>
+        <div class="example-item"><span class="example-icon">✅</span> 목요일 20:00 예약</div>
+        <div class="example-item"><span class="example-icon">✅</span> 토요일 18:00 예약</div>
+        <div class="example-item"><span class="example-icon">❌</span>
+          <span>일요일 17:00 예약 불가 — <em style="color:rgba(252,165,165,0.7)">주말 피크타임 한도 초과</em></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 비피크타임 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Off-Peak Hours</div>
+    <h2 class="pol-section-title">비피크타임 예약</h2>
+    <div class="peak-grid">
+      <div class="peak-block">
+        <div class="peak-label">평일 비피크</div>
+        <div class="peak-time" style="font-size:22px">07:00 – 16:00</div>
+        <div class="peak-days">월요일 ~ 금요일 · 횟수 제한 없음</div>
+      </div>
+      <div class="peak-block">
+        <div class="peak-label">주말 비피크</div>
+        <div class="peak-time" style="font-size:22px">07:00 – 16:00</div>
+        <div class="peak-days">토요일 ~ 일요일 · 횟수 제한 없음</div>
+      </div>
+    </div>
+    <p class="pol-body">비피크타임 예약은 횟수 제한 없이 자유롭게 가능합니다.</p>
+  </div>
+
+  <!-- 24시간 룰 -->
+  <div class="pol-section">
+    <div class="pol-section-label">24-Hour Release Rule</div>
+    <h2 class="pol-section-title">24시간 룰</h2>
+    <div class="pol-card" style="border-color:rgba(0,194,168,0.2);background:rgba(0,194,168,0.04)">
+      <div class="pol-card-title" style="color:var(--gold)">경기 시작 24시간 전부터 예약 제한 해제</div>
+      <div class="pol-card-body">
+        코트 이용 시작 24시간 전부터는 피크타임 예약 제한이 해제됩니다. 남아있는 코트는 한도를 초과한 회원도 추가 예약이 가능합니다.
+      </div>
+    </div>
+    <div class="pol-card" style="margin-top:12px">
+      <div class="pol-card-title">예시</div>
+      <div class="pol-card-body">
+        <div class="example-list">
+          <div class="example-item"><span class="example-icon">📅</span> 회원 A: 화/목 평일 피크 2회 + 토요일 주말 피크 1회 — 모든 한도 소진</div>
+          <div class="example-item"><span class="example-icon">✅</span>
+            일요일 18:00 코트가 비어있고 경기 시작 24시간 이내라면 <strong style="color:var(--cream)">추가 예약 가능</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 대기열 시스템 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Waitlist System</div>
+    <h2 class="pol-section-title">대기열 시스템</h2>
+    <div class="pol-body">
+      <p>예약이 마감된 시간대는 대기 신청이 가능합니다. 취소 발생 시 자동으로 처리됩니다.</p>
+    </div>
+    <div class="pol-card">
+      <div class="pol-card-title">자동 처리 순서</div>
+      <div class="example-list">
+        <div class="example-item">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(0,194,168,0.15);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0">1</span>
+          대기자 1순위에게 자동 알림 발송
+        </div>
+        <div class="example-item">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(0,194,168,0.15);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0">2</span>
+          지정 시간 내 결제 진행
+        </div>
+        <div class="example-item">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(0,194,168,0.15);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0">3</span>
+          미결제 시 다음 대기자에게 자동 이동
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 예약 취소 정책 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Cancellation Policy</div>
+    <h2 class="pol-section-title">예약 취소 환불 정책</h2>
+    <div class="summary-wrap" style="margin-bottom:16px">
+      <table class="cancel-table">
+        <thead>
+          <tr>
+            <th>취소 시점</th>
+            <th>환불율</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>24시간 이상 전</td>
+            <td class="refund refund-100">100%</td>
+            <td style="font-size:12px;color:var(--cream-dim)">전액 환불</td>
+          </tr>
+          <tr>
+            <td>12 ~ 24시간 전</td>
+            <td class="refund refund-50">50%</td>
+            <td style="font-size:12px;color:var(--cream-dim)">부분 환불</td>
+          </tr>
+          <tr>
+            <td>6 ~ 12시간 전</td>
+            <td class="refund refund-30">30%</td>
+            <td style="font-size:12px;color:var(--cream-dim)">부분 환불</td>
+          </tr>
+          <tr>
+            <td>6시간 미만</td>
+            <td class="refund refund-10">10%</td>
+            <td style="font-size:12px;color:var(--cream-dim)">최소 환불</td>
+          </tr>
+          <tr>
+            <td>No Show</td>
+            <td class="refund refund-0">0%</td>
+            <td style="font-size:12px;color:var(--cream-dim)">환불 없음</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 계정 공유 금지 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Account Policy</div>
+    <h2 class="pol-section-title">계정 공유 금지</h2>
+    <div class="pol-warning">
+      <div class="pol-warning-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="pol-warning-body">
+        <strong>회원 계정 공유는 금지됩니다.</strong> 적발 시 예약 취소, 계정 일시 정지, 회원 자격 제한 조치가 가능합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="pol-divider"></div>
+
+  <!-- 요약 테이블 -->
+  <div class="pol-section">
+    <div class="pol-section-label">Summary</div>
+    <h2 class="pol-section-title">정책 요약</h2>
+    <div class="summary-wrap">
+      <table class="summary-table">
+        <thead>
+          <tr><th>항목</th><th>정책</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>예약 오픈</td><td>경기 7일 전부터</td></tr>
+          <tr><td>평일 피크타임</td><td>16:00 ~ 22:00</td></tr>
+          <tr><td>주말 피크타임</td><td>16:00 ~ 22:00</td></tr>
+          <tr><td>평일 피크타임 예약 한도</td><td>주 2회</td></tr>
+          <tr><td>주말 피크타임 예약 한도</td><td>주 1회</td></tr>
+          <tr><td>비피크타임 예약</td><td>횟수 무제한</td></tr>
+          <tr><td>24시간 전 규칙</td><td>피크타임 제한 해제</td></tr>
+          <tr><td>대기열</td><td>자동 운영</td></tr>
+          <tr><td>No Show</td><td>환불 없음</td></tr>
+          <tr><td>계정 공유</td><td>금지</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;padding:40px 0 0">
+    <p style="font-size:14px;color:var(--cream-muted);margin-bottom:20px">궁금한 점이 있으시면 스태프에게 문의하세요.</p>
+    <a href="book.html" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;background:var(--gold);color:var(--ink);font-size:15px;font-weight:800;text-decoration:none;transition:transform 0.2s,box-shadow 0.2s"
+      onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 8px 32px rgba(0,194,168,0.4)'"
+      onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      코트 예약하기
+    </a>
   </div>
 
 </main>

@@ -6,7 +6,8 @@
 
 -- ── Extensions ───────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- fuzzy text search
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";    -- fuzzy text search
+CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- required for EXCLUDE constraint on bookings
 
 
 -- ── Enums ────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ CREATE TABLE public.profiles (
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   INSERT INTO public.profiles (id, first_name, last_name, phone, role)
   VALUES (
@@ -42,8 +43,12 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
-    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'member')
-  );
+    'member'::user_role
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'handle_new_user failed for user %: %', NEW.id, SQLERRM;
   RETURN NEW;
 END;
 $$;

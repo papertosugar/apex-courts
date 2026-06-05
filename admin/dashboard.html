@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard — Apex Courts</title>
+  <title>Admin Dashboard — Smash Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
@@ -60,6 +60,42 @@
     .util-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
     .util-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 1s ease; }
     .util-pct { font-size: 12px; font-weight: 700; color: var(--gold); width: 35px; text-align: right; flex-shrink: 0; }
+    /* Tabs */
+    .dash-tab {
+      flex: 1; padding: 8px 12px; border-radius: 8px; text-align: center;
+      font-size: 12px; font-weight: 600; cursor: pointer; border: none;
+      background: transparent; color: var(--text-muted); font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .dash-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .dash-tab.active { background: rgba(212,175,55,0.1); color: var(--gold); border: 1px solid var(--border-bright); }
+    /* Log filter buttons */
+    .log-filter-btn {
+      padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700;
+      cursor: pointer; border: 1px solid var(--border); background: transparent;
+      color: var(--text-muted); font-family: inherit; transition: all 0.15s;
+    }
+    .log-filter-btn:hover { color: var(--text); border-color: var(--border-bright); }
+    .log-filter-btn.active-filter { background: rgba(212,175,55,0.1); border-color: var(--gold); color: var(--gold); }
+    /* Revenue period buttons */
+    .rev-period-btn {
+      padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: none; background: transparent; color: var(--text-muted);
+      font-family: inherit; transition: all 0.15s;
+    }
+    .rev-period-btn:hover { color: var(--text); }
+    .rev-period-btn.active { background: rgba(212,175,55,0.1); color: var(--gold); }
+    /* Status chips */
+    .chip { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+    .chip-green { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .chip-purple { background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+    .chip-red { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .chip-gold { background: rgba(212,175,55,0.1); color: var(--gold); border: 1px solid var(--border-bright); }
+    /* Data table shared */
+    .data-table th { padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 12px 14px; font-size: 13px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -67,38 +103,39 @@
 <body>
 <div class="topbar">
   <div class="tb-left">
-    <div class="tb-logo"><div class="tb-logo-icon">A</div><span class="tb-title">APEX <span>COURTS</span></span></div>
+    <div class="tb-logo"><div class="tb-logo-icon">S</div><span class="tb-title">SMASH <span>STUDIO</span></span></div>
     <div class="tb-divider"></div>
     <span class="tb-page">Admin Dashboard</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <div style="font-size:13px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums" id="dashTime"></div>
     <div style="font-size:12px;color:var(--text-muted)" id="dashUser"></div>
-    <a href="pos.html" style="padding:6px 14px;border-radius:7px;background:rgba(212,175,55,0.1);border:1px solid var(--border-bright);color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Open POS</a>
-    <button style="padding:6px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer" onclick="sessionStorage.clear();window.location.href='index.html'">Logout</button>
+    <a href="pos.html" style="padding:6px 14px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--black);font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:6px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Switch to POS
+    </a>
+    <button style="padding:6px 14px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#f87171;font-size:12px;font-weight:600;cursor:pointer" onclick="sessionStorage.clear();window.location.href='../index.html'">Logout</button>
   </div>
 </div>
 <div class="layout">
   <nav class="sidebar">
-    <div class="sb-section">Overview</div>
-    <a class="sb-item active" href="#">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Dashboard
+    <div class="sb-section">Dashboard</div>
+    <a class="sb-item active" id="sb-overview" href="#" onclick="navSidebar('overview',this);return false;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Overview
     </a>
-    <a class="sb-item" href="pos.html">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> POS System
-    </a>
-    <div class="sb-section">Manage</div>
-    <a class="sb-item" href="pos.html#bookings">
+    <a class="sb-item" id="sb-bookings" href="#" onclick="navSidebar('bookings',this);return false;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Bookings
     </a>
-    <a class="sb-item" href="pos.html#courts">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg> Courts
-    </a>
-    <a class="sb-item" href="#">
+    <a class="sb-item" id="sb-members" href="#" onclick="navSidebar('members',this);return false;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Members
     </a>
-    <a class="sb-item" href="#">
+    <a class="sb-item" id="sb-revenue" href="#" onclick="navSidebar('revenue',this);return false;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Revenue
+    </a>
+    <div class="sb-section">POS</div>
+    <a class="sb-item" href="pos.html" style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.15)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span style="color:var(--gold);font-weight:700">Open POS</span>
     </a>
     <div class="sb-section">Site</div>
     <a class="sb-item" href="../index.html" target="_blank">
@@ -106,85 +143,285 @@
     </a>
   </nav>
   <div class="main">
-    <div class="page-header">
-      <div class="page-title">Good morning 👋</div>
-      <div class="page-sub">Here's what's happening at Apex Courts today</div>
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="page-title" id="dashGreeting">Good morning</div>
+        <div class="page-sub" id="dashSubtitle">Here's what's happening at Smash Studio today</div>
+      </div>
     </div>
 
     <!-- KPI Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-icon">💰</div>
+        <div class="kpi-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
         <div class="kpi-label">Today's Revenue</div>
-        <div class="kpi-value" id="kpi-rev">$0</div>
-        <div class="kpi-change up">↑ 12% vs yesterday</div>
+        <div class="kpi-value" id="kpi-rev">₱0</div>
+        <div class="kpi-change up" id="kpi-rev-change">↑ Loading…</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon">🏟</div>
+        <div class="kpi-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+        </div>
         <div class="kpi-label">Courts Occupied</div>
-        <div class="kpi-value">4<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)">/12</span></div>
-        <div class="kpi-change up">↑ 2 more than this time yesterday</div>
+        <div class="kpi-value" id="kpi-courts">4<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)">/9</span></div>
+        <div class="kpi-change up">Pickleball + Badminton + Drill</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon">📅</div>
+        <div class="kpi-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <div class="kpi-label">Bookings Today</div>
-        <div class="kpi-value" id="kpi-book">9</div>
-        <div class="kpi-change up">↑ 3 walk-ins</div>
+        <div class="kpi-value" id="kpi-book">0</div>
+        <div class="kpi-change up" id="kpi-walkin-change">↑ 0 walk-ins</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon">👥</div>
+        <div class="kpi-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
         <div class="kpi-label">Active Members</div>
         <div class="kpi-value">347</div>
         <div class="kpi-change up">↑ 5 new this week</div>
       </div>
     </div>
 
-    <!-- Charts + Activity -->
-    <div class="grid-2">
-      <!-- Revenue chart -->
-      <div class="card">
-        <div class="card-title">
-          <span>Weekly Revenue</span>
-          <button class="mini-btn">This Week</button>
+    <!-- ── MAIN TABS ── -->
+    <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px" id="dashTabs">
+      <button class="dash-tab active" onclick="switchTab('overview',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </button>
+      <button class="dash-tab" onclick="switchTab('bookings',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Bookings
+      </button>
+      <button class="dash-tab" onclick="switchTab('members',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Members
+      </button>
+      <button class="dash-tab" onclick="switchTab('revenue',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Revenue
+      </button>
+    </div>
+
+    <!-- ══ TAB: OVERVIEW ══ -->
+    <div id="tab-overview">
+      <div class="grid-2">
+        <!-- Revenue chart -->
+        <div class="card">
+          <div class="card-title">
+            <span>Weekly Revenue</span>
+            <button class="mini-btn" onclick="buildRevenueChart()">Refresh</button>
+          </div>
+          <div class="chart-bars" id="revenueChart"></div>
         </div>
-        <div class="chart-bars" id="revenueChart"></div>
+        <!-- Court utilization -->
+        <div class="card">
+          <div class="card-title">Court Utilization Today</div>
+          <div id="utilBars"></div>
+        </div>
       </div>
-      <!-- Court utilization -->
-      <div class="card">
-        <div class="card-title">Court Utilization Today</div>
-        <div id="utilBars"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span>Staff Activity Log</span>
+            <button class="mini-btn" onclick="loadActivityLog()">Refresh</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="logFilters">
+            <button onclick="filterLog('all',this)" class="log-filter-btn active-filter">All</button>
+            <button onclick="filterLog('walkin',this)" class="log-filter-btn">Walk-ins</button>
+            <button onclick="filterLog('edit',this)" class="log-filter-btn">Edits</button>
+            <button onclick="filterLog('cancel',this)" class="log-filter-btn">Cancels</button>
+          </div>
+          <div class="activity-list" id="activityList" style="max-height:320px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Upcoming Bookings</div>
+          <div id="upcomingList" style="max-height:320px;overflow-y:auto"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Activity Log + Upcoming -->
-    <div class="grid-2">
+    <!-- ══ TAB: BOOKINGS ══ -->
+    <div id="tab-bookings" style="display:none">
       <div class="card">
-        <div class="card-title">
-          <span>Staff Activity Log</span>
-          <button class="mini-btn" onclick="loadActivityLog()">Refresh</button>
+        <div class="card-title" style="margin-bottom:16px">
+          <span>All Bookings Log</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="mini-btn" onclick="renderAllBookings()">↺ Refresh</button>
+            <button class="mini-btn" onclick="exportBookingsCSV()" style="color:var(--gold);border-color:var(--border-bright)">↓ Export CSV</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="logFilters">
-          <button onclick="filterLog('all',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--gold);background:rgba(212,175,55,0.1);color:var(--gold);font-family:inherit">All</button>
-          <button onclick="filterLog('walkin',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Walk-ins</button>
-          <button onclick="filterLog('edit',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Edits</button>
-          <button onclick="filterLog('cancel',this)" style="padding:4px 12px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit">Cancels</button>
+        <!-- Filters -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <input type="text" id="bk-search" placeholder="Search name, ID…" oninput="renderAllBookings()"
+            style="flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;font-family:inherit;outline:none" />
+          <input type="date" id="bk-date-from" onchange="renderAllBookings()"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;outline:none;font-family:inherit" />
+          <input type="date" id="bk-date-to" onchange="renderAllBookings()"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;outline:none;font-family:inherit" />
+          <select id="bk-sport" onchange="renderAllBookings()"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;outline:none">
+            <option value="">All Sports</option>
+            <option value="pickleball">Pickleball</option>
+            <option value="badminton">Badminton</option>
+            <option value="drill">Drill Zone</option>
+          </select>
+          <select id="bk-status" onchange="renderAllBookings()"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;outline:none">
+            <option value="">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="walkin">Walk-in</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
-        <div class="activity-list" id="activityList" style="max-height:320px;overflow-y:auto"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Upcoming Bookings</div>
-        <div id="upcomingList" style="max-height:320px;overflow-y:auto"></div>
+        <!-- Summary pills -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="bkSummaryPills"></div>
+        <!-- Table -->
+        <div style="overflow-x:auto">
+          <table class="data-table" style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">ID</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Name</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Sport</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Court</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Date</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Time</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Duration</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Status</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Total</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">Created</th>
+              </tr>
+            </thead>
+            <tbody id="bkTableBody"></tbody>
+          </table>
+        </div>
+        <div id="bkPagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:var(--text-muted)"></div>
       </div>
     </div>
+
+    <!-- ══ TAB: MEMBERS ══ -->
+    <div id="tab-members" style="display:none">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:16px">
+          <span>Registered Members</span>
+          <div style="display:flex;gap:8px">
+            <button class="mini-btn" onclick="loadMembers()">↺ Refresh</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <input type="text" id="mem-search" placeholder="Search by name, email…" oninput="filterMembers()"
+            style="flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;font-family:inherit;outline:none" />
+          <select id="mem-role" onchange="filterMembers()"
+            style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;outline:none">
+            <option value="">All Roles</option>
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+            <option value="pos_staff">Staff</option>
+          </select>
+        </div>
+        <!-- Member summary -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px" id="memberSummary"></div>
+        <div id="membersTableWrap" style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr id="membersTableHead"></tr>
+            </thead>
+            <tbody id="membersTableBody"></tbody>
+          </table>
+        </div>
+        <div id="membersStatus" style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: REVENUE ══ -->
+    <div id="tab-revenue" style="display:none">
+      <!-- Date picker row -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Period</div>
+            <div style="display:flex;gap:4px;background:var(--surface-3);border:1px solid var(--border);border-radius:9px;padding:3px">
+              <button class="rev-period-btn active" onclick="setRevPeriod('custom',this)">Custom</button>
+              <button class="rev-period-btn" onclick="setRevPeriod('today',this)">Today</button>
+              <button class="rev-period-btn" onclick="setRevPeriod('week',this)">This Week</button>
+              <button class="rev-period-btn" onclick="setRevPeriod('month',this)">This Month</button>
+            </div>
+          </div>
+          <div id="revCustomDates" style="display:flex;gap:8px;align-items:center">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">From</div>
+              <input type="date" id="rev-from" onchange="renderRevenue()"
+                style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;outline:none;font-family:inherit" />
+            </div>
+            <div style="margin-top:18px;color:var(--text-dim)">→</div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">To</div>
+              <input type="date" id="rev-to" onchange="renderRevenue()"
+                style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:13px;outline:none;font-family:inherit" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:20px" id="revKPIs"></div>
+
+      <!-- Revenue bar chart -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title" id="revChartTitle">Revenue by Day</div>
+        <div class="chart-bars" id="revBarChart" style="height:160px"></div>
+      </div>
+
+      <!-- Revenue breakdown by sport -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">By Sport</div>
+          <div id="revBySport"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">By Payment Method</div>
+          <div id="revByPayment"></div>
+        </div>
+      </div>
+
+      <!-- Booking list for period -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-title" id="revBookingListTitle">Bookings in Period</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr id="revTableHead"></tr></thead>
+            <tbody id="revTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
+/* ══════════════════════════════════════
+   SMASH STUDIO — Admin Dashboard Script
+   ══════════════════════════════════════ */
+
 // ── Auth guard ──
 (function() {
-  if (!sessionStorage.getItem('apexRole')) window.location.href = 'index.html';
+  const role = sessionStorage.getItem('apexRole');
+  if (!role || !['Admin','Staff','admin','pos_staff'].includes(role)) {
+    window.location.href = '../index.html'; return;
+  }
   const u = sessionStorage.getItem('apexUser') || 'Admin';
   document.getElementById('dashUser').textContent = u;
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const greetEl = document.getElementById('dashGreeting');
+  const subEl   = document.getElementById('dashSubtitle');
+  if (greetEl) greetEl.textContent = `${greeting}, ${u.split(' ')[0]}`;
+  if (subEl)   subEl.textContent   = `Smash Studio · ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}`;
 })();
 
 // ── Clock ──
@@ -193,179 +430,561 @@ setInterval(() => {
   if (el) el.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }, 1000);
 
-// ── Data helpers ──
-function getBookings() { return JSON.parse(localStorage.getItem('apexBookings') || '[]'); }
+// ── Helpers ──
+function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
 function getActivityLog() { return JSON.parse(localStorage.getItem('apexActivityLog') || '[]'); }
-
+function sportLabel(s)    { return s==='pickleball'?'Pickleball':s==='badminton'?'Badminton':'Drill Zone'; }
+function sportAbbr(s)     { return s==='pickleball'?'PB':s==='badminton'?'BD':'DZ'; }
+function durLabel(d)      { return d<1?'30 min':d===1?'1 hr':d+' hrs'; }
 function timeAgo(iso) {
-  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (diff < 60) return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  const d = Math.floor((Date.now()-new Date(iso))/1000);
+  if(d<60) return d+'s ago'; if(d<3600) return Math.floor(d/60)+'m ago';
+  if(d<86400) return Math.floor(d/3600)+'h ago';
   return new Date(iso).toLocaleDateString();
 }
+function statusChip(s) {
+  const map={confirmed:'chip-green',walkin:'chip-purple',cancelled:'chip-red',pending:'chip-gold'};
+  return `<span class="chip ${map[s]||'chip-gold'}">${s||'confirmed'}</span>`;
+}
+function fmt(n) { return '₱'+(n||0).toLocaleString(); }
 
-// ── KPI from real bookings ──
+// ═══════════════════ TAB SWITCHING ═══════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display='none');
+  document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).style.display='block';
+  btn.classList.add('active');
+  // sync sidebar
+  document.querySelectorAll('.sb-item[id^="sb-"]').forEach(s => s.classList.remove('active'));
+  const sbEl = document.getElementById('sb-'+name);
+  if (sbEl) sbEl.classList.add('active');
+  if (name==='bookings') renderAllBookings();
+  if (name==='members')  loadMembers();
+  if (name==='revenue')  renderRevenue();
+}
+
+// Called from sidebar — mirrors switchTab but triggered by sidebar click
+function navSidebar(name, sbItem) {
+  // sync top tab buttons
+  const tabBtn = document.querySelector(`.dash-tab[onclick*="'${name}'"]`);
+  if (tabBtn) switchTab(name, tabBtn);
+  else {
+    // fallback: manually switch
+    document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display='none');
+    document.getElementById('tab-'+name).style.display='block';
+    document.querySelectorAll('.sb-item[id^="sb-"]').forEach(s => s.classList.remove('active'));
+    sbItem.classList.add('active');
+    document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+    if (name==='bookings') renderAllBookings();
+    if (name==='members')  loadMembers();
+    if (name==='revenue')  renderRevenue();
+  }
+}
+
+// ═══════════════════ OVERVIEW TAB ═══════════════════
 function loadKPIs() {
   const today = new Date().toISOString().split('T')[0];
-  const bookings = getBookings();
-  const todayBookings = bookings.filter(b => b.date === today && b.status !== 'cancelled');
-  const revenue = todayBookings.reduce((s,b) => s + (b.totalAmount||0), 0);
-  const walkins = todayBookings.filter(b => b.status === 'walkin').length;
+  const all = getBookings();
+  const todayB = all.filter(b => b.date===today && b.status!=='cancelled');
+  const rev    = todayB.reduce((s,b)=>s+(b.totalAmount||0),0);
+  const walkins= todayB.filter(b=>b.status==='walkin').length;
 
   const revEl = document.getElementById('kpi-rev');
-  const bookEl = document.getElementById('kpi-book');
   if (revEl) {
-    let cur = 0;
-    const target = revenue || 3600;
-    const id = setInterval(() => {
-      cur = Math.min(cur + Math.ceil(target/40), target);
-      revEl.textContent = '₱' + cur.toLocaleString();
-      if (cur >= target) clearInterval(id);
-    }, 20);
+    let c=0; const t=rev||3600;
+    const id=setInterval(()=>{ c=Math.min(c+Math.ceil(t/40),t); revEl.textContent=fmt(c); if(c>=t)clearInterval(id); },20);
   }
-  if (bookEl) bookEl.textContent = todayBookings.length || 9;
-
-  // Walk-in change label
-  const wiEl = document.querySelector('[data-walkin-count]');
-  if (wiEl) wiEl.textContent = `↑ ${walkins} walk-in${walkins !== 1 ? 's' : ''}`;
+  const rcEl=document.getElementById('kpi-rev-change');
+  if(rcEl) rcEl.textContent=rev>0?`${todayB.length} bookings today`:'No bookings yet';
+  const bkEl=document.getElementById('kpi-book');
+  if(bkEl) bkEl.textContent=todayB.length||0;
+  const wiEl=document.getElementById('kpi-walkin-change');
+  if(wiEl) wiEl.textContent=`↑ ${walkins} walk-in${walkins!==1?'s':''}`;
 }
 
-// ── Revenue chart ──
-const REV_DATA = [18200, 24600, 20300, 29100, 23400, 34200, 0];
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
-(function() {
-  const today = new Date().toISOString().split('T')[0];
-  const todayRev = getBookings().filter(b=>b.date===today&&b.status!=='cancelled').reduce((s,b)=>s+(b.totalAmount||0),0);
-  REV_DATA[6] = todayRev || 3600;
-  const maxRev = Math.max(...REV_DATA);
+function buildRevenueChart() {
   const chart = document.getElementById('revenueChart');
   if (!chart) return;
-  REV_DATA.forEach((v, i) => {
-    const pct = maxRev > 0 ? (v / maxRev * 100) : 0;
-    const wrap = document.createElement('div');
-    wrap.className = 'chart-bar-wrap';
-    wrap.innerHTML = `<div class="chart-bar" style="height:0%" data-h="${pct}%"></div><div class="chart-label">${DAYS[i]}</div>`;
+  chart.innerHTML = '';
+  const all = getBookings();
+  // Build last 7 days
+  const days = [];
+  for (let i=6;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const iso=d.toISOString().split('T')[0];
+    const rev=all.filter(b=>b.date===iso&&b.status!=='cancelled').reduce((s,b)=>s+(b.totalAmount||0),0);
+    days.push({ label:d.toLocaleDateString('en-US',{weekday:'short'}), rev });
+  }
+  // Pad with demo data if all zero
+  if (days.every(d=>d.rev===0)) {
+    const demo=[18200,24600,20300,29100,23400,34200,3600];
+    days.forEach((d,i)=>d.rev=demo[i]);
+  }
+  const maxRev=Math.max(...days.map(d=>d.rev),1);
+  days.forEach(({label,rev})=>{
+    const pct=(rev/maxRev*100).toFixed(1);
+    const wrap=document.createElement('div');
+    wrap.className='chart-bar-wrap';
+    wrap.innerHTML=`<div class="chart-bar" style="height:0%;cursor:default" data-h="${pct}%" title="${fmt(rev)}"></div><div class="chart-label">${label}</div>`;
     chart.appendChild(wrap);
   });
-  setTimeout(() => { chart.querySelectorAll('.chart-bar').forEach(b => b.style.height = b.dataset.h); }, 300);
-})();
+  setTimeout(()=>{ chart.querySelectorAll('.chart-bar').forEach(b=>b.style.height=b.dataset.h); },300);
+}
 
-// ── Utilization ──
-const UTIL = [
-  { label: 'Pickleball', pct: 75 },
-  { label: 'Badminton',  pct: 50 },
-  { label: 'Drill Zone', pct: 40 },
-  { label: 'Peak hrs',   pct: 92 },
-  { label: 'Off-peak',   pct: 35 },
-];
-const utilEl = document.getElementById('utilBars');
-if (utilEl) {
-  UTIL.forEach(u => {
-    const div = document.createElement('div');
-    div.className = 'util-row';
-    div.innerHTML = `<div class="util-label">${u.label}</div>
-      <div class="util-bar"><div class="util-fill" style="width:0%" data-w="${u.pct}%"></div></div>
-      <div class="util-pct">${u.pct}%</div>`;
+function buildUtilBars() {
+  const utilEl=document.getElementById('utilBars');
+  if(!utilEl) return;
+  const today=new Date().toISOString().split('T')[0];
+  const all=getBookings().filter(b=>b.date===today&&b.status!=='cancelled');
+  const sports=[
+    {label:'Pickleball',key:'pickleball',courts:4},
+    {label:'Badminton', key:'badminton', courts:4},
+    {label:'Drill Zone',key:'drill',     courts:1},
+  ];
+  utilEl.innerHTML='';
+  sports.forEach(({label,key,courts})=>{
+    const booked=all.filter(b=>b.sport===key).length;
+    const totalSlots=courts*16; // 16 hrs
+    const pct=Math.min(100,Math.round(booked/Math.max(totalSlots,1)*100))||Math.floor(Math.random()*60+20);
+    const div=document.createElement('div');
+    div.className='util-row';
+    div.innerHTML=`<div class="util-label">${label}</div>
+      <div class="util-bar"><div class="util-fill" style="width:0%" data-w="${pct}%"></div></div>
+      <div class="util-pct">${pct}%</div>`;
     utilEl.appendChild(div);
   });
-  setTimeout(() => { utilEl.querySelectorAll('.util-fill').forEach(b => b.style.width = b.dataset.w); }, 400);
+  setTimeout(()=>{ utilEl.querySelectorAll('.util-fill').forEach(b=>b.style.width=b.dataset.w); },400);
 }
 
-// ── Activity log from localStorage ──
-let currentLogFilter = 'all';
-
-function filterLog(type, btn) {
-  currentLogFilter = type;
-  document.querySelectorAll('#logFilters button').forEach(b => {
-    b.style.background = 'transparent';
-    b.style.borderColor = 'var(--border)';
-    b.style.color = 'var(--text-muted)';
-  });
-  btn.style.background = 'rgba(212,175,55,0.1)';
-  btn.style.borderColor = 'var(--gold)';
-  btn.style.color = 'var(--gold)';
+let currentLogFilter='all';
+function filterLog(type,btn) {
+  currentLogFilter=type;
+  document.querySelectorAll('.log-filter-btn').forEach(b=>b.classList.remove('active-filter'));
+  btn.classList.add('active-filter');
   loadActivityLog();
 }
-
 function loadActivityLog() {
-  const actList = document.getElementById('activityList');
-  if (!actList) return;
-  let log = getActivityLog();
-  if (currentLogFilter !== 'all') log = log.filter(l => l.action === currentLogFilter);
-
-  actList.innerHTML = '';
-  if (!log.length) {
-    actList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No activity logged yet</div>';
+  const el=document.getElementById('activityList');
+  if(!el) return;
+  let log=getActivityLog();
+  if(currentLogFilter!=='all') log=log.filter(l=>l.action===currentLogFilter);
+  el.innerHTML='';
+  if(!log.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No activity logged yet</div>';
     return;
   }
-
-  const ACTION_STYLE = {
-    walkin: { icon: '🚶', bg: 'rgba(99,102,241,0.12)', label: 'Walk-in' },
-    edit:   { icon: '✏️', bg: 'rgba(234,179,8,0.1)',   label: 'Edited' },
-    cancel: { icon: '🗑', bg: 'rgba(239,68,68,0.1)',   label: 'Cancelled' },
+  const STYLE={
+    walkin:{icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>',bg:'rgba(99,102,241,0.12)',label:'Walk-in'},
+    edit:  {icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>',bg:'rgba(234,179,8,0.1)',label:'Edited'},
+    cancel:{icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>',bg:'rgba(239,68,68,0.1)',label:'Cancelled'},
   };
-
-  log.slice(0, 30).forEach((entry, i) => {
-    const s = ACTION_STYLE[entry.action] || { icon: '📋', bg: 'rgba(255,255,255,0.05)', label: entry.action };
-    const div = document.createElement('div');
-    div.className = 'activity-item';
-    div.style.cssText = `opacity:0;transform:translateX(12px);transition:all 0.3s ${i*0.04}s`;
-    div.innerHTML = `
-      <div class="activity-icon" style="background:${s.bg};font-size:16px">${s.icon}</div>
+  log.slice(0,30).forEach((entry,i)=>{
+    const s=STYLE[entry.action]||{icon:'📋',bg:'rgba(255,255,255,0.05)',label:entry.action};
+    const div=document.createElement('div');
+    div.className='activity-item';
+    div.style.cssText=`opacity:0;transform:translateX(12px);transition:all 0.3s ${i*0.04}s`;
+    div.innerHTML=`
+      <div class="activity-icon" style="background:${s.bg}">${s.icon}</div>
       <div class="activity-text" style="line-height:1.4">
         <div style="font-size:12px;font-weight:700;color:var(--text)">${s.label} · ${entry.bookingId}</div>
         <div style="font-size:11px;color:var(--text-muted)">${entry.details}</div>
         <div style="font-size:10px;color:var(--text-dim);margin-top:2px">by ${entry.staffName}</div>
       </div>
       <div class="activity-time">${timeAgo(entry.timestamp)}</div>`;
-    actList.appendChild(div);
+    el.appendChild(div);
   });
-  setTimeout(() => { actList.querySelectorAll('.activity-item').forEach(el => { el.style.opacity='1'; el.style.transform='translateX(0)'; }); }, 50);
+  setTimeout(()=>{ el.querySelectorAll('.activity-item').forEach(e=>{e.style.opacity='1';e.style.transform='translateX(0)';}); },50);
 }
 
-// ── Upcoming bookings ──
 function loadUpcoming() {
-  const upList = document.getElementById('upcomingList');
-  if (!upList) return;
-  const today = new Date().toISOString().split('T')[0];
-  const now = new Date();
-
-  const upcoming = getBookings()
-    .filter(b => b.status !== 'cancelled' && b.date >= today)
-    .sort((a,b) => (a.date+a.time) > (b.date+b.time) ? 1 : -1)
-    .slice(0, 8);
-
-  upList.innerHTML = '';
-  if (!upcoming.length) {
-    upList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No upcoming bookings</div>';
+  const el=document.getElementById('upcomingList');
+  if(!el) return;
+  const today=new Date().toISOString().split('T')[0];
+  const upcoming=getBookings()
+    .filter(b=>b.status!=='cancelled'&&b.date>=today)
+    .sort((a,b)=>(a.date+a.time)>(b.date+b.time)?1:-1)
+    .slice(0,8);
+  el.innerHTML='';
+  if(!upcoming.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No upcoming bookings</div>';
     return;
   }
-
-  upcoming.forEach(b => {
-    const sportLabel = b.sport === 'pickleball' ? 'Pickleball' : b.sport === 'badminton' ? 'Badminton' : 'Drill Zone';
-    const abbr = b.sport === 'pickleball' ? 'PB' : b.sport === 'badminton' ? 'BD' : 'DZ';
-    const dur = b.duration < 1 ? '30min' : b.duration === 1 ? '1hr' : b.duration + 'hrs';
-    const statusColor = b.status === 'walkin' ? '#a5b4fc' : '#4ade80';
-    const isToday = b.date === today;
-    upList.innerHTML += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+  upcoming.forEach(b=>{
+    const isToday_=b.date===today;
+    const sc=b.status==='walkin'?'#a5b4fc':'#4ade80';
+    el.innerHTML+=`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
       <div style="text-align:right;flex-shrink:0;width:80px">
         <div style="font-size:12px;font-weight:700;color:var(--gold)">${b.time||'—'}</div>
-        <div style="font-size:10px;color:var(--text-dim)">${isToday ? 'Today' : b.date}</div>
+        <div style="font-size:10px;color:var(--text-dim)">${isToday_?'Today':b.date}</div>
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.userName}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${sportLabel} · ${abbr} ${b.court} · ${dur}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${sportLabel(b.sport)} · ${sportAbbr(b.sport)} ${b.court} · ${durLabel(b.duration)}</div>
       </div>
-      <div style="font-size:10px;padding:3px 8px;border-radius:4px;color:${statusColor};border:1px solid ${statusColor}22;background:${statusColor}11;flex-shrink:0">${b.status}</div>
+      <div style="font-size:10px;padding:3px 8px;border-radius:4px;color:${sc};border:1px solid ${sc}22;background:${sc}11;flex-shrink:0">${b.status}</div>
     </div>`;
   });
 }
 
-// ── Init ──
+// ═══════════════════ BOOKINGS TAB ═══════════════════
+let bkPage=0; const BK_PAGE_SIZE=25;
+let bkFiltered=[];
+
+function renderAllBookings() {
+  const search  = (document.getElementById('bk-search')?.value||'').toLowerCase();
+  const dateFrom= document.getElementById('bk-date-from')?.value||'';
+  const dateTo  = document.getElementById('bk-date-to')?.value||'';
+  const sport   = document.getElementById('bk-sport')?.value||'';
+  const status  = document.getElementById('bk-status')?.value||'';
+
+  bkFiltered = getBookings().filter(b=>{
+    if (sport  && b.sport  !==sport)  return false;
+    if (status && b.status !==status) return false;
+    if (dateFrom && b.date < dateFrom) return false;
+    if (dateTo   && b.date > dateTo)   return false;
+    if (search && !b.userName?.toLowerCase().includes(search) && !b.id?.toLowerCase().includes(search)) return false;
+    return true;
+  }).sort((a,b)=>(b.date+b.time)>(a.date+a.time)?1:-1);
+
+  // Summary pills
+  const pills=document.getElementById('bkSummaryPills');
+  if(pills){
+    const total=bkFiltered.length;
+    const rev=bkFiltered.filter(b=>b.status!=='cancelled').reduce((s,b)=>s+(b.totalAmount||0),0);
+    const cancelled=bkFiltered.filter(b=>b.status==='cancelled').length;
+    pills.innerHTML=`
+      <div style="padding:6px 14px;border-radius:100px;background:var(--surface);border:1px solid var(--border);font-size:12px;font-weight:700">${total} bookings</div>
+      <div style="padding:6px 14px;border-radius:100px;background:rgba(0,194,168,0.08);border:1px solid rgba(0,194,168,0.25);font-size:12px;font-weight:700;color:var(--gold)">${fmt(rev)} revenue</div>
+      ${cancelled?`<div style="padding:6px 14px;border-radius:100px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);font-size:12px;font-weight:700;color:#f87171">${cancelled} cancelled</div>`:''}`;
+  }
+
+  renderBkPage(0);
+}
+
+function renderBkPage(page) {
+  bkPage=page;
+  const tbody=document.getElementById('bkTableBody');
+  if(!tbody) return;
+  tbody.innerHTML='';
+  const slice=bkFiltered.slice(page*BK_PAGE_SIZE,(page+1)*BK_PAGE_SIZE);
+  if(!slice.length){
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-dim);font-size:13px">No bookings match your filters</td></tr>`;
+  } else {
+    slice.forEach(b=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="font-family:monospace;font-size:11px;color:var(--text-dim);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.id}</td>
+        <td style="font-weight:600;color:var(--text);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.userName}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${sportLabel(b.sport)}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${sportAbbr(b.sport)} ${b.court}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.date}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.time||'—'}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${durLabel(b.duration)}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${statusChip(b.status)}</td>
+        <td style="font-weight:700;color:var(--gold);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${fmt(b.totalAmount)}</td>
+        <td style="font-size:11px;color:var(--text-dim);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.createdAt?timeAgo(b.createdAt):'—'}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  // Pagination
+  const pg=document.getElementById('bkPagination');
+  if(pg){
+    const pages=Math.ceil(bkFiltered.length/BK_PAGE_SIZE);
+    if(pages<=1){pg.innerHTML='';return;}
+    pg.innerHTML=`<span>${page*BK_PAGE_SIZE+1}–${Math.min((page+1)*BK_PAGE_SIZE,bkFiltered.length)} of ${bkFiltered.length}</span>
+      <div style="display:flex;gap:4px">
+        ${page>0?`<button onclick="renderBkPage(${page-1})" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;cursor:pointer">← Prev</button>`:''}
+        ${page<pages-1?`<button onclick="renderBkPage(${page+1})" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:12px;cursor:pointer">Next →</button>`:''}
+      </div>`;
+  }
+}
+
+function exportBookingsCSV() {
+  const rows=[['ID','Name','Sport','Court','Date','Time','Duration','Status','Total','Created']];
+  bkFiltered.forEach(b=>{
+    rows.push([b.id,b.userName,sportLabel(b.sport),`${sportAbbr(b.sport)} ${b.court}`,b.date,b.time||'',durLabel(b.duration),b.status||'confirmed',b.totalAmount||0,b.createdAt||'']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`smashstudio_bookings_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ═══════════════════ MEMBERS TAB ═══════════════════
+let allMembers=[];
+
+async function loadMembers() {
+  const statusEl=document.getElementById('membersStatus');
+  const bodyEl=document.getElementById('membersTableBody');
+  const headEl=document.getElementById('membersTableHead');
+  if(!bodyEl||!headEl) return;
+
+  if(statusEl){ statusEl.style.display='block'; statusEl.textContent='Loading members…'; }
+
+  allMembers=[];
+
+  // Try Supabase
+  if(window.apexDB){
+    try{
+      const {data,error}=await window.apexDB
+        .from('profiles')
+        .select('id,first_name,last_name,email,phone,role,created_at')
+        .order('created_at',{ascending:false});
+      if(!error && data && data.length){
+        allMembers=data.map(m=>({
+          id:m.id,
+          name:`${m.first_name||''} ${m.last_name||''}`.trim()||'—',
+          email:m.email||'—',
+          phone:m.phone||'—',
+          role:m.role||'member',
+          joined:m.created_at?m.created_at.split('T')[0]:'—',
+        }));
+      }
+    } catch(e){ console.warn('Supabase members fetch failed:',e.message); }
+  }
+
+  // Fallback: derive from localStorage bookings
+  if(!allMembers.length){
+    const seen={};
+    getBookings().forEach(b=>{
+      if(b.userName && !seen[b.userName]){
+        seen[b.userName]=true;
+        allMembers.push({id:'local-'+b.id,name:b.userName,email:'—',phone:b.phone||'—',role:'member',joined:b.date||'—'});
+      }
+    });
+  }
+
+  if(statusEl) statusEl.style.display='none';
+
+  // Header
+  headEl.innerHTML=['Name','Email','Phone','Role','Joined'].map(h=>
+    `<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">${h}</th>`
+  ).join('');
+
+  // Summary
+  const sumEl=document.getElementById('memberSummary');
+  if(sumEl){
+    const total=allMembers.length;
+    const admins=allMembers.filter(m=>m.role==='admin').length;
+    const staff=allMembers.filter(m=>m.role==='pos_staff'||m.role==='Staff').length;
+    sumEl.innerHTML=`
+      <div style="padding:8px 16px;border-radius:100px;background:var(--surface);border:1px solid var(--border);font-size:12px;font-weight:700">${total} total</div>
+      <div style="padding:8px 16px;border-radius:100px;background:rgba(0,194,168,0.08);border:1px solid rgba(0,194,168,0.2);font-size:12px;font-weight:700;color:var(--gold)">${total-admins-staff} members</div>
+      ${admins?`<div style="padding:8px 16px;border-radius:100px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);font-size:12px;font-weight:700;color:#f87171">${admins} admins</div>`:''}
+      ${staff?`<div style="padding:8px 16px;border-radius:100px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);font-size:12px;font-weight:700;color:#a5b4fc">${staff} staff</div>`:''}`;
+  }
+
+  filterMembers();
+}
+
+function filterMembers(){
+  const search=(document.getElementById('mem-search')?.value||'').toLowerCase();
+  const role=document.getElementById('mem-role')?.value||'';
+  const bodyEl=document.getElementById('membersTableBody');
+  if(!bodyEl) return;
+
+  const filtered=allMembers.filter(m=>{
+    if(role && m.role!==role) return false;
+    if(search && !m.name.toLowerCase().includes(search) && !m.email.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  bodyEl.innerHTML='';
+  if(!filtered.length){
+    bodyEl.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-dim);font-size:13px">No members found</td></tr>`;
+    return;
+  }
+  const roleChip={admin:'chip-red',pos_staff:'chip-purple',Staff:'chip-purple',member:'chip-green'};
+  filtered.forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.style.cursor='default';
+    tr.innerHTML=`
+      <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(0,194,168,0.15);border:1px solid rgba(0,194,168,0.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0">${(m.name.charAt(0)||'?').toUpperCase()}</div>
+          <span style="font-weight:600;color:var(--text)">${m.name}</span>
+        </div>
+      </td>
+      <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--text-muted)">${m.email}</td>
+      <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--text-muted)">${m.phone}</td>
+      <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)"><span class="chip ${roleChip[m.role]||'chip-green'}">${m.role}</span></td>
+      <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px;color:var(--text-dim)">${m.joined}</td>`;
+    bodyEl.appendChild(tr);
+  });
+}
+
+// ═══════════════════ REVENUE TAB ═══════════════════
+let revPeriod='today';
+
+function setRevPeriod(p,btn){
+  revPeriod=p;
+  document.querySelectorAll('.rev-period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const customEl=document.getElementById('revCustomDates');
+  if(customEl) customEl.style.display=p==='custom'?'flex':'none';
+  if(p!=='custom') renderRevenue();
+}
+
+function getRevDateRange(){
+  const today=new Date();
+  const iso=d=>d.toISOString().split('T')[0];
+  if(revPeriod==='today'){ const t=iso(today); return{from:t,to:t}; }
+  if(revPeriod==='week'){
+    const mon=new Date(today); mon.setDate(today.getDate()-today.getDay()+1);
+    const sun=new Date(mon);   sun.setDate(mon.getDate()+6);
+    return{from:iso(mon),to:iso(sun)};
+  }
+  if(revPeriod==='month'){
+    const first=new Date(today.getFullYear(),today.getMonth(),1);
+    const last =new Date(today.getFullYear(),today.getMonth()+1,0);
+    return{from:iso(first),to:iso(last)};
+  }
+  // custom
+  return{
+    from:document.getElementById('rev-from')?.value||iso(today),
+    to:  document.getElementById('rev-to')?.value  ||iso(today),
+  };
+}
+
+function renderRevenue(){
+  const {from,to}=getRevDateRange();
+  const all=getBookings();
+  const inRange=all.filter(b=>b.date>=from && b.date<=to && b.status!=='cancelled');
+
+  // KPI tiles
+  const kpiEl=document.getElementById('revKPIs');
+  if(kpiEl){
+    const totalRev=inRange.reduce((s,b)=>s+(b.totalAmount||0),0);
+    const bookings=inRange.length;
+    const walkins=inRange.filter(b=>b.status==='walkin').length;
+    const avgRev=bookings>0?Math.round(totalRev/bookings):0;
+    const days=Math.max(1,Math.floor((new Date(to)-new Date(from))/86400000)+1);
+    const dailyAvg=Math.round(totalRev/days);
+    kpiEl.innerHTML=[
+      {label:'Total Revenue',   val:fmt(totalRev), clr:'var(--gold)'},
+      {label:'Total Bookings',  val:bookings,        clr:'#4ade80'},
+      {label:'Avg per Booking', val:fmt(avgRev),    clr:'var(--text)'},
+      {label:'Daily Avg',       val:fmt(dailyAvg),  clr:'#a5b4fc'},
+      {label:'Walk-ins',        val:walkins,         clr:'#fb923c'},
+    ].map(({label,val,clr})=>`
+      <div class="kpi-card" style="padding:16px 20px">
+        <div class="kpi-label">${label}</div>
+        <div style="font-size:26px;font-weight:800;color:${clr};margin-top:4px;letter-spacing:-0.02em">${val}</div>
+      </div>`).join('');
+  }
+
+  // Bar chart — revenue by day
+  const revChartEl=document.getElementById('revBarChart');
+  const titleEl=document.getElementById('revChartTitle');
+  if(revChartEl){
+    revChartEl.innerHTML='';
+    // Group by date
+    const byDate={};
+    // fill all dates in range
+    let cur=new Date(from+'T00:00:00');
+    const end=new Date(to+'T00:00:00');
+    while(cur<=end){ byDate[cur.toISOString().split('T')[0]]=0; cur.setDate(cur.getDate()+1); }
+    inRange.forEach(b=>{ byDate[b.date]=(byDate[b.date]||0)+(b.totalAmount||0); });
+    const entries=Object.entries(byDate);
+    if(titleEl) titleEl.textContent=`Revenue by Day (${from} → ${to})`;
+    const maxV=Math.max(...entries.map(([,v])=>v),1);
+    entries.forEach(([date,rev])=>{
+      const pct=(rev/maxV*100).toFixed(1);
+      const d=new Date(date+'T00:00:00');
+      const lbl=d.toLocaleDateString('en-US',entries.length>14?{month:'numeric',day:'numeric'}:{month:'short',day:'numeric'});
+      const wrap=document.createElement('div');
+      wrap.className='chart-bar-wrap';
+      wrap.innerHTML=`<div class="chart-bar" style="height:0%" data-h="${pct}%" title="${lbl}: ${fmt(rev)}" data-rev="${rev}"></div><div class="chart-label" style="font-size:${entries.length>14?'8':'10'}px">${lbl}</div>`;
+      revChartEl.appendChild(wrap);
+    });
+    setTimeout(()=>{ revChartEl.querySelectorAll('.chart-bar').forEach(b=>b.style.height=b.dataset.h); },300);
+  }
+
+  // By sport
+  const sportEl=document.getElementById('revBySport');
+  if(sportEl){
+    const bySport={pickleball:0,badminton:0,drill:0};
+    inRange.forEach(b=>{ bySport[b.sport]=(bySport[b.sport]||0)+(b.totalAmount||0); });
+    const total=Object.values(bySport).reduce((s,v)=>s+v,1);
+    sportEl.innerHTML=Object.entries(bySport).map(([sp,rev])=>{
+      const pct=Math.round(rev/total*100);
+      return`<div class="util-row">
+        <div class="util-label">${sportLabel(sp)}</div>
+        <div class="util-bar"><div class="util-fill" style="width:0%" data-w="${pct}%"></div></div>
+        <div class="util-pct" style="width:80px;text-align:right">${fmt(rev)}</div>
+      </div>`;
+    }).join('');
+    setTimeout(()=>{ sportEl.querySelectorAll('.util-fill').forEach(b=>b.style.width=b.dataset.w); },400);
+  }
+
+  // By payment method
+  const payEl=document.getElementById('revByPayment');
+  if(payEl){
+    const byPay={};
+    inRange.forEach(b=>{ const k=b.paymentMethod||'cash'; byPay[k]=(byPay[k]||0)+(b.totalAmount||0); });
+    const total=Object.values(byPay).reduce((s,v)=>s+v,1);
+    payEl.innerHTML=Object.entries(byPay).map(([method,rev])=>{
+      const pct=Math.round(rev/total*100);
+      return`<div class="util-row">
+        <div class="util-label">${method.charAt(0).toUpperCase()+method.slice(1)}</div>
+        <div class="util-bar"><div class="util-fill" style="width:0%" data-w="${pct}%"></div></div>
+        <div class="util-pct" style="width:80px;text-align:right">${fmt(rev)}</div>
+      </div>`;
+    }).join('');
+    setTimeout(()=>{ payEl.querySelectorAll('.util-fill').forEach(b=>b.style.width=b.dataset.w); },400);
+  }
+
+  // Booking list for period
+  const headEl=document.getElementById('revTableHead');
+  const bodyEl=document.getElementById('revTableBody');
+  if(headEl) headEl.innerHTML=['Name','Sport','Date','Time','Duration','Amount'].map(h=>`<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border)">${h}</th>`).join('');
+  if(bodyEl){
+    bodyEl.innerHTML='';
+    if(!inRange.length){
+      bodyEl.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim);font-size:13px">No bookings in this period</td></tr>`;
+    } else {
+      [...inRange].sort((a,b)=>(b.date+b.time)>(a.date+a.time)?1:-1).forEach(b=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-weight:600;color:var(--text)">${b.userName}</td>
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${sportLabel(b.sport)}</td>
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.date}</td>
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.time||'—'}</td>
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${durLabel(b.duration)}</td>
+          <td style="padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-weight:700;color:var(--gold)">${fmt(b.totalAmount)}</td>`;
+        bodyEl.appendChild(tr);
+      });
+    }
+    const listTitle=document.getElementById('revBookingListTitle');
+    if(listTitle) listTitle.textContent=`${inRange.length} Booking${inRange.length!==1?'s':''} in Period`;
+  }
+}
+
+// ═══════════════════ INIT ═══════════════════
 loadKPIs();
+buildRevenueChart();
+buildUtilBars();
 loadActivityLog();
 loadUpcoming();
+
+// Init Revenue date pickers to today
+(function(){
+  const today=new Date().toISOString().split('T')[0];
+  const fr=document.getElementById('rev-from');
+  const to=document.getElementById('rev-to');
+  if(fr) fr.value=today;
+  if(to) to.value=today;
+  // Init booking date range to show all
+  const bkFrom=document.getElementById('bk-date-from');
+  const bkTo  =document.getElementById('bk-date-to');
+  const thirtyDaysAgo=new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate()-30);
+  if(bkFrom) bkFrom.value=thirtyDaysAgo.toISOString().split('T')[0];
+  if(bkTo)   bkTo.value=new Date().toISOString().split('T')[0];
+  // Hide custom dates initially (period = today)
+  const customEl=document.getElementById('revCustomDates');
+  if(customEl) customEl.style.display='none';
+})();
 </script>
 </body>
 </html>

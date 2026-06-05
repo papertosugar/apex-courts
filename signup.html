@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up — Apex Courts</title>
-  <meta name="description" content="Create your Apex Courts account to book courts, track sessions, and manage your membership." />
+  <title>Sign Up — Smash Studio</title>
+  <meta name="description" content="Create your Smash Studio account to book courts, track sessions, and manage your membership." />
   <meta name="robots" content="noindex" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -73,7 +73,7 @@
       background: var(--stone); position: relative; z-index: 1;
       transition: all 0.3s;
     }
-    .auth-step.active .as-dot { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+    .auth-step.active .as-dot { border-color: var(--gold); color: var(--gold); background: rgba(0,194,168,0.1); }
     .auth-step.done .as-dot { border-color: #22c55e; background: rgba(34,197,94,0.15); color: #22c55e; }
     .as-label { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cream-muted); }
     .auth-step.active .as-label { color: var(--gold); }
@@ -114,12 +114,12 @@
     .send-otp-row .form-input { flex: 1; }
     .btn-send-otp {
       padding: 13px 16px; border-radius: 10px;
-      background: rgba(201,168,76,0.15); border: 1px solid var(--gold);
+      background: rgba(0,194,168,0.15); border: 1px solid var(--gold);
       color: var(--gold); font-size: 13px; font-weight: 700;
       cursor: pointer; white-space: nowrap; font-family: inherit;
       transition: all 0.2s; flex-shrink: 0;
     }
-    .btn-send-otp:hover { background: rgba(201,168,76,0.25); }
+    .btn-send-otp:hover { background: rgba(0,194,168,0.25); }
     .btn-send-otp:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .otp-grid { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
@@ -157,7 +157,7 @@
       border: none; cursor: pointer; transition: all 0.25s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-primary-full:hover { transform: scale(1.01); box-shadow: 0 8px 32px rgba(201,168,76,0.35); }
+    .btn-primary-full:hover { transform: scale(1.01); box-shadow: 0 8px 32px rgba(0,194,168,0.35); }
     .btn-primary-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .terms-note { font-size: 12px; color: var(--cream-muted); text-align: center; margin-top: 14px; line-height: 1.6; }
@@ -194,14 +194,14 @@
 <body>
 
 <nav id="navbar" class="scrolled">
-  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+  <a href="/" class="nav-logo" aria-label="Smash Studio — Home">
     <div class="nav-logo-mark" aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
         <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
       </svg>
     </div>
-    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+    <span class="nav-wordmark">SMASH <em>STUDIO</em></span>
   </a>
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="/">Home</a></li>
@@ -217,14 +217,14 @@
   <div class="auth-card">
 
     <div class="auth-header">
-      <a href="/" class="auth-logo" aria-label="Apex Courts">
+      <a href="/" class="auth-logo" aria-label="Smash Studio">
         <div class="auth-logo-mark">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
             <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2.5" fill="none"/>
             <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2.5"/>
           </svg>
         </div>
-        <span class="auth-logo-text">APEX COURTS</span>
+        <span class="auth-logo-text">SMASH STUDIO</span>
       </a>
       <h1 class="auth-title">CREATE ACCOUNT</h1>
       <p class="auth-sub">Book courts, track your sessions, manage your membership.</p>
@@ -503,7 +503,7 @@ async function verifyOtp() {
       // Use email if contact looks like an email, else use phone
       const isEmail = contact.includes('@');
       await ApexCourts.signUp({
-        email:     isEmail ? contact : `${contact.replace(/\D/g,'')}@apex-courts.local`,
+        email:     isEmail ? contact : `${contact.replace(/\D/g,'')}@smash-studio.local`,
         phone:     isEmail ? undefined : contact,
         password,
         firstName,
@@ -511,7 +511,7 @@ async function verifyOtp() {
       });
       // Sign in immediately after signup
       await ApexCourts.signIn(
-        isEmail ? contact : `${contact.replace(/\D/g,'')}@apex-courts.local`,
+        isEmail ? contact : `${contact.replace(/\D/g,'')}@smash-studio.local`,
         password
       );
     } catch (e) {

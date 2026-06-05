@@ -1,4 +1,4 @@
-/* ─── APEX COURTS — main.js v2 ─── */
+/* ─── SMASH STUDIO — main.js v2 ─── */
 
 // ─── NAVBAR ───
 const navbar = document.getElementById('navbar');
@@ -25,11 +25,13 @@ function toggleMenu() {
     spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
   }
 }
-// Close menu on outside click
+// Close menu on outside click or nav link click
 document.addEventListener('click', e => {
   const links = document.getElementById('navLinks');
-  const btn = document.getElementById('hamburger');
-  if (links?.classList.contains('open') && !links.contains(e.target) && !btn?.contains(e.target)) {
+  const btn   = document.getElementById('hamburger');
+  if (!links?.classList.contains('open')) return;
+  const clickedLink = e.target.closest('a');
+  if (clickedLink || (!links.contains(e.target) && !btn?.contains(e.target))) {
     toggleMenu();
   }
 });
@@ -126,9 +128,13 @@ async function renderAvailability(sport) {
   const label   = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
   const now     = new Date().getHours();
 
+  // ── Show loading state ────────────────────────────────────
+  const liveEl = document.getElementById('availLiveTag');
+
   // ── Try Supabase, fall back to fake data ──────────────────
   let slotMap = null;
   let myUserId = null;
+  let isLive = false;
   if (window.ApexCourts) {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -139,9 +145,19 @@ async function renderAvailability(sport) {
       ]);
       myUserId = user?.id;
       slotMap  = buildSlotMap(bookings, myUserId, timeArr);
+      isLive   = true;
     } catch (e) {
       console.warn('[Availability] Supabase error, using fallback:', e.message);
     }
+  }
+
+  // Update LIVE indicator
+  if (liveEl) {
+    liveEl.innerHTML = isLive
+      ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#4ade80">
+           <span style="width:6px;height:6px;border-radius:50%;background:#4ade80;animation:livePulse 1.4s ease-in-out infinite"></span>LIVE
+         </span>`
+      : `<span style="font-size:10px;color:var(--cream-dim);letter-spacing:0.06em">DEMO</span>`;
   }
 
   // Build slots array (Supabase or fallback)
@@ -163,7 +179,7 @@ async function renderAvailability(sport) {
 
   // Drill Zone notice
   if (isDZ) {
-    html += `<div style="margin:0 0 10px;padding:8px 12px;border-radius:8px;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);font-size:11px;color:rgba(201,168,76,0.75);display:flex;align-items:center;gap:8px">
+    html += `<div style="margin:0 0 10px;padding:8px 12px;border-radius:8px;background:rgba(0,194,168,0.07);border:1px solid rgba(0,194,168,0.2);font-size:11px;color:rgba(0,194,168,0.75);display:flex;align-items:center;gap:8px">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="11" opacity="0.25"/></svg>
       Solo training zone · Ball machine included · Book in 30 or 60-min blocks
     </div>`;
@@ -226,17 +242,73 @@ const todayEl = document.getElementById('todayDate');
 if (todayEl) todayEl.textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 renderAvailability('pickleball');
 
-// ── Real-time: refresh grid when bookings change ─────────────
-if (window.ApexCourts) {
+// ── Real-time: subscribe all 3 sports, refresh active grid ───
+(function setupRealtime() {
+  if (!window.ApexCourts) return;
   const today = new Date().toISOString().split('T')[0];
-  ApexCourts.subscribeAvailability('pickleball', today, () => {
-    const active = document.querySelector('.avail-tab.active');
-    if (active) {
-      const sport = active.onclick?.toString().match(/'(\w+)'/)?.[1] || 'pickleball';
-      renderAvailability(sport);
+
+  function getActiveSport() {
+    const tab = document.querySelector('.avail-tab.active');
+    if (!tab) return 'pickleball';
+    // extract sport from onclick attr or data-sport
+    const m = (tab.getAttribute('onclick') || '').match(/'([a-z]+)'/);
+    return m ? m[1] : 'pickleball';
+  }
+
+  // ── Court canvas: map Supabase bookings → animation active states ──
+  // courtNum: 1-4 for PB/BD, 1 for DZ  →  id: P1-P4, B1-B4, DZ
+  async function syncCanvasActivity() {
+    if (!window.updateCourtActivity) return;
+    const nowStr = new Date().toTimeString().slice(0,5); // "HH:MM"
+    try {
+      const [pb, bd, dz] = await Promise.all([
+        ApexCourts.getAvailability('pickleball', today),
+        ApexCourts.getAvailability('badminton',  today),
+        ApexCourts.getAvailability('drillzone',  today),
+      ]);
+
+      // A court is "active" if it has a booking that covers right now
+      function isNowBooked(rows, courtNum) {
+        return rows.some(r =>
+          r.court_number === courtNum &&
+          r.booking_id &&
+          r.booking_status !== 'cancelled' &&
+          r.start_time <= nowStr &&
+          (r.end_time || '23:59') > nowStr
+        );
+      }
+
+      window.updateCourtActivity({
+        P1: isNowBooked(pb, 1), P2: isNowBooked(pb, 2),
+        P3: isNowBooked(pb, 3), P4: isNowBooked(pb, 4),
+        B1: isNowBooked(bd, 1), B2: isNowBooked(bd, 2),
+        B3: isNowBooked(bd, 3), B4: isNowBooked(bd, 4),
+        DZ: isNowBooked(dz, 1),
+      });
+    } catch(e) {
+      console.warn('[Canvas] Activity sync failed:', e.message);
     }
+  }
+
+  function onBookingChange() {
+    renderAvailability(getActiveSport());
+    syncCanvasActivity();           // also update the animation
+  }
+
+  // Subscribe to all sports so any booking triggers a refresh
+  ['pickleball', 'badminton', 'drillzone'].forEach(sport => {
+    ApexCourts.subscribeAvailability(sport, today, onBookingChange);
   });
-}
+
+  // Initial sync on load
+  syncCanvasActivity();
+
+  // Poll every 60s — catches time-based transitions (booking starts/ends)
+  setInterval(() => {
+    renderAvailability(getActiveSport());
+    syncCanvasActivity();
+  }, 60_000);
+})()
 
 // ─── TESTIMONIALS — infinite marquee ───
 const TESTIMONIALS = [

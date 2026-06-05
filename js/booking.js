@@ -1,4 +1,4 @@
-/* ─── APEX COURTS — Booking System JS ─── */
+/* ─── SMASH STUDIO — Booking System JS ─── */
 
 // ─── AUTH GUARD ───
 (function() {
@@ -8,53 +8,121 @@
   }
 })();
 
+// ─── STATE ───
+// selectedSlots: [{ dateKey, date (Date), court, idx, label }]
 const state = {
   sport: 'pickleball',
   selectedDate: null,
-  selectedTime: null,
-  duration: 1,
-  court: null,
+  selectedSlots: [],   // multi-slot, multi-date
   extras: new Set(),
   dateOffset: 0,
 };
 
 const PRICING = {
-  // Court hourly rate (PHP) — drill zone uses block pricing below
   court: 600,
-  drillZone: { base: 400, perBlock: 300 }, // 400 first 30min, +300 each additional 30min
+  drillZone: { base: 400, perBlock: 300 },
   extras: {
     racket: { name: 'Racket Rental', desc: 'Premium Wilson racket', price: 50 },
     shoes:  { name: 'Court Shoes',   desc: 'Clean court-approved footwear', price: 50 },
   }
 };
 
-// Drill zone price: ₱400 first 30min, +₱300 per additional 30min block
 function drillZonePrice(durationHrs) {
-  const blocks = Math.round(durationHrs * 2); // 0.5hr = 1 block
+  const blocks = Math.round(durationHrs * 2);
   return PRICING.drillZone.base + Math.max(0, blocks - 1) * PRICING.drillZone.perBlock;
 }
 
-function courtPrice(durationHrs) {
-  return state.sport === 'drill' ? drillZonePrice(durationHrs) : PRICING.court * durationHrs;
+// Cost across all selected slots
+function totalCourtCost() {
+  if (!state.selectedSlots.length) return 0;
+  const step = getSlotStep();
+  if (state.sport !== 'drill') {
+    return PRICING.court * state.selectedSlots.length * step;
+  }
+  // Drill: group by date → price per date session
+  const byDate = {};
+  state.selectedSlots.forEach(s => {
+    byDate[s.dateKey] = (byDate[s.dateKey] || 0) + 1;
+  });
+  return Object.values(byDate).reduce((sum, cnt) => sum + drillZonePrice(cnt * 0.5), 0);
+}
+
+function totalDuration() {
+  return state.selectedSlots.length * getSlotStep();
 }
 
 const COURT_COUNT = { pickleball: 4, badminton: 4, drill: 1 };
 
-// 07:00 – 23:00 (last slot starts 23:00, ends midnight)
-const HOURS = [
-  '7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM',
-  '1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM',
-  '7:00 PM','8:00 PM','9:00 PM','10:00 PM','11:00 PM'
+const HOURS_1HR = [
+  '7 AM','8 AM','9 AM','10 AM','11 AM','12 PM',
+  '1 PM','2 PM','3 PM','4 PM','5 PM','6 PM',
+  '7 PM','8 PM','9 PM','10 PM'
+];
+const HOURS_30MIN = [
+  '8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM',
+  '11:00 AM','11:30 AM','12:00 PM','12:30 PM',
+  '1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM',
+  '4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM','6:30 PM',
+  '7:00 PM','7:30 PM','8:00 PM','8:30 PM','9:00 PM','9:30 PM'
 ];
 
+function getSlots() {
+  return state.sport === 'drill' ? HOURS_30MIN : HOURS_1HR;
+}
+function getSlotStep() {
+  return state.sport === 'drill' ? 0.5 : 1;
+}
+
+function parseSlotHours(label) {
+  const parts = label.replace(' AM','').replace(' PM','').split(':');
+  let h = parseInt(parts[0]);
+  const m = parts[1] ? parseInt(parts[1]) : 0;
+  if (label.includes('PM') && h !== 12) h += 12;
+  if (label.includes('AM') && h === 12) h = 0;
+  return h + m / 60;
+}
+function fhToTime(fh) {
+  const h = Math.floor(fh);
+  const m = Math.round((fh - h) * 60);
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+// ─── SLOT HELPERS ───
+function isSlotSelected(date, court, idx) {
+  const dk = date.toDateString();
+  return state.selectedSlots.some(s => s.dateKey === dk && s.court === court && s.idx === idx);
+}
+
+function toggleSlot(date, court, idx, label) {
+  const dk = date.toDateString();
+  const pos = state.selectedSlots.findIndex(s => s.dateKey === dk && s.court === court && s.idx === idx);
+  if (pos >= 0) {
+    state.selectedSlots.splice(pos, 1);
+  } else {
+    state.selectedSlots.push({ dateKey: dk, date: new Date(date), court, idx, label });
+  }
+}
+
+function clearAllSlots() {
+  state.selectedSlots = [];
+}
+
 // ─── DATES ───
-function getDateRange(offset = 0) {
+const BOOKING_WINDOW_DAYS = 7;
+
+function getBookingMaxDate() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + BOOKING_WINDOW_DAYS - 1);
+  return d;
+}
+
+function getDateRange() {
   const dates = [];
-  const base = new Date();
-  base.setDate(base.getDate() + offset);
-  for (let i = 0; i < 10; i++) {
-    const d = new Date(base);
-    d.setDate(d.getDate() + i);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < BOOKING_WINDOW_DAYS; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
     dates.push(d);
   }
   return dates;
@@ -75,21 +143,33 @@ function renderDates() {
   const strip = document.getElementById('dateStrip');
   const label = document.getElementById('dateRangeLabel');
   if (!strip) return;
-  const dates = getDateRange(state.dateOffset);
+  const dates = getDateRange();
   label.textContent = `${formatDate(dates[0])} – ${formatDate(dates[dates.length - 1])}`;
+
+  const windowBadge = document.getElementById('bookWindowBadge');
+  if (windowBadge) {
+    windowBadge.textContent = `Bookings open ${BOOKING_WINDOW_DAYS} days in advance · Next slot opens tomorrow`;
+  }
 
   strip.innerHTML = '';
   dates.forEach(d => {
+    const dk = d.toDateString();
+    const hasSelection = state.selectedSlots.some(s => s.dateKey === dk);
+    const isSelected = state.selectedDate && d.toDateString() === state.selectedDate.toDateString();
+
     const chip = document.createElement('div');
-    chip.className = 'date-chip' + (isToday(d) ? ' today' : '') + (state.selectedDate && d.toDateString() === state.selectedDate.toDateString() ? ' selected' : '');
-    chip.innerHTML = `<div class="dc-dow">${formatDow(d)}</div>
+    chip.className = 'date-chip' + (isToday(d) ? ' today' : '') + (isSelected ? ' selected' : '');
+    chip.innerHTML = `
+      <div class="dc-dow">${formatDow(d)}</div>
       <div class="dc-day">${d.getDate()}</div>
-      <div class="dc-mon">${formatDate(d).split(' ')[0]}</div>`;
+      <div class="dc-mon">${formatDate(d).split(' ')[0]}</div>
+      ${hasSelection ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin:2px auto 0;flex-shrink:0"></div>` : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`}`;
+
     chip.addEventListener('click', () => {
+      // Switch view only — don't clear selections
       state.selectedDate = d;
       renderDates();
-      renderTimes();
-      renderCourts();
+      renderAvailGrid();
       updateSummary();
     });
     strip.appendChild(chip);
@@ -98,93 +178,258 @@ function renderDates() {
   if (!state.selectedDate) { state.selectedDate = dates[0]; renderDates(); }
 }
 
-function shiftDates(n) {
-  state.dateOffset = Math.max(0, state.dateOffset + n);
-  renderDates();
+function jumpToCalendarDate(isoStr) {
+  if (!isoStr) return;
+  const picked = new Date(isoStr + 'T00:00:00');
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const maxDate = getBookingMaxDate();
+  if (picked < today || picked > maxDate) return;
+  state.selectedDate = picked;
+  renderDates(); renderAvailGrid(); updateSummary();
 }
 
-// ─── TIMES ───
-function getSlotStatus(hour, courtNum) {
+// ─── CUSTOM CALENDAR POPUP ─────────────────────────────────────
+let calPopupMonth = null;
+
+function toggleCalPopup() {
+  const popup = document.getElementById('calPopup');
+  if (!popup) return;
+  if (popup.style.display === 'none' || !popup.style.display) {
+    const d = state.selectedDate || new Date();
+    calPopupMonth = { year: d.getFullYear(), month: d.getMonth() };
+    renderCalPopup();
+    popup.style.display = 'block';
+    setTimeout(() => {
+      document.addEventListener('click', closeCalPopupOutside, { once: true, capture: true });
+    }, 10);
+  } else {
+    popup.style.display = 'none';
+  }
+}
+
+function closeCalPopupOutside(e) {
+  const popup = document.getElementById('calPopup');
+  const btn   = document.getElementById('calPickerBtn');
+  if (popup && !popup.contains(e.target) && btn && !btn.contains(e.target)) {
+    popup.style.display = 'none';
+  } else if (popup && popup.style.display !== 'none') {
+    setTimeout(() => {
+      document.addEventListener('click', closeCalPopupOutside, { once: true, capture: true });
+    }, 10);
+  }
+}
+
+function renderCalPopup() {
+  const popup = document.getElementById('calPopup');
+  if (!popup || !calPopupMonth) return;
+  const { year, month } = calPopupMonth;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const maxDate = getBookingMaxDate();
+
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+  const DOW = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let html = `<div class="cal-popup">
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calNavMonth(-1)" aria-label="Previous month">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="cal-month-label">${MONTH_NAMES[month]} ${year}</span>
+      <button class="cal-nav-btn" onclick="calNavMonth(1)" aria-label="Next month">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="cal-grid" role="grid">`;
+
+  DOW.forEach(d => { html += `<div class="cal-dow" role="columnheader">${d}</div>`; });
+
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="cal-day cal-day-empty" role="gridcell"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const isPast    = date < today;
+    const isFuture  = date > maxDate;
+    const isBlocked = isPast || isFuture;
+    const isToday_  = date.getTime() === today.getTime();
+    const isSel     = state.selectedDate && date.toDateString() === state.selectedDate.toDateString();
+    let cls = 'cal-day';
+    if (isPast)    cls += ' cal-day-disabled';
+    if (isFuture)  cls += ' cal-day-future';
+    if (isToday_)  cls += ' cal-day-today';
+    if (isSel)     cls += ' cal-day-selected';
+    const isoStr   = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const clickStr = isBlocked ? '' : `onclick="calPickDate('${isoStr}')"`;
+    const title    = isFuture ? `Opens ${new Date(date.getTime() - (BOOKING_WINDOW_DAYS-1)*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : '';
+    html += `<div class="${cls}" role="gridcell" aria-label="${MONTH_NAMES[month]} ${d}, ${year}" ${clickStr} ${title ? `title="${title}"` : ''}>${d}</div>`;
+  }
+
+  html += `</div></div>`;
+  popup.innerHTML = html;
+}
+
+function calNavMonth(dir) {
+  if (!calPopupMonth) return;
+  let { year, month } = calPopupMonth;
+  month += dir;
+  if (month < 0)  { month = 11; year--; }
+  if (month > 11) { month = 0;  year++; }
+  calPopupMonth = { year, month };
+  renderCalPopup();
+}
+
+function calPickDate(isoStr) {
+  document.getElementById('calPopup').style.display = 'none';
+  jumpToCalendarDate(isoStr);
+}
+
+// ─── SLOT STATUS ───
+function getSlotStatus(slotIdx, courtNum) {
   if (!state.selectedDate) return 'open';
-  const seed = state.selectedDate.getDate() + courtNum * 17 + hour * 3;
-  const rng = Math.sin(seed) * 10000;
+  const seed = state.selectedDate.getDate() + courtNum * 17 + slotIdx * 3;
+  const rng = Math.sin(seed * 9301 + 49297) * 10000;
   const r = rng - Math.floor(rng);
-  if (r < 0.35) return 'taken';
+  if (r < 0.28) return 'taken';
+  if (r > 0.92) return 'open-session';
   return 'open';
 }
 
-function renderTimes() {
-  const grid = document.getElementById('timeGrid');
+// ─── AVAILABILITY GRID ───────────────────────────────────────────
+function renderAvailGrid() {
+  const grid = document.getElementById('availGrid');
   if (!grid) return;
-  const nowHour = new Date().getHours();
-  grid.innerHTML = '';
-  HOURS.forEach((t, i) => {
-    const hour = 7 + i;
-    const isPast = isToday(state.selectedDate) && hour <= nowHour;
-    const isTaken = !isPast && getSlotStatus(i, 1) === 'taken';
-    const chip = document.createElement('div');
-    chip.className = 'time-chip' + (isPast || isTaken ? ' taken' : '') + (state.selectedTime === t ? ' selected' : '');
-    chip.textContent = t;
-    if (!isPast && !isTaken) {
-      chip.addEventListener('click', () => {
-        state.selectedTime = t;
-        renderTimes();
-        renderCourts();
-        updateSummary();
-        markStep(2);
-      });
-    }
-    grid.appendChild(chip);
-  });
-}
 
-function selectDuration(hrs, el) {
-  state.duration = hrs;
-  document.querySelectorAll('.dur-chip').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  updateSummary();
-}
+  const slots  = getSlots();
+  const count  = COURT_COUNT[state.sport] || 1;
+  const label  = state.sport === 'pickleball' ? 'PB' : state.sport === 'badminton' ? 'BD' : 'DZ';
+  const colW   = `52px repeat(${count}, 1fr)`;
+  const nowH   = new Date().getHours();
+  const nowM   = new Date().getMinutes();
 
-// ─── COURTS ───
-function renderCourts() {
-  const grid = document.getElementById('courtGrid');
-  if (!grid) return;
-  const count = COURT_COUNT[state.sport] || 1;
-  const label = state.sport === 'pickleball' ? 'PB' : state.sport === 'badminton' ? 'BD' : 'DZ';
-  grid.innerHTML = '';
-  for (let i = 1; i <= count; i++) {
-    const unavail = state.selectedTime && getSlotStatus(HOURS.indexOf(state.selectedTime), i) === 'taken';
-    const chip = document.createElement('div');
-    chip.className = 'court-chip' + (unavail ? ' unavail' : '') + (state.court === i ? ' selected' : '');
-    chip.innerHTML = `<div class="cc-name">${label} ${i}</div>
-      <div class="cc-status ${unavail ? 'taken' : 'open'}">${unavail ? '● Taken' : '● Open'}</div>`;
-    if (!unavail) {
-      chip.addEventListener('click', () => {
-        state.court = i;
-        renderCourts();
-        updateSummary();
-        markStep(3);
-      });
-    }
-    grid.appendChild(chip);
+  // Hint text
+  const hint = document.getElementById('gridHint');
+  if (hint) {
+    const n = state.selectedSlots.length;
+    hint.textContent = n === 0
+      ? 'Click slots to select · Multiple dates supported'
+      : `${n} slot${n > 1 ? 's' : ''} selected · Click again to deselect`;
   }
-  // Animate
-  grid.querySelectorAll('.court-chip').forEach((c, i) => {
-    c.style.opacity = '0'; c.style.transform = 'scale(0.8)';
-    setTimeout(() => {
-      c.style.transition = 'opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1)';
-      c.style.opacity = '1'; c.style.transform = 'scale(1)';
-    }, i * 40);
+
+  grid.innerHTML = '';
+
+  // ── header ──
+  const header = document.createElement('div');
+  header.className = 'ag-header';
+  header.style.gridTemplateColumns = colW;
+  header.innerHTML = `<div class="ag-header-time">Time</div>`;
+  for (let c = 1; c <= count; c++) {
+    header.innerHTML += `<div class="ag-header-court">${label}${c}</div>`;
+  }
+  grid.appendChild(header);
+
+  // ── rows ──
+  slots.forEach((timeLabel, si) => {
+    const parts = timeLabel.replace(/ AM| PM/,'').split(':');
+    let slotH = parseInt(parts[0]);
+    const slotM = parts[1] ? parseInt(parts[1]) : 0;
+    if (timeLabel.includes('PM') && slotH !== 12) slotH += 12;
+    if (timeLabel.includes('AM') && slotH === 12) slotH = 0;
+    const isPast = isToday(state.selectedDate) &&
+      (slotH < nowH || (slotH === nowH && slotM <= nowM));
+
+    const row = document.createElement('div');
+    row.className = 'ag-row' + (isPast ? ' past' : '');
+    row.style.gridTemplateColumns = colW;
+    row.setAttribute('role', 'row');
+
+    const timeCell = document.createElement('div');
+    timeCell.className = 'ag-time';
+    timeCell.textContent = timeLabel;
+    row.appendChild(timeCell);
+
+    for (let c = 1; c <= count; c++) {
+      const rawStatus = getSlotStatus(si, c);
+      const cell = document.createElement('div');
+      cell.className = 'ag-cell';
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('aria-label', `${label}${c} at ${timeLabel}`);
+
+      const inner = document.createElement('div');
+      inner.className = 'ag-cell-inner';
+
+      const selected = state.selectedDate && isSlotSelected(state.selectedDate, c, si);
+
+      if (isPast || rawStatus === 'taken') {
+        cell.classList.add('booked');
+        cell.setAttribute('aria-disabled', 'true');
+
+      } else if (selected) {
+        // ── Selected slot — shows check, click to deselect ──
+        cell.classList.add('selected-start');
+        inner.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+        cell.appendChild(inner);
+        cell.setAttribute('aria-selected', 'true');
+        cell.addEventListener('click', () => {
+          toggleSlot(state.selectedDate, c, si, timeLabel);
+          renderAvailGrid();
+          renderDates();
+          updateSummary();
+        });
+
+      } else if (rawStatus === 'open-session') {
+        cell.classList.add('open-session');
+        cell.setAttribute('aria-label', `${label}${c} at ${timeLabel} — Open Session`);
+        cell.addEventListener('click', () => {
+          toggleSlot(state.selectedDate, c, si, timeLabel);
+          renderAvailGrid();
+          renderDates();
+          updateSummary();
+          markStep(2);
+        });
+
+      } else {
+        // ── Available — click to add to selection ──
+        cell.classList.add('available');
+        cell.appendChild(inner);
+        cell.addEventListener('click', () => {
+          toggleSlot(state.selectedDate, c, si, timeLabel);
+          renderAvailGrid();
+          renderDates();
+          updateSummary();
+          markStep(2);
+        });
+      }
+
+      row.appendChild(cell);
+    }
+    grid.appendChild(row);
   });
 }
+
+function renderTimes()  { renderAvailGrid(); }
+function renderCourts() { renderAvailGrid(); }
 
 // ─── SPORT ───
 function selectSport(sport, el) {
   state.sport = sport;
-  state.court = null;
+  clearAllSlots();
   document.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
-  renderCourts();
+
+  const normalRow = document.getElementById('durationRow');
+  const dzRow = document.getElementById('dzDurationRow');
+  if (normalRow && dzRow) {
+    normalRow.style.display = sport === 'drill' ? 'none' : 'flex';
+    dzRow.style.display = sport === 'drill' ? 'flex' : 'none';
+  }
+
+  renderAvailGrid();
+  renderDates();
   updateSummary();
   markStep(1);
 }
@@ -217,35 +462,63 @@ function renderExtras() {
 
 // ─── SUMMARY ───
 function updateSummary() {
-  const body = document.getElementById('summaryContent');
+  const body    = document.getElementById('summaryContent');
   const totalEl = document.getElementById('totalAmount');
-  const btn = document.getElementById('confirmBtn');
+  const btn     = document.getElementById('confirmBtn');
   if (!body) return;
 
-  const courtCost = courtPrice(state.duration);
   let extrasCost = 0;
   state.extras.forEach(k => extrasCost += PRICING.extras[k].price);
-  const total = state.court && state.selectedTime ? courtCost + extrasCost : 0;
+  const courtCost = totalCourtCost();
+  const total = courtCost + extrasCost;
 
-  if (!state.selectedTime || !state.court) {
-    body.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:16px 0">Select a time and court to see your total</p>';
+  if (!state.selectedSlots.length) {
+    body.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:16px 0">Select time slots to see your total</p>';
     totalEl.textContent = '₱0';
     if (btn) btn.disabled = true;
     return;
   }
 
-  const sportName = state.sport === 'drill' ? 'Drill Zone' : state.sport.charAt(0).toUpperCase() + state.sport.slice(1);
-  const courtLabel = state.sport === 'pickleball' ? 'PB' : state.sport === 'badminton' ? 'BD' : 'DZ';
-  const dateStr = state.selectedDate ? state.selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
+  const sportName   = state.sport === 'drill' ? 'Drill Zone' : state.sport.charAt(0).toUpperCase() + state.sport.slice(1);
+  const courtLabel  = state.sport === 'pickleball' ? 'PB' : state.sport === 'badminton' ? 'BD' : 'DZ';
+  const step        = getSlotStep();
+  const dur         = totalDuration();
+  const durStr      = dur >= 1 ? dur + ' hr' + (dur > 1 ? 's' : '') : (dur * 60) + ' min';
 
-  let rows = `
-    <div class="summary-row"><span class="label">Sport</span><span class="value">${sportName}</span></div>
-    <div class="summary-row"><span class="label">Date</span><span class="value">${dateStr}</span></div>
-    <div class="summary-row"><span class="label">Time</span><span class="value">${state.selectedTime}</span></div>
-    <div class="summary-row"><span class="label">Duration</span><span class="value">${state.duration >= 1 ? state.duration + ' hr' + (state.duration > 1 ? 's' : '') : '30 min'}</span></div>
-    <div class="summary-row"><span class="label">Court</span><span class="value">${courtLabel} ${state.sport === 'drill' ? 'Zone' : 'Court'} ${state.court}</span></div>
-    <div class="summary-row"><span class="label">Court fee</span><span class="value">₱${courtCost.toLocaleString()}</span></div>`;
+  // Group slots by date for display
+  const byDate = {};
+  state.selectedSlots.forEach(s => {
+    if (!byDate[s.dateKey]) byDate[s.dateKey] = { date: s.date, slots: [] };
+    byDate[s.dateKey].slots.push(s);
+  });
 
+  let rows = `<div class="summary-row"><span class="label">Sport</span><span class="value">${sportName}</span></div>`;
+  rows += `<div class="summary-row"><span class="label">Duration</span><span class="value">${durStr}</span></div>`;
+
+  // Per-date rows
+  Object.values(byDate).forEach(({ date, slots }) => {
+    const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    // Sort by time index, group by court
+    const byCourt = {};
+    slots.forEach(s => {
+      if (!byCourt[s.court]) byCourt[s.court] = [];
+      byCourt[s.court].push(s);
+    });
+    Object.entries(byCourt).forEach(([court, cs]) => {
+      cs.sort((a,b) => a.idx - b.idx);
+      const startLabel = cs[0].label;
+      const lastSlot   = cs[cs.length - 1];
+      const endFH      = parseSlotHours(lastSlot.label) + step;
+      const endHour    = Math.floor(endFH);
+      const endMin     = Math.round((endFH - endHour) * 60);
+      const ampm       = endHour >= 12 ? 'PM' : 'AM';
+      const dH         = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
+      const endLabel   = endMin ? `${dH}:${String(endMin).padStart(2,'0')} ${ampm}` : `${dH} ${ampm}`;
+      rows += `<div class="summary-row"><span class="label">${dateStr}</span><span class="value">${courtLabel}${court} · ${startLabel}–${endLabel}</span></div>`;
+    });
+  });
+
+  rows += `<div class="summary-row"><span class="label">Court fee</span><span class="value">₱${courtCost.toLocaleString()}</span></div>`;
   state.extras.forEach(k => {
     rows += `<div class="summary-row"><span class="label">${PRICING.extras[k].name}</span><span class="value">₱${PRICING.extras[k].price}</span></div>`;
   });
@@ -253,7 +526,6 @@ function updateSummary() {
   body.innerHTML = rows;
   totalEl.textContent = '₱' + total.toLocaleString();
 
-  // Animate total
   totalEl.style.transform = 'scale(1.15)';
   setTimeout(() => { totalEl.style.transition = 'transform 0.2s'; totalEl.style.transform = 'scale(1)'; }, 50);
 
@@ -271,20 +543,64 @@ function markStep(num) {
 }
 
 // ─── CONFIRM BOOKING ───
-function confirmBooking() {
-  const first = document.getElementById('firstName')?.value.trim();
-  const email = document.getElementById('email')?.value.trim();
-  if (!first || !email) {
-    document.getElementById('firstName').focus();
-    document.getElementById('firstName').style.borderColor = 'rgba(239,68,68,0.6)';
-    setTimeout(() => { document.getElementById('firstName').style.borderColor = ''; }, 2000);
+async function confirmBooking() {
+  if (!state.selectedSlots.length) {
+    showBookingError('Please select at least one time slot.');
     return;
   }
-  // Show payment modal
-  const total = courtPrice(state.duration) + Array.from(state.extras).reduce((s,k)=>s+PRICING.extras[k].price,0);
+
+  // Availability re-check before payment modal
+  if (window.ApexCourts) {
+    const btn = document.getElementById('confirmBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Checking availability…'; }
+    try {
+      // Group by date for check
+      const byDate = {};
+      state.selectedSlots.forEach(s => {
+        if (!byDate[s.dateKey]) byDate[s.dateKey] = { date: s.date, slots: [] };
+        byDate[s.dateKey].slots.push(s);
+      });
+      for (const { date, slots } of Object.values(byDate)) {
+        const dateStr = date.toISOString().split('T')[0];
+        const avail   = await ApexCourts.getAvailability(state.sport, dateStr);
+        const totalCourts = state.sport === 'drillzone' ? 1 : 4;
+        for (const s of slots) {
+          const fh     = parseSlotHours(s.label);
+          const start  = fhToTime(fh);
+          const end    = fhToTime(fh + getSlotStep());
+          const taken  = avail.filter(a => a.booking_id && a.start_time <= start && a.end_time >= end);
+          if (taken.length >= totalCourts) {
+            showBookingError(`${s.label} on ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})} was just taken. Please remove it.`);
+            if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Pay'; }
+            renderAvailGrid();
+            return;
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('[Booking] Availability check failed:', e.message);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Pay'; }
+  }
+
+  const total   = totalCourtCost() + Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
   const payTotal = document.getElementById('payModalTotal');
   if (payTotal) payTotal.textContent = '₱' + total.toLocaleString();
   document.getElementById('paymentModal').classList.add('open');
+}
+
+function showBookingError(msg) {
+  let el = document.getElementById('bookingErrorMsg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bookingErrorMsg';
+    el.style.cssText = 'background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#fca5a5;margin-bottom:16px';
+    const summary = document.querySelector('.booking-summary');
+    if (summary) summary.prepend(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 5000);
 }
 
 function selectPayMethod(method, el) {
@@ -299,52 +615,55 @@ function selectPayMethod(method, el) {
 }
 
 async function finalizePayment() {
-  const method    = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
-  const code      = 'APX-' + Math.floor(1000 + Math.random() * 9000);
-  const dateStr   = state.selectedDate ? state.selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-  const courtCost = courtPrice(state.duration);
-  const extrasCost= Array.from(state.extras).reduce((s,k)=>s+PRICING.extras[k].price,0);
+  const method     = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
+  const code       = 'APX-' + Math.floor(1000 + Math.random() * 9000);
+  const courtCost  = totalCourtCost();
+  const extrasCost = Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
+  const step       = getSlotStep();
 
   // ── Save to Supabase ─────────────────────────────────────────
   if (window.ApexCourts) {
     try {
-      // Convert time label ('9AM') → '09:00', add duration for end time
-      const startH = (() => {
-        let h = parseInt(state.selectedTime);
-        if (state.selectedTime.includes('PM') && h !== 12) h += 12;
-        if (state.selectedTime.includes('AM') && h === 12) h = 0;
-        return h;
-      })();
-      const endH = startH + state.duration;
-      const toTime = h => String(h).padStart(2,'0') + ':00';
-
-      // Look up court_id from DB (sport + court number)
       const courts = await ApexCourts.getCourts(state.sport);
-      const courtRow = courts.find(c => c.court_number === state.court);
-
-      if (courtRow) {
-        await ApexCourts.createBooking({
-          courtId:     courtRow.id,
-          date:        dateStr,
-          startTime:   toTime(startH),
-          endTime:     toTime(endH),
-          durationMins: state.duration * 60,
-          playerCount: 2,
-          notes:       `Extras: ${Array.from(state.extras).join(', ') || 'none'} | Pay: ${method}`,
-        });
+      // Group slots by date+court for contiguous bookings
+      const byDateCourt = {};
+      state.selectedSlots.forEach(s => {
+        const key = s.dateKey + '_' + s.court;
+        if (!byDateCourt[key]) byDateCourt[key] = { date: s.date, court: s.court, slots: [] };
+        byDateCourt[key].slots.push(s);
+      });
+      for (const block of Object.values(byDateCourt)) {
+        block.slots.sort((a,b) => a.idx - b.idx);
+        const dateStr  = block.date.toISOString().split('T')[0];
+        const startFH  = parseSlotHours(block.slots[0].label);
+        const endFH    = parseSlotHours(block.slots[block.slots.length-1].label) + step;
+        const dur      = block.slots.length * step;
+        const courtRow = courts.find(c => c.court_number === block.court);
+        if (courtRow) {
+          await ApexCourts.createBooking({
+            courtId: courtRow.id, date: dateStr,
+            startTime: fhToTime(startFH), endTime: fhToTime(endFH),
+            durationMins: Math.round(dur * 60), playerCount: 2,
+            notes: `Extras: ${Array.from(state.extras).join(', ') || 'none'} | Pay: ${method}`,
+          });
+        }
       }
     } catch (e) {
       console.warn('[Booking] Supabase save failed, using localStorage:', e.message);
     }
   }
 
-  // ── Always save to localStorage as fallback ──────────────────
+  // ── localStorage fallback ────────────────────────────────────
   const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
   const user = sessionStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
   bookings.push({
-    id: code, userName: user, sport: state.sport, date: dateStr,
-    time: state.selectedTime, duration: state.duration, court: state.court,
-    extras: Array.from(state.extras), totalAmount: courtCost + extrasCost,
+    id: code, userName: user, sport: state.sport,
+    slots: state.selectedSlots.map(s => ({
+      date: s.date.toISOString().split('T')[0], court: s.court, time: s.label,
+    })),
+    duration: totalDuration(),
+    extras: Array.from(state.extras),
+    totalAmount: courtCost + extrasCost,
     status: 'confirmed', paymentMethod: method,
     createdAt: new Date().toISOString(), createdBy: 'online',
   });
@@ -362,8 +681,12 @@ function closePaymentModal() {
 
 function closeModal() {
   document.getElementById('confirmModal').classList.remove('open');
-  state.court = null; state.selectedTime = null; state.extras.clear();
-  renderCourts(); renderTimes(); renderExtras(); updateSummary();
+  clearAllSlots();
+  state.extras.clear();
+  renderDates();
+  renderAvailGrid();
+  renderExtras();
+  updateSummary();
 }
 
 // ─── URL PARAMS ───
@@ -373,12 +696,6 @@ function applyUrlParams() {
     state.sport = p.get('sport');
     const el = document.getElementById('opt-' + state.sport);
     if (el) { document.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected')); el.classList.add('selected'); }
-  }
-  if (p.get('time')) {
-    state.selectedTime = p.get('time');
-  }
-  if (p.get('court')) {
-    state.court = parseInt(p.get('court'));
   }
 }
 
@@ -391,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderExtras();
   updateSummary();
 
-  // Scroll-reveal for booking panels
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; } });
   }, { threshold: 0.05 });

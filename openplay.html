@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Open Play — Apex Courts</title>
-  <meta name="description" content="Join an Apex Courts Open Play session. Play with new people, meet the community, and enjoy affordable drop-in games." />
+  <title>Open Play — Smash Studio</title>
+  <meta name="description" content="Join an Smash Studio Open Play session. Play with new people, meet the community, and enjoy affordable drop-in games." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
@@ -18,7 +18,7 @@
       padding: 56px 5% 0;
       display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: flex-end;
     }
-    @media(max-width:700px) { .op-hero { grid-template-columns: 1fr; } }
+    @media(max-width:700px) { .op-hero { grid-template-columns: 1fr; } .op-hero-right { align-items: flex-start; } }
     .op-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
     .op-eyebrow-line { width: 32px; height: 2px; background: var(--gold); }
     .op-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
@@ -32,14 +32,14 @@
       font-size: 13px; font-weight: 800; font-family: inherit;
       border: none; cursor: pointer; transition: all 0.2s;
     }
-    .admin-create-btn:hover { transform: scale(1.02); box-shadow: 0 6px 24px rgba(201,168,76,0.35); }
+    .admin-create-btn:hover { transform: scale(1.02); box-shadow: 0 6px 24px rgba(0,194,168,0.35); }
 
     /* ── POLICY BANNER ── */
     .op-policy {
       max-width: 1180px; margin: 32px auto 0; padding: 0 5%;
     }
     .policy-banner {
-      background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.18);
+      background: rgba(0,194,168,0.05); border: 1px solid rgba(0,194,168,0.18);
       border-radius: 14px; padding: 24px 28px;
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px 32px;
@@ -47,7 +47,7 @@
     .policy-item { display: flex; align-items: flex-start; gap: 12px; }
     .policy-icon {
       width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
-      background: rgba(201,168,76,0.1); display: flex; align-items: center; justify-content: center; color: var(--gold);
+      background: rgba(0,194,168,0.1); display: flex; align-items: center; justify-content: center; color: var(--gold);
     }
     .policy-item-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 3px; }
     .policy-item-value { font-size: 13px; color: var(--cream); line-height: 1.5; }
@@ -67,7 +67,7 @@
     .op-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
     .op-tab-count {
       padding: 2px 7px; border-radius: 100px;
-      background: rgba(201,168,76,0.12); color: var(--gold);
+      background: rgba(0,194,168,0.12); color: var(--gold);
       font-size: 10px; font-weight: 800;
     }
 
@@ -86,15 +86,15 @@
       background: var(--stone); border: 1px solid var(--stone-line);
       border-radius: 16px; overflow: hidden; transition: border-color 0.2s;
     }
-    .session-card:hover { border-color: rgba(201,168,76,0.25); }
-    .session-card.extended { border-left: 3px solid rgba(201,168,76,0.5); }
+    .session-card:hover { border-color: rgba(0,194,168,0.25); }
+    .session-card.extended { border-left: 3px solid rgba(0,194,168,0.5); }
     .session-header {
       padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px;
       border-bottom: 1px solid var(--stone-line);
     }
     .session-date-block {
       width: 56px; flex-shrink: 0; text-align: center;
-      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18);
+      background: rgba(0,194,168,0.08); border: 1px solid rgba(0,194,168,0.18);
       border-radius: 10px; padding: 8px 4px;
     }
     .session-date-mon { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
@@ -106,7 +106,7 @@
       padding: 3px 9px; border-radius: 100px; font-size: 10px; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase;
     }
-    .badge-extended { background: rgba(201,168,76,0.15); color: var(--gold); }
+    .badge-extended { background: rgba(0,194,168,0.15); color: var(--gold); }
     .badge-confirmed { background: rgba(34,197,94,0.12); color: #4ade80; }
     .badge-open { background: rgba(99,102,241,0.12); color: #a5b4fc; }
     .badge-cancelled { background: rgba(239,68,68,0.1); color: #f87171; }
@@ -142,7 +142,7 @@
       font-size: 13px; font-weight: 800; font-family: inherit;
       border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    .register-btn:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+    .register-btn:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(0,194,168,0.3); }
     .register-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
     .register-btn.registered { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
     .cancel-reg-btn {
@@ -177,7 +177,7 @@
     .pricing-row:last-child { border-bottom: none; }
     .pricing-tag { padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; }
     .pricing-tag.off { background: rgba(255,255,255,0.06); color: var(--cream-muted); }
-    .pricing-tag.peak { background: rgba(201,168,76,0.12); color: var(--gold); }
+    .pricing-tag.peak { background: rgba(0,194,168,0.12); color: var(--gold); }
 
     /* ── MODALS ── */
     .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -208,14 +208,14 @@
 <body>
 
 <nav id="navbar">
-  <a href="/" class="nav-logo" aria-label="Apex Courts — Home">
+  <a href="/" class="nav-logo" aria-label="Smash Studio — Home">
     <div class="nav-logo-mark" aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
         <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
       </svg>
     </div>
-    <span class="nav-wordmark">APEX <em>COURTS</em></span>
+    <span class="nav-wordmark">SMASH <em>STUDIO</em></span>
   </a>
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="/">Home</a></li>
@@ -466,7 +466,7 @@
       <label class="form-label-sm">Phone / Email</label>
       <input type="text" class="form-input-sm" id="regContact" placeholder="For confirmation & updates" />
     </div>
-    <div id="regPriceDisplay" style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px">
+    <div id="regPriceDisplay" style="background:rgba(0,194,168,0.06);border:1px solid rgba(0,194,168,0.18);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px">
       <span style="font-size:13px;color:var(--cream-muted)">Fee per person</span>
       <span style="font-size:20px;font-weight:800;color:var(--gold)" id="regPriceAmt">₱200</span>
     </div>
