@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smash Studio — Preview Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:    #07070A;
+      --teal:   #00C2A8;
+      --teal-2: #00E5CC;
+      --teal-dim: rgba(0,194,168,0.12);
+      --cream:  #EEF0F5;
+      --cream-60: rgba(238,240,245,0.6);
+      --cream-30: rgba(238,240,245,0.3);
+      --cream-10: rgba(238,240,245,0.1);
+      --s1: #0D0D12;
+      --s2: #141419;
+      --s3: #1C1C24;
+      --red-court: #FF3B3B;
+      --blue-open: #3B82F6;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════
+       NAVBAR — minimal strip
+    ═══════════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 56px;
+      background: rgba(7,7,10,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 0.1em;
+      color: var(--cream); text-decoration: none; display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--teal); animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
+    .nav-links {
+      display: flex; align-items: center; gap: 32px; list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px; font-weight: 500; color: var(--cream-60);
+      text-decoration: none; letter-spacing: 0.01em; transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-book {
+      padding: 9px 22px; border-radius: 7px;
+      background: var(--teal); color: var(--ink);
+      font-size: 13px; font-weight: 700; text-decoration: none;
+      letter-spacing: 0.01em; transition: all 0.2s;
+    }
+    .nav-book:hover { background: var(--teal-2); transform: translateY(-1px); }
+    @media(max-width:768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+    }
+
+    /* ═══════════════════════════════════════════
+       HERO — FULL VIEWPORT, TYPE-FORWARD
+    ═══════════════════════════════════════════ */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding-top: 56px;
+      position: relative; overflow: hidden;
+    }
+    @media(max-width:900px) { .hero { grid-template-columns: 1fr; } }
+
+    /* Left: giant type */
+    .hero-left {
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 60px 40px 60px 48px;
+      position: relative; z-index: 2;
+    }
+    @media(max-width:768px) { .hero-left { padding: 40px 24px; } }
+
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow-line { width: 24px; height: 1.5px; background: var(--teal); }
+    .hero-eyebrow-text {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--teal);
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 11vw, 140px);
+      line-height: 0.9; letter-spacing: -0.01em;
+      margin-bottom: 32px;
+    }
+    .hero-title-outline {
+      -webkit-text-stroke: 1.5px rgba(238,240,245,0.3);
+      color: transparent;
+    }
+    .hero-title-teal { color: var(--teal); }
+
+    .hero-body {
+      font-size: 15px; line-height: 1.7; color: var(--cream-60);
+      max-width: 380px; margin-bottom: 40px;
+    }
+
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .btn-primary {
+      padding: 14px 32px; border-radius: 8px;
+      background: var(--teal); color: var(--ink);
+      font-size: 14px; font-weight: 700; text-decoration: none;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--teal-2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,194,168,0.3); }
+    .btn-ghost {
+      padding: 14px 24px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12); color: var(--cream-60);
+      font-size: 14px; font-weight: 500; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: var(--cream); }
+
+    /* Right: live court tiles */
+    .hero-right {
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 60px 48px 60px 0;
+      position: relative; z-index: 2;
+    }
+    @media(max-width:900px) { .hero-right { display: none; } }
+
+    .hero-stat-strip {
+      display: flex; gap: 0;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .hero-stat-item {
+      flex: 1; padding: 20px 24px;
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+    .hero-stat-item:last-child { border-right: none; }
+    .hero-stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px; letter-spacing: 0.02em; color: var(--cream); line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 11px; color: var(--cream-30); margin-top: 4px; font-weight: 500;
+    }
+
+    .live-courts-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--cream-30);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80; animation: liveglow 1.5s ease-in-out infinite;
+    }
+    @keyframes liveglow { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,0.4)} 50%{box-shadow:0 0 0 6px rgba(74,222,128,0)} }
+
+    .court-tiles {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    }
+    .court-tile {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; transition: all 0.2s; cursor: pointer;
+    }
+    .court-tile.open {
+      background: rgba(255,255,255,0.03); color: rgba(238,240,245,0.35);
+    }
+    .court-tile.open:hover { background: rgba(0,194,168,0.08); border-color: rgba(0,194,168,0.3); color: var(--teal); }
+    .court-tile.booked { background: rgba(255,59,59,0.1); border-color: rgba(255,59,59,0.25); color: rgba(255,100,100,0.7); }
+    .court-tile.mine { background: rgba(0,194,168,0.12); border-color: rgba(0,194,168,0.35); color: var(--teal); }
+    .ct-id { font-size: 14px; font-weight: 800; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+
+    /* Background ambient glow */
+    .hero::before {
+      content: '';
+      position: absolute; top: -200px; right: -100px;
+      width: 700px; height: 700px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,194,168,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -100px; left: 30%;
+      width: 500px; height: 400px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       TICKER — running marquee
+    ═══════════════════════════════════════════ */
+    .ticker {
+      overflow: hidden; border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 14px 0; background: var(--s1);
+    }
+    .ticker-track {
+      display: flex; gap: 0; width: max-content;
+      animation: ticker 28s linear infinite;
+    }
+    @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+    .ticker-item {
+      display: flex; align-items: center; gap: 24px;
+      padding: 0 32px; white-space: nowrap;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--cream-30);
+    }
+    .ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+    .ticker-item span.hl { color: var(--teal); }
+
+    /* ═══════════════════════════════════════════
+       BENTO GRID
+    ═══════════════════════════════════════════ */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-auto-rows: 80px;
+      gap: 10px;
+      padding: 10px 32px 32px;
+      max-width: 1400px; margin: 0 auto;
+    }
+    @media(max-width:1100px) { .bento { grid-template-columns: repeat(6,1fr); padding: 10px 20px 28px; } }
+    @media(max-width:640px) { .bento { grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 16px 24px; } }
+
+    .bento-card {
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden; position: relative;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .bento-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-1px); }
+
+    /* Column / row spans */
+    .bc-sport-pk { grid-column: span 5; grid-row: span 4; background: var(--s2); }
+    .bc-sport-bd { grid-column: span 4; grid-row: span 4; background: var(--s2); }
+    .bc-price    { grid-column: span 3; grid-row: span 2; background: var(--s2); }
+    .bc-courts   { grid-column: span 3; grid-row: span 2; background: var(--s3); }
+    .bc-avail    { grid-column: span 8; grid-row: span 5; background: var(--s1); }
+    .bc-op       { grid-column: span 4; grid-row: span 3; background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.15); }
+    .bc-cta      { grid-column: span 4; grid-row: span 2; background: var(--teal); }
+    .bc-drill    { grid-column: span 5; grid-row: span 3; background: var(--s2); }
+    .bc-tip      { grid-column: span 3; grid-row: span 2; background: var(--s3); }
+
+    @media(max-width:1100px) {
+      .bc-sport-pk { grid-column: span 6; grid-row: span 4; }
+      .bc-sport-bd { grid-column: span 6; grid-row: span 4; }
+      .bc-price    { grid-column: span 3; grid-row: span 2; }
+      .bc-courts   { grid-column: span 3; grid-row: span 2; }
+      .bc-avail    { grid-column: span 6; grid-row: span 5; }
+      .bc-op       { grid-column: span 6; grid-row: span 3; }
+      .bc-cta      { grid-column: span 3; grid-row: span 2; }
+      .bc-drill    { grid-column: span 6; grid-row: span 3; }
+      .bc-tip      { grid-column: span 3; grid-row: span 2; }
+    }
+    @media(max-width:640px) {
+      .bc-sport-pk, .bc-sport-bd, .bc-avail, .bc-op, .bc-drill { grid-column: span 2; }
+      .bc-price, .bc-courts, .bc-cta, .bc-tip { grid-column: span 1; }
+      .bc-sport-pk { grid-row: span 4; }
+      .bc-sport-bd { grid-row: span 4; }
+      .bc-avail { grid-row: span 5; }
+      .bc-op { grid-row: span 4; }
+      .bc-drill { grid-row: span 3; }
+      .bc-cta { grid-row: span 2; }
+      .bc-price, .bc-courts, .bc-tip { grid-row: span 2; }
+    }
+
+    /* ── Pickleball card ── */
+    .sport-card-inner {
+      height: 100%; padding: 28px 28px 24px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .sport-card-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px; border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cream-60);
+      width: fit-content; margin-bottom: 20px;
+    }
+    .sport-card-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 4vw, 60px); letter-spacing: 0.02em; line-height: 1;
+      margin-bottom: 10px;
+    }
+    .sport-card-desc {
+      font-size: 13px; line-height: 1.65; color: var(--cream-60);
+      flex: 1; margin-bottom: 20px;
+    }
+    .sport-card-footer {
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    .sport-price {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; line-height: 1; color: var(--teal);
+    }
+    .sport-price-sub { font-size: 11px; color: var(--cream-30); margin-top: 3px; }
+    .sport-book-btn {
+      padding: 10px 20px; border-radius: 7px;
+      background: rgba(0,194,168,0.12); border: 1px solid rgba(0,194,168,0.3);
+      color: var(--teal); font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all 0.2s; letter-spacing: 0.02em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .sport-book-btn:hover { background: rgba(0,194,168,0.22); transform: scale(1.03); }
+
+    /* ── Price + Courts mini cards ── */
+    .mini-card-inner {
+      height: 100%; padding: 20px 22px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .mini-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cream-30);
+    }
+    .mini-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px; line-height: 1; color: var(--cream);
+    }
+    .mini-sub { font-size: 11px; color: var(--cream-30); margin-top: 3px; }
+
+    /* ── Availability card ── */
+    .avail-card-inner {
+      height: 100%; padding: 24px 26px;
+      display: flex; flex-direction: column;
+    }
+    .avail-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .avail-card-title {
+      font-size: 13px; font-weight: 700; color: var(--cream);
+    }
+    .avail-live-badge {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #4ade80;
+    }
+    /* Mini grid */
+    .mini-avail-grid { flex: 1; overflow: hidden; }
+    .mini-grid-head {
+      display: grid; grid-template-columns: 60px repeat(8, 1fr);
+      gap: 4px; margin-bottom: 5px;
+    }
+    .mini-grid-head span {
+      font-size: 9px; color: var(--cream-30); font-weight: 600;
+      text-align: center; letter-spacing: 0.04em;
+    }
+    .mini-grid-row {
+      display: grid; grid-template-columns: 60px repeat(8, 1fr);
+      gap: 4px; margin-bottom: 4px;
+    }
+    .mini-grid-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+      color: var(--cream-30); display: flex; align-items: center;
+    }
+    .mini-slot {
+      height: 28px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; font-weight: 800; letter-spacing: 0.06em;
+    }
+    .ms-open   { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); }
+    .ms-booked { background: rgba(255,59,59,0.12); border: 1px solid rgba(255,59,59,0.2); color: rgba(255,100,100,0.8); }
+    .ms-open-s { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2); color: rgba(96,165,250,0.8); }
+    .ms-mine   { background: rgba(0,194,168,0.15); border: 1px solid rgba(0,194,168,0.3); color: var(--teal); }
+    .avail-card-footer {
+      margin-top: 14px; display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .avail-legend-mini {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .alm-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--cream-30); }
+    .alm-dot { width: 7px; height: 7px; border-radius: 2px; }
+
+    /* ── Open Play card ── */
+    .op-card-inner {
+      height: 100%; padding: 24px 26px;
+      display: flex; flex-direction: column;
+    }
+    .op-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .op-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #60a5fa;
+    }
+    .op-session {
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 10px; padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .op-session-date {
+      width: 44px; flex-shrink: 0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 8px; padding: 6px 4px; text-align: center;
+    }
+    .op-session-date .month { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #60a5fa; }
+    .op-session-date .day   { font-size: 22px; font-weight: 800; line-height: 1; color: var(--cream); font-family: 'Bebas Neue', sans-serif; }
+    .op-session-info { flex: 1; }
+    .op-session-name { font-size: 14px; font-weight: 700; color: var(--cream); margin-bottom: 3px; }
+    .op-session-meta { font-size: 11px; color: var(--cream-60); }
+    .op-session-slots {
+      font-size: 11px; font-weight: 700; color: #60a5fa; white-space: nowrap;
+    }
+
+    /* ── CTA card ── */
+    .cta-card-inner {
+      height: 100%; padding: 24px 26px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+    .cta-card-inner::before {
+      content: '';
+      position: absolute; bottom: -30px; right: -30px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(7,7,10,0.2);
+    }
+    .cta-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; line-height: 1.05; letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+    .cta-sub { font-size: 12px; color: rgba(7,7,10,0.65); line-height: 1.5; }
+    .cta-arrow {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(7,7,10,0.15); display: flex; align-items: center; justify-content: center;
+      color: var(--ink); text-decoration: none; transition: all 0.2s; align-self: flex-end;
+    }
+    .cta-arrow:hover { background: rgba(7,7,10,0.25); transform: translateX(3px) translateY(-3px); }
+
+    /* ── Drill Zone card ── */
+    .drill-inner {
+      height: 100%; padding: 24px 28px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative;
+    }
+    .drill-bg-text {
+      position: absolute; right: -10px; bottom: -20px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 90px; line-height: 1; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.025); pointer-events: none; user-select: none;
+    }
+    .drill-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; line-height: 1; letter-spacing: 0.02em; color: var(--cream);
+    }
+    .drill-points { display: flex; flex-direction: column; gap: 8px; }
+    .drill-point {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--cream-60);
+    }
+    .drill-point-icon {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: rgba(0,194,168,0.1); border: 1px solid rgba(0,194,168,0.2);
+      display: flex; align-items: center; justify-content: center; color: var(--teal); flex-shrink: 0;
+    }
+
+    /* ── Tip card ── */
+    .tip-inner {
+      height: 100%; padding: 20px 22px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .tip-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--teal); margin-bottom: 8px;
+    }
+    .tip-text { font-size: 13px; line-height: 1.6; color: var(--cream-60); }
+    .tip-author { font-size: 11px; color: var(--cream-30); margin-top: 8px; font-style: italic; }
+
+    /* ═══════════════════════════════════════════
+       HOW IT WORKS — horizontal timeline
+    ═══════════════════════════════════════════ */
+    .how-section {
+      padding: 80px 48px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      position: relative; overflow: hidden;
+    }
+    @media(max-width:768px) { .how-section { padding: 60px 24px; } }
+
+    .how-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--teal);
+      margin-bottom: 48px;
+    }
+
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0; position: relative;
+    }
+    @media(max-width:768px) { .how-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+    /* Connecting line */
+    .how-grid::before {
+      content: '';
+      position: absolute; top: 22px; left: 8%; right: 8%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,194,168,0.3) 20%, rgba(0,194,168,0.3) 80%, transparent);
+    }
+    @media(max-width:768px) { .how-grid::before { display: none; } }
+
+    .how-step { padding: 0 32px; }
+    .how-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid rgba(0,194,168,0.3);
+      background: rgba(0,194,168,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--teal);
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .how-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .how-desc { font-size: 13px; line-height: 1.7; color: var(--cream-60); }
+
+    /* ═══════════════════════════════════════════
+       TESTIMONIALS — magazine column layout
+    ═══════════════════════════════════════════ */
+    .reviews-section {
+      padding: 80px 48px;
+      background: var(--s1);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    @media(max-width:768px) { .reviews-section { padding: 60px 24px; } }
+
+    .reviews-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 48px; gap: 20px; flex-wrap: wrap;
+    }
+    .reviews-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 5vw, 64px); line-height: 1; letter-spacing: 0.02em;
+    }
+    .reviews-meta { font-size: 13px; color: var(--cream-60); text-align: right; }
+    .reviews-meta strong { color: var(--teal); font-size: 28px; font-family: 'Bebas Neue', sans-serif; display: block; letter-spacing: 0.05em; }
+
+    /* Masonry columns */
+    .reviews-cols {
+      columns: 3; gap: 16px;
+    }
+    @media(max-width:900px) { .reviews-cols { columns: 2; } }
+    @media(max-width:600px) { .reviews-cols { columns: 1; } }
+
+    .review-card {
+      break-inside: avoid; margin-bottom: 16px;
+      background: var(--s2); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px; padding: 22px;
+      transition: border-color 0.2s;
+    }
+    .review-card:hover { border-color: rgba(255,255,255,0.14); }
+    .review-stars {
+      color: var(--teal); font-size: 13px; letter-spacing: 2px; margin-bottom: 12px;
+    }
+    .review-text {
+      font-size: 14px; line-height: 1.7; color: var(--cream-60);
+      margin-bottom: 16px; font-style: italic;
+    }
+    .review-author { display: flex; align-items: center; gap: 10px; }
+    .review-avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(0,194,168,0.3), rgba(59,130,246,0.2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: var(--teal); font-family: 'Bebas Neue', sans-serif;
+    }
+    .review-name { font-size: 13px; font-weight: 700; color: var(--cream); }
+    .review-role { font-size: 11px; color: var(--cream-30); }
+
+    /* ═══════════════════════════════════════════
+       FULL-WIDTH CTA
+    ═══════════════════════════════════════════ */
+    .full-cta {
+      padding: 100px 48px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 40px; align-items: center;
+    }
+    @media(max-width:768px) { .full-cta { grid-template-columns: 1fr; padding: 60px 24px; } }
+
+    .full-cta-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 7vw, 96px); letter-spacing: 0.01em; line-height: 0.95;
+    }
+    .full-cta-headline em { color: var(--teal); font-style: normal; }
+    .full-cta-right { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; min-width: 260px; }
+    .full-cta-sub { font-size: 14px; color: var(--cream-60); line-height: 1.65; max-width: 300px; }
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════ */
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+      background: var(--ink);
+    }
+    @media(max-width:768px) { footer { padding: 32px 24px; } }
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.08em;
+      color: var(--cream-30); text-decoration: none;
+    }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-links a { font-size: 12px; color: var(--cream-30); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cream); }
+    .footer-copy { font-size: 11px; color: rgba(238,240,245,0.15); }
+
+    /* ═══════════════════════════════════════════
+       PREVIEW BADGE
+    ═══════════════════════════════════════════ */
+    .preview-badge {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      background: var(--teal); color: var(--ink);
+      padding: 10px 18px; border-radius: 100px;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.05em;
+      box-shadow: 0 8px 32px rgba(0,194,168,0.4);
+      display: flex; align-items: center; gap: 8px;
+      animation: badgefloat 3s ease-in-out infinite;
+    }
+    @keyframes badgefloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    .preview-badge a { color: var(--ink); text-decoration: none; font-weight: 800; }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ PREVIEW BADGE ══ -->
+<div class="preview-badge">
+  ✦ PREVIEW DESIGN · <a href="index.html">← 현재 사이트</a>
+</div>
+
+<!-- ══ NAVBAR ══ -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    SMASH STUDIO
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Pickleball</a></li>
+    <li><a href="#">Badminton</a></li>
+    <li><a href="openplay.html">Open Play</a></li>
+    <li><a href="community.html">Community</a></li>
+    <li><a href="my-bookings.html">My Bookings</a></li>
+  </ul>
+  <a href="book.html" class="nav-book">Book a Court →</a>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+
+  <!-- Left: HUGE type -->
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-line"></div>
+      <span class="hero-eyebrow-text">Now Open — 9 Indoor Courts</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="hero-title-outline">PLAY</span><br>
+      AT YOUR<br>
+      <span class="hero-title-teal">BEST.</span>
+    </h1>
+    <p class="hero-body">
+      Climate-controlled pickleball and badminton courts. Real-time booking, no phone calls. Just show up and play.
+    </p>
+    <div class="hero-ctas">
+      <a href="book.html" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Book Now
+      </a>
+      <a href="openplay.html" class="btn-ghost">Open Play →</a>
+    </div>
+  </div>
+
+  <!-- Right: live court tiles -->
+  <div class="hero-right">
+    <div class="hero-stat-strip">
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">9</div>
+        <div class="hero-stat-label">Indoor Courts</div>
+      </div>
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">7AM</div>
+        <div class="hero-stat-label">Opens Daily</div>
+      </div>
+      <div class="hero-stat-item">
+        <div class="hero-stat-num">₱600</div>
+        <div class="hero-stat-label">Per Hour</div>
+      </div>
+    </div>
+    <div class="live-courts-label">
+      <div class="live-dot"></div>
+      Live Court Status — Today
+    </div>
+    <!-- 4 PB + 4 BD + 1 DZ -->
+    <div class="court-tiles">
+      <div class="court-tile open"><div class="ct-id">PB1</div><span>Free</span></div>
+      <div class="court-tile booked"><div class="ct-id">PB2</div><span>Booked</span></div>
+      <div class="court-tile open"><div class="ct-id">PB3</div><span>Free</span></div>
+      <div class="court-tile open"><div class="ct-id">PB4</div><span>Free</span></div>
+      <div class="court-tile mine"><div class="ct-id">BD1</div><span>Mine</span></div>
+      <div class="court-tile open"><div class="ct-id">BD2</div><span>Free</span></div>
+      <div class="court-tile booked"><div class="ct-id">BD3</div><span>Booked</span></div>
+      <div class="court-tile open"><div class="ct-id">BD4</div><span>Free</span></div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:16px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(238,240,245,0.25)">
+        <div style="width:8px;height:8px;border-radius:2px;background:rgba(255,59,59,0.5)"></div>Booked
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(238,240,245,0.25)">
+        <div style="width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,0.08)"></div>Available
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(238,240,245,0.25)">
+        <div style="width:8px;height:8px;border-radius:2px;background:rgba(0,194,168,0.4)"></div>My Booking
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TICKER ══ -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <div class="ticker-item"><div class="ticker-dot"></div>Pickleball <span class="hl">₱600/hr</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Badminton <span class="hl">₱600/hr</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Drill Zone <span class="hl">₱400/30min</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Open Daily <span class="hl">7AM–12AM</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>9 Indoor Courts</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Real-time Booking</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Equipment Rental Available</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Open Play Sessions</div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item"><div class="ticker-dot"></div>Pickleball <span class="hl">₱600/hr</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Badminton <span class="hl">₱600/hr</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Drill Zone <span class="hl">₱400/30min</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Open Daily <span class="hl">7AM–12AM</span></div>
+    <div class="ticker-item"><div class="ticker-dot"></div>9 Indoor Courts</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Real-time Booking</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Equipment Rental Available</div>
+    <div class="ticker-item"><div class="ticker-dot"></div>Open Play Sessions</div>
+  </div>
+</div>
+
+<!-- ══ BENTO GRID ══ -->
+<div class="bento">
+
+  <!-- Pickleball — large card -->
+  <div class="bento-card bc-sport-pk">
+    <div class="sport-card-inner">
+      <div>
+        <div class="sport-card-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><line x1="12" y1="14" x2="12" y2="22"/></svg>
+          4 Courts
+        </div>
+        <div class="sport-card-headline">PICKLE<br>BALL</div>
+        <div class="sport-card-desc">Championship-grade courts with permanent lines, tournament nets, and premium sprung flooring. The fastest-growing sport on its best surface.</div>
+      </div>
+      <div class="sport-card-footer">
+        <div>
+          <div class="sport-price">₱600</div>
+          <div class="sport-price-sub">per hour · up to 4 players</div>
+        </div>
+        <a href="book.html?sport=pickleball" class="sport-book-btn">
+          Book
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badminton — medium card -->
+  <div class="bento-card bc-sport-bd">
+    <div class="sport-card-inner">
+      <div>
+        <div class="sport-card-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="8" rx="5" ry="7"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
+          4 Courts
+        </div>
+        <div class="sport-card-headline" style="font-size:clamp(34px,3.5vw,52px)">BAD<br>MINTON</div>
+        <div class="sport-card-desc">Olympic ceiling height, calibrated lighting, zero shadow zones. The finest badminton courts in the region.</div>
+      </div>
+      <div class="sport-card-footer">
+        <div>
+          <div class="sport-price">₱600</div>
+          <div class="sport-price-sub">per hour · up to 4 players</div>
+        </div>
+        <a href="book.html?sport=badminton" class="sport-book-btn">Book →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price mini -->
+  <div class="bento-card bc-price">
+    <div class="mini-card-inner">
+      <div class="mini-label">Starting From</div>
+      <div>
+        <div class="mini-value" style="color:var(--teal)">₱400</div>
+        <div class="mini-sub">Drill Zone · 30 min sessions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Courts mini -->
+  <div class="bento-card bc-courts">
+    <div class="mini-card-inner">
+      <div class="mini-label">Indoor Courts</div>
+      <div>
+        <div class="mini-value">9</div>
+        <div class="mini-sub">PB × 4 · BD × 4 · DZ × 1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Availability — wide card -->
+  <div class="bento-card bc-avail">
+    <div class="avail-card-inner">
+      <div class="avail-card-header">
+        <div class="avail-card-title">Today's Availability · Pickleball</div>
+        <div class="avail-live-badge">
+          <div class="live-dot"></div>
+          Live
+        </div>
+      </div>
+      <div class="mini-avail-grid">
+        <div class="mini-grid-head">
+          <span></span>
+          <span>8AM</span><span>9AM</span><span>10AM</span><span>11AM</span>
+          <span>12PM</span><span>1PM</span><span>2PM</span><span>3PM</span>
+        </div>
+        <div class="mini-grid-row">
+          <div class="mini-grid-label">PB 1</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-booked">BOOKED</div>
+          <div class="mini-slot ms-booked">BOOKED</div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-open-s">OPEN</div><div class="mini-slot ms-open"></div>
+        </div>
+        <div class="mini-grid-row">
+          <div class="mini-grid-label">PB 2</div>
+          <div class="mini-slot ms-mine">MINE</div><div class="mini-slot ms-mine">MINE</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-booked">BOOKED</div>
+          <div class="mini-slot ms-booked">BOOKED</div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+        </div>
+        <div class="mini-grid-row">
+          <div class="mini-grid-label">PB 3</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-open-s">OPEN</div><div class="mini-slot ms-open-s">OPEN</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-booked">BOOKED</div>
+          <div class="mini-slot ms-booked">BOOKED</div><div class="mini-slot ms-open"></div>
+        </div>
+        <div class="mini-grid-row">
+          <div class="mini-grid-label">PB 4</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+          <div class="mini-slot ms-booked">BOOKED</div><div class="mini-slot ms-booked">BOOKED</div>
+          <div class="mini-slot ms-open"></div><div class="mini-slot ms-open"></div>
+        </div>
+      </div>
+      <div class="avail-card-footer">
+        <div class="avail-legend-mini">
+          <div class="alm-item"><div class="alm-dot ms-open" style="width:7px;height:7px;border-radius:2px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)"></div>Open</div>
+          <div class="alm-item"><div class="alm-dot" style="width:7px;height:7px;border-radius:2px;background:rgba(255,59,59,0.2);border:1px solid rgba(255,59,59,0.3)"></div><span style="color:rgba(255,100,100,0.7)">Booked</span></div>
+          <div class="alm-item"><div class="alm-dot" style="width:7px;height:7px;border-radius:2px;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3)"></div><span style="color:#60a5fa">Open Session</span></div>
+          <div class="alm-item"><div class="alm-dot" style="width:7px;height:7px;border-radius:2px;background:rgba(0,194,168,0.2);border:1px solid rgba(0,194,168,0.35)"></div><span style="color:var(--teal)">Mine</span></div>
+        </div>
+        <a href="book.html" class="sport-book-btn" style="font-size:11px;padding:8px 14px">Full Schedule →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open Play -->
+  <div class="bento-card bc-op">
+    <div class="op-card-inner">
+      <div class="op-card-header">
+        <div class="op-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Open Play
+        </div>
+        <a href="openplay.html" style="font-size:10px;color:rgba(238,240,245,0.3);text-decoration:none;font-weight:600">View all →</a>
+      </div>
+      <!-- Sessions (demo) -->
+      <div class="op-session">
+        <div class="op-session-date">
+          <div class="month">JUN</div>
+          <div class="day">14</div>
+        </div>
+        <div class="op-session-info">
+          <div class="op-session-name">Pickleball Drop-in</div>
+          <div class="op-session-meta">10:00 AM · All levels · ₱200</div>
+        </div>
+        <div class="op-session-slots">8 left</div>
+      </div>
+      <div class="op-session" style="opacity:0.7">
+        <div class="op-session-date">
+          <div class="month">JUN</div>
+          <div class="day">16</div>
+        </div>
+        <div class="op-session-info">
+          <div class="op-session-name">Badminton Extended</div>
+          <div class="op-session-meta">2:30 PM · Inter/Adv · ₱300</div>
+        </div>
+        <div class="op-session-slots">3 left</div>
+      </div>
+      <a href="openplay.html" style="margin-top:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#60a5fa;text-decoration:none;padding-top:14px">
+        Join an Open Play session
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- CTA card (teal) -->
+  <a href="book.html" class="bento-card bc-cta" style="text-decoration:none;cursor:pointer">
+    <div class="cta-card-inner">
+      <div>
+        <div class="cta-headline">BOOK<br>YOUR<br>COURT</div>
+        <div class="cta-sub" style="margin-top:8px">Real-time availability. Instant confirmation.</div>
+      </div>
+      <div class="cta-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </div>
+    </div>
+  </a>
+
+  <!-- Drill Zone -->
+  <div class="bento-card bc-drill">
+    <div class="drill-inner">
+      <div class="drill-bg-text">DZ</div>
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Solo Training</div>
+        <div class="drill-headline">DRILL<br>ZONE</div>
+      </div>
+      <div class="drill-points">
+        <div class="drill-point">
+          <div class="drill-point-icon">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/></svg>
+          </div>
+          Automated ball machine — adjustable speed, spin, angle
+        </div>
+        <div class="drill-point">
+          <div class="drill-point-icon">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          30 or 60 min sessions · ₱400 / ₱700
+        </div>
+        <div class="drill-point">
+          <div class="drill-point-icon">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          No partner required
+        </div>
+      </div>
+      <a href="book.html?sport=drill" class="sport-book-btn" style="margin-top:16px;width:fit-content">Book Drill Zone →</a>
+    </div>
+  </div>
+
+  <!-- Tip card -->
+  <div class="bento-card bc-tip">
+    <div class="tip-inner">
+      <div>
+        <div class="tip-label">Pro Tip</div>
+        <div class="tip-text">"Book 7 days ahead for peak weekend slots. Early mornings are always open — and the lighting is perfect."</div>
+      </div>
+      <div class="tip-author">— Marcus T., Elite Member</div>
+    </div>
+  </div>
+
+</div><!-- /bento -->
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="how-section">
+  <div class="how-label">Simple Process</div>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">1</div>
+      <div class="how-title">Choose Sport & Date</div>
+      <div class="how-desc">Pick pickleball, badminton, or the drill zone. Select a date and see real-time availability — every slot updated live.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">2</div>
+      <div class="how-title">Select Court & Add Extras</div>
+      <div class="how-desc">Pick your court, add equipment rental if needed, and watch your total update instantly. No surprises.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">3</div>
+      <div class="how-title">Pay Deposit & Play</div>
+      <div class="how-desc">Confirm with GCash or card. Get your booking code instantly. Show it at the desk, pay the remainder, and play.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TESTIMONIALS — masonry columns ══ -->
+<section class="reviews-section">
+  <div class="reviews-header">
+    <div class="reviews-headline">WHAT<br>PLAYERS SAY</div>
+    <div class="reviews-meta">
+      <strong>98%</strong>
+      Satisfaction Rate
+    </div>
+  </div>
+
+  <div class="reviews-cols">
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"Best pickleball courts I've played on outside of a tournament. The flooring is exceptional and booking takes 90 seconds flat."</div>
+      <div class="review-author">
+        <div class="review-avatar">SK</div>
+        <div>
+          <div class="review-name">Sarah K.</div>
+          <div class="review-role">Pro Member</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"The ceiling height alone makes these courts worth it. Perfect lighting, zero glare. My shuttle speeds are consistent every single session. I've played all over the city — nothing comes close."</div>
+      <div class="review-author">
+        <div class="review-avatar">MT</div>
+        <div>
+          <div class="review-name">Marcus T.</div>
+          <div class="review-role">Badminton · Elite Member</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"Live court availability is a game changer. No more calling ahead or showing up to find everything taken."</div>
+      <div class="review-author">
+        <div class="review-avatar">PR</div>
+        <div>
+          <div class="review-name">Priya R.</div>
+          <div class="review-role">Pro Member</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"Ran our company league tournament here — 40 people, zero hiccups. Staff handled scheduling, equipment, even catering. Will return every quarter."</div>
+      <div class="review-author">
+        <div class="review-avatar">TW</div>
+        <div>
+          <div class="review-name">Tom W.</div>
+          <div class="review-role">Corporate Events</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"I drive 45 minutes to play here. The unlimited membership pays for itself in two weeks. Staff are genuinely welcoming."</div>
+      <div class="review-author">
+        <div class="review-avatar">JL</div>
+        <div>
+          <div class="review-name">Jennifer L.</div>
+          <div class="review-role">Elite Member</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">"Walked in, got a court in 20 minutes, rented equipment, played 2 hours. Completely seamless."</div>
+      <div class="review-author">
+        <div class="review-avatar">DH</div>
+        <div>
+          <div class="review-name">David H.</div>
+          <div class="review-role">Drop-In Player</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ FULL-WIDTH CTA ══ -->
+<section class="full-cta">
+  <div class="full-cta-headline">
+    YOUR COURT<br>IS <em>WAITING.</em>
+  </div>
+  <div class="full-cta-right">
+    <div class="full-cta-sub">Real-time availability. Instant confirmation. No membership required to start playing today.</div>
+    <a href="book.html" class="btn-primary" style="font-size:15px;padding:16px 36px">
+      Book a Court
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <a href="openplay.html" class="btn-ghost" style="font-size:13px;padding:13px 24px">View Open Play →</a>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <a href="#" class="footer-logo">SMASH STUDIO</a>
+  <div class="footer-links">
+    <a href="book.html">Book</a>
+    <a href="openplay.html">Open Play</a>
+    <a href="community.html">Community</a>
+    <a href="my-bookings.html">My Bookings</a>
+    <a href="policy.html">Policy</a>
+  </div>
+  <div class="footer-copy">© 2025 Smash Studio</div>
+</footer>
+
+</body>
+</html>
