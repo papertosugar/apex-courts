@@ -1257,9 +1257,8 @@ function buildDenomRows(prefill) {
     const subtotal = qty ? (d * qty) : 0;
     return `
     <div style="display:grid;grid-template-columns:1fr 80px 90px;gap:6px;align-items:center;margin-bottom:6px">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;background:var(--surface-3);border:1px solid var(--border)">
-        <span style="font-size:15px;font-weight:800;color:${d>=500?'var(--gold)':'var(--text)'}"">₱${d.toLocaleString()}</span>
-        <span style="font-size:10px;color:var(--text-dim)">${d>=100?'bill':'coin'}</span>
+      <div style="display:flex;align-items:center;padding:10px 14px;border-radius:9px;background:var(--surface-3);border:1px solid var(--border)">
+        <span style="font-size:15px;font-weight:800;color:${d>=500?'var(--gold)':'var(--text)'}">₱${d.toLocaleString()}</span>
       </div>
       <input type="number" min="0" step="1" placeholder="0" value="${qty}"
         data-denom="${d}"
