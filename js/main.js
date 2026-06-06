@@ -86,26 +86,45 @@ function pgTimeToLabel(pg) {
   return h + suffix;
 }
 
-// ── Fallback: seeded fake data (used if Supabase unavailable) ─
-function getDaySlots(sport) {
-  const seed = new Date().getDate() + (sport === 'pickleball' ? 0 : sport === 'badminton' ? 100 : 200);
-  const rng  = n => { const x = Math.sin(n + seed) * 10000; return x - Math.floor(x); };
-  const slots = {}, n = COURTS[sport], isDZ = sport === 'drillzone';
-  const timeArr = isDZ ? DZ_TIMES : TIMES;
-  for (let c = 1; c <= n; c++) {
-    slots[c] = [];
-    for (let t = 0; t < timeArr.length; t++) {
-      const r = rng(c * 100 + t);
-      if (r < 0.06 && t === 2) slots[c].push('mine');
-      else if (r < (isDZ ? 0.35 : 0.42)) slots[c].push('booked');
-      else slots[c].push('open');
+// ── Build slot map from localStorage bookings ─────────────────
+function buildSlotMapFromLocal(sport, timeArr) {
+  const today     = new Date().toISOString().split('T')[0];
+  const myUserId  = localStorage.getItem('apexUserId');
+  const bookings  = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const openPlays = JSON.parse(localStorage.getItem('apexOpenSessions') || '[]');
+  const map = {};
+
+  // Regular bookings
+  bookings.forEach(b => {
+    if (b.status === 'cancelled') return;
+    if (b.sport !== sport) return;
+    (b.slots || []).forEach(s => {
+      if (s.date !== today) return;
+      const c = Number(s.court);
+      if (!map[c]) map[c] = {};
+      const label = pgTimeToLabel(s.time) || s.time;
+      if (timeArr.includes(label)) {
+        map[c][label] = (b.id && myUserId && b.userId === myUserId) ? 'mine' : 'booked';
+      }
+    });
+  });
+
+  // Open play sessions → show as open-session
+  openPlays.forEach(s => {
+    if (s.date !== today) return;
+    if (s.sport !== sport) return;
+    const c = Number(s.court || 1);
+    if (!map[c]) map[c] = {};
+    const label = pgTimeToLabel(s.time) || s.time;
+    if (timeArr.includes(label)) {
+      if (!map[c][label]) map[c][label] = 'open-session';
     }
-  }
-  return slots;
+  });
+
+  return map;
 }
 
 // ── Build slot map from Supabase bookings ─────────────────────
-// returns { courtNum: { '8AM': 'booked'|'mine', ... } }
 function buildSlotMap(bookings, myUserId, timeArr) {
   const map = {};
   bookings.forEach(b => {
@@ -113,7 +132,7 @@ function buildSlotMap(bookings, myUserId, timeArr) {
     if (!map[cNum]) map[cNum] = {};
     const label = pgTimeToLabel(b.start_time);
     if (timeArr.includes(label)) {
-      map[cNum][label] = (b.booked_by && b.booked_by === myUserId) ? 'mine' : 'booked';
+      map[cNum][label] = (b.user_id && b.user_id === myUserId) ? 'mine' : 'booked';
     }
   });
   return map;
@@ -131,41 +150,43 @@ async function renderAvailability(sport) {
   // ── Show loading state ────────────────────────────────────
   const liveEl = document.getElementById('availLiveTag');
 
-  // ── Try Supabase, fall back to fake data ──────────────────
-  let slotMap = null;
-  let myUserId = null;
-  let isLive = false;
+  // ── 1) localStorage에서 실제 예약 읽기 (항상) ──────────────
+  let slotMap = buildSlotMapFromLocal(sport, timeArr);
+  let myUserId = localStorage.getItem('apexUserId');
+  let isLive = true;
+
+  // ── 2) Supabase에서 추가 데이터 머지 (가능하면) ────────────
   if (window.ApexCourts) {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today   = new Date().toISOString().split('T')[0];
       const dbSport = sport === 'drillzone' ? 'drillzone' : sport;
-      const [bookings, user] = await Promise.all([
+      const [dbBookings, user] = await Promise.all([
         ApexCourts.getAvailability(dbSport, today),
         ApexCourts.getCurrentUser().catch(() => null),
       ]);
-      myUserId = user?.id;
-      slotMap  = buildSlotMap(bookings, myUserId, timeArr);
-      isLive   = true;
+      if (user?.id) myUserId = user.id;
+      const dbMap = buildSlotMap(dbBookings, myUserId, timeArr);
+      // Merge: Supabase로 덮어쓰되 local 데이터 유지
+      for (const c in dbMap) {
+        if (!slotMap[c]) slotMap[c] = {};
+        Object.assign(slotMap[c], dbMap[c]);
+      }
     } catch (e) {
-      console.warn('[Availability] Supabase error, using fallback:', e.message);
+      console.warn('[Availability] Supabase unavailable, using localStorage only');
     }
   }
 
   // Update LIVE indicator
   if (liveEl) {
-    liveEl.innerHTML = isLive
-      ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#4ade80">
-           <span style="width:6px;height:6px;border-radius:50%;background:#4ade80;animation:livePulse 1.4s ease-in-out infinite"></span>LIVE
-         </span>`
-      : `<span style="font-size:10px;color:var(--cream-dim);letter-spacing:0.06em">DEMO</span>`;
+    liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#4ade80">
+        <span style="width:6px;height:6px;border-radius:50%;background:#4ade80;animation:livePulse 1.4s ease-in-out infinite"></span>LIVE
+      </span>`;
   }
 
-  // Build slots array (Supabase or fallback)
+  // Build slots array
   const slots = {};
   for (let c = 1; c <= n; c++) {
-    slots[c] = timeArr.map(t =>
-      slotMap ? (slotMap[c]?.[t] || 'open') : getDaySlots(sport)[c][timeArr.indexOf(t)]
-    );
+    slots[c] = timeArr.map(t => slotMap[c]?.[t] || 'open');
   }
 
   // Time header row
@@ -194,15 +215,20 @@ async function renderAvailability(sport) {
     slots[c].forEach((s, i) => {
       const tLabel = timeArr[i];
       const h = parseInt(tLabel) + (tLabel.includes('PM') && tLabel !== '12PM' ? 12 : 0);
-      const isPast = isToday() && h < now;
-      const cls = isPast && s !== 'mine' ? 'booked' : s;
-      const slotLabel = cls === 'open-session' ? 'OPEN' : cls === 'mine' ? 'MINE' : cls === 'booked' ? 'BOOKED' : '';
-      const ariaLabel = `${tLabel}: ${cls === 'open' ? 'Available' : cls === 'open-session' ? 'Open Session' : cls === 'mine' ? 'Your booking' : 'Booked'}`;
+      const isPast    = isToday() && h < now;
+      const cls       = isPast && s !== 'mine' ? 'booked' : s;
+      const isBookable = cls === 'open' && !isPast;
+      const slotLabel  = cls === 'open-session' ? 'OPEN'
+                       : cls === 'mine'         ? 'MINE'
+                       : cls === 'booked'       ? 'BOOKED'
+                       : '';
+      const ariaLabel  = `${tLabel}: ${cls === 'open' ? 'Available — click to book' : cls === 'open-session' ? 'Open Session' : cls === 'mine' ? 'Your booking' : 'Booked'}`;
       html += `<div class="slot ${cls}"
-        role="${cls === 'open' && !isPast ? 'button' : 'cell'}"
-        tabindex="${cls === 'open' && !isPast ? '0' : '-1'}"
+        role="${isBookable ? 'button' : 'cell'}"
+        tabindex="${isBookable ? '0' : '-1'}"
         aria-label="${ariaLabel}"
-        ${cls === 'open' && !isPast ? `onclick="window.location.href='book.html?sport=${sport}&court=${c}&time=${tLabel}'"
+        style="${!isBookable ? 'pointer-events:none;cursor:default' : 'cursor:pointer'}"
+        ${isBookable ? `onclick="window.location.href='book.html?sport=${sport}&court=${c}&time=${tLabel}'"
         onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"` : ''}
       >${slotLabel}</div>`;
     });
