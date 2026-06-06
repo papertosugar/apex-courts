@@ -140,11 +140,9 @@ async function getCourts(sport) {
    ============================================================ */
 
 /** Create a new booking */
-async function createBooking({ courtId, date, startTime, endTime, durationMins, playerCount, notes }) {
+async function createBooking({ courtId, date, startTime, endTime, durationMins, playerCount, notes, userName, paymentMethod, totalAmount, sport, courtNum, bookingCode }) {
   const user = await getCurrentUser();
-  const { data, error } = await db.from('bookings').insert({
-    court_id:         courtId,
-    user_id:          user?.id,
+  const payload = {
     booking_date:     date,
     start_time:       startTime,
     end_time:         endTime,
@@ -152,7 +150,18 @@ async function createBooking({ courtId, date, startTime, endTime, durationMins, 
     player_count:     playerCount || 2,
     notes,
     status:           'confirmed',
-  }).select().single();
+  };
+  // Optional fields — add only if they exist
+  if (courtId)       payload.court_id         = courtId;
+  if (user?.id)      payload.user_id           = user.id;
+  if (userName)      payload.player_name       = userName;
+  if (paymentMethod) payload.payment_method    = paymentMethod;
+  if (totalAmount)   payload.total_amount      = totalAmount;
+  if (sport)         payload.sport             = sport;
+  if (courtNum)      payload.court_number      = courtNum;
+  if (bookingCode)   payload.booking_code      = bookingCode;
+
+  const { data, error } = await db.from('bookings').insert(payload).select().single();
   if (error) throw error;
   return data;
 }

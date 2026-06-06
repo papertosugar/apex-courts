@@ -622,9 +622,13 @@ async function finalizePayment() {
   const step       = getSlotStep();
 
   // ── Save to Supabase ─────────────────────────────────────────
+  let supabaseSaved = false;
   if (window.ApexCourts) {
     try {
-      const courts = await ApexCourts.getCourts(state.sport);
+      // Try to get courts (may be empty if DB not seeded — that's OK)
+      let courts = [];
+      try { courts = await ApexCourts.getCourts(state.sport); } catch(_) {}
+
       // Group slots by date+court for contiguous bookings
       const byDateCourt = {};
       state.selectedSlots.forEach(s => {
@@ -632,6 +636,10 @@ async function finalizePayment() {
         if (!byDateCourt[key]) byDateCourt[key] = { date: s.date, court: s.court, slots: [] };
         byDateCourt[key].slots.push(s);
       });
+
+      const userName = localStorage.getItem('apexUser')
+        || document.getElementById('firstName')?.value || 'Guest';
+
       for (const block of Object.values(byDateCourt)) {
         block.slots.sort((a,b) => a.idx - b.idx);
         const dateStr  = block.date.toISOString().split('T')[0];
@@ -639,17 +647,28 @@ async function finalizePayment() {
         const endFH    = parseSlotHours(block.slots[block.slots.length-1].label) + step;
         const dur      = block.slots.length * step;
         const courtRow = courts.find(c => c.court_number === block.court);
-        if (courtRow) {
-          await ApexCourts.createBooking({
-            courtId: courtRow.id, date: dateStr,
-            startTime: fhToTime(startFH), endTime: fhToTime(endFH),
-            durationMins: Math.round(dur * 60), playerCount: 2,
-            notes: `Extras: ${Array.from(state.extras).join(', ') || 'none'} | Pay: ${method}`,
-          });
-        }
+
+        await ApexCourts.createBooking({
+          courtId:       courtRow?.id || null,   // null if courts table is empty — OK
+          date:          dateStr,
+          startTime:     fhToTime(startFH),
+          endTime:       fhToTime(endFH),
+          durationMins:  Math.round(dur * 60),
+          playerCount:   2,
+          notes:         `Extras: ${Array.from(state.extras).join(', ') || 'none'} | Pay: ${method}`,
+          userName,
+          paymentMethod: method,
+          totalAmount:   courtCost + extrasCost,
+          sport:         state.sport,
+          courtNum:      block.court,
+          bookingCode:   code,
+        });
       }
+      supabaseSaved = true;
+      console.log('[Booking] ✅ Saved to Supabase');
     } catch (e) {
-      console.warn('[Booking] Supabase save failed, using localStorage:', e.message);
+      console.error('[Booking] ❌ Supabase save failed:', e.message, e);
+      // Continue — localStorage fallback below will still save
     }
   }
 
@@ -672,6 +691,9 @@ async function finalizePayment() {
   document.getElementById('paymentModal').classList.remove('open');
   document.getElementById('bookingCode').textContent = code;
   document.getElementById('confirmModal').classList.add('open');
+  // Show sync status on confirm screen
+  const syncNote = document.getElementById('confirmSyncNote');
+  if (syncNote) syncNote.textContent = supabaseSaved ? '✅ Synced to server' : '⚠️ Saved locally only (check internet)';
   for (let i = 1; i <= 5; i++) markStep(i + 1);
 }
 

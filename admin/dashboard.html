@@ -258,7 +258,7 @@
         <div class="card-title" style="margin-bottom:16px">
           <span>All Bookings Log</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <button class="mini-btn" onclick="renderAllBookings()">↺ Refresh</button>
+            <button class="mini-btn" onclick="syncBookingsFromSupabase().then(()=>renderAllBookings())">↺ Refresh</button>
             <button class="mini-btn" onclick="exportBookingsCSV()" style="color:var(--gold);border-color:var(--border-bright)">↓ Export CSV</button>
           </div>
         </div>
@@ -479,6 +479,47 @@ setInterval(() => {
 
 // ── Helpers ──
 function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
+
+// ── Load bookings from Supabase and merge with localStorage ──
+async function syncBookingsFromSupabase() {
+  if (!window.ApexCourts) return;
+  try {
+    const { data, error } = await window.apexDB
+      .from('bookings')
+      .select('*')
+      .neq('status', 'cancelled')
+      .order('booking_date', { ascending: false })
+      .order('start_time');
+    if (error || !data?.length) return;
+    // Convert Supabase rows → local format
+    const remote = data.map(r => ({
+      id:            r.booking_code || r.id,
+      userName:      r.player_name  || 'Member',
+      sport:         r.sport        || 'pickleball',
+      slots: [{
+        date:  r.booking_date,
+        court: r.court_number || 1,
+        time:  r.start_time ? r.start_time.slice(0,5) : '',
+      }],
+      duration:      (r.duration_minutes || 60) / 60,
+      extras:        [],
+      totalAmount:   r.total_amount || 0,
+      status:        r.status || 'confirmed',
+      paymentMethod: r.payment_method || 'cash',
+      createdAt:     r.created_at || new Date().toISOString(),
+      createdBy:     'online',
+    }));
+    // Merge: remote takes priority, local fills gaps
+    const local    = getBookings();
+    const localIds = new Set(local.map(b => b.id));
+    const merged   = [...remote, ...local.filter(b => !remote.find(r => r.id === b.id))];
+    localStorage.setItem('apexBookings', JSON.stringify(merged));
+    console.log(`[Dashboard] ✅ Synced ${remote.length} bookings from Supabase`);
+    return true;
+  } catch (e) {
+    console.warn('[Dashboard] Supabase sync failed, using localStorage only:', e.message);
+  }
+}
 function getActivityLog() { return JSON.parse(localStorage.getItem('apexActivityLog') || '[]'); }
 function sportLabel(s)    { return s==='pickleball'?'Pickleball':s==='badminton'?'Badminton':'Drill Zone'; }
 function sportAbbr(s)     { return s==='pickleball'?'PB':s==='badminton'?'BD':'DZ'; }
@@ -505,7 +546,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.sb-item[id^="sb-"]').forEach(s => s.classList.remove('active'));
   const sbEl = document.getElementById('sb-'+name);
   if (sbEl) sbEl.classList.add('active');
-  if (name==='bookings') renderAllBookings();
+  if (name==='bookings') { syncBookingsFromSupabase().then(() => renderAllBookings()); }
   if (name==='members')  loadMembers();
   if (name==='revenue')  renderRevenue();
   if (name==='shifts')   renderShiftLogs();
@@ -521,7 +562,7 @@ function navSidebar(name, sbItem) {
     document.querySelectorAll('.sb-item[id^="sb-"]').forEach(s => s.classList.remove('active'));
     sbItem.classList.add('active');
     document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
-    if (name==='bookings') renderAllBookings();
+    if (name==='bookings') { syncBookingsFromSupabase().then(() => renderAllBookings()); }
     if (name==='members')  loadMembers();
     if (name==='revenue')  renderRevenue();
     if (name==='shifts')   renderShiftLogs();
