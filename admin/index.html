@@ -99,12 +99,20 @@
         onkeydown="if(event.key==='Enter') login()" />
     </div>
 
+    <!-- POS location notice -->
+    <div id="posLocationNotice" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);font-size:12px;color:#a5b4fc;line-height:1.6">
+      📍 POS access is restricted to the venue network.<br>
+      Please connect to the venue WiFi before signing in.
+    </div>
+
     <button class="login-btn" onclick="login()">
       Sign In
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </button>
 
-    <div class="login-hint">Demo: any username + PIN "1234" → <b>Admin</b><br>any username + PIN "5678" → <b>POS Staff</b></div>
+    <div class="login-hint" style="margin-top:20px;line-height:1.8">
+      Staff login is restricted to authorized personnel only.
+    </div>
   </div>
 
   <a href="/" class="back-link">
@@ -114,31 +122,85 @@
 </div>
 
 <script>
+/* ── CREDENTIALS ── */
+const ADMIN_PASSWORD = 'akak0814';   // Admin password
+const POS_PASSWORD   = 'smash2025';  // POS Staff password (현장 전용)
+
+/* ── VENUE IP LOCK (POS only) ──
+   Set VENUE_IPS to your venue's public IP addresses.
+   Leave empty [] to disable the restriction.
+   Get your venue IP at: https://api.ipify.org           */
+const VENUE_IPS = [];  // e.g. ['123.456.789.0']
+
 let currentRole = 'admin';
 function setRole(role, el) {
   currentRole = role;
   document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('errorMsg').style.display = 'none';
+
+  // Show/hide location notice for POS
+  const notice = document.getElementById('posLocationNotice');
+  if (notice) notice.style.display = role === 'pos' ? 'block' : 'none';
 }
-function login() {
-  const pin = document.getElementById('pin').value;
-  const err = document.getElementById('errorMsg');
-  if (pin === '1234') {
-    localStorage.setItem('apexRole', 'Admin');
-    localStorage.setItem('apexUser', document.getElementById('username').value || 'Admin');
-    window.location.href = 'dashboard.html';
-  } else if (pin === '5678') {
-    localStorage.setItem('apexRole', 'POS Staff');
-    localStorage.setItem('apexUser', document.getElementById('username').value || 'POS Staff');
-    window.location.href = 'pos.html';
+
+async function getClientIP() {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) });
+    const d = await r.json();
+    return d.ip;
+  } catch { return null; }
+}
+
+async function login() {
+  const pin      = document.getElementById('pin').value;
+  const username = document.getElementById('username').value.trim() || null;
+  const err      = document.getElementById('errorMsg');
+  const btn      = document.querySelector('.login-btn');
+
+  err.style.display = 'none';
+
+  if (currentRole === 'admin') {
+    // ── Admin login ──
+    if (pin === ADMIN_PASSWORD) {
+      localStorage.setItem('apexRole', 'Admin');
+      localStorage.setItem('apexUser', username || 'Admin');
+      window.location.href = 'dashboard.html';
+    } else {
+      showError('Incorrect password.');
+    }
   } else {
-    err.style.display = 'block';
-    const inp = document.getElementById('pin');
-    inp.style.borderColor = 'rgba(239,68,68,0.5)';
-    inp.style.animation = 'shake 0.3s';
-    setTimeout(() => { inp.style.borderColor = ''; inp.style.animation = ''; }, 800);
+    // ── POS login — check venue IP if VENUE_IPS configured ──
+    if (pin !== POS_PASSWORD) { showError('Incorrect password.'); return; }
+
+    if (VENUE_IPS.length > 0) {
+      btn.textContent = 'Checking location…';
+      btn.disabled = true;
+      const ip = await getClientIP();
+      btn.disabled = false;
+      btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+
+      if (!ip || !VENUE_IPS.includes(ip)) {
+        showError(`Access restricted to venue network only.\nYour IP: ${ip || 'unknown'}\nPlease connect to the venue WiFi.`);
+        return;
+      }
+    }
+
+    localStorage.setItem('apexRole', 'POS Staff');
+    localStorage.setItem('apexUser', username || 'POS Staff');
+    window.location.href = 'pos.html';
   }
+}
+
+function showError(msg) {
+  const err = document.getElementById('errorMsg');
+  err.textContent = msg;
+  err.style.display = 'block';
+  err.style.whiteSpace = 'pre-line';
+  const inp = document.getElementById('pin');
+  inp.style.borderColor = 'rgba(239,68,68,0.5)';
+  inp.style.animation = 'shake 0.3s';
+  setTimeout(() => { inp.style.borderColor = ''; inp.style.animation = ''; }, 800);
 }
 </script>
 <style>

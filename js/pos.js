@@ -1218,7 +1218,7 @@ function reprintLast() {
 //  SHIFT CLOSE
 // ═══════════════════════════════════════
 function scTab(tab, btn) {
-  ['summary','inventory'].forEach(t => {
+  ['summary','cash','inventory'].forEach(t => {
     const panel = document.getElementById('sc-panel-' + t);
     const tabBtn = document.getElementById('sc-tab-' + t);
     if (panel) panel.style.display = t === tab ? 'block' : 'none';
@@ -1291,9 +1291,177 @@ function openShiftClose() {
   // ── INVENTORY PANEL ──
   renderInventoryPanel(bookings);
 
+  // ── CASH COUNT PANEL ──
+  // Store expected amounts globally for reconciliation
+  window._scExpected = { cash: byPM.cash, gcash: byPM.gcash, card: byPM.card, grand };
+  renderCashCountPanel(byPM.cash, byPM.gcash, byPM.card);
+
   // Reset to summary tab
   scTab('summary', document.getElementById('sc-tab-summary'));
   modal.classList.add('open');
+}
+
+function renderCashCountPanel(expectedCash, expectedGcash, expectedCard) {
+  const panel = document.getElementById('sc-panel-cash');
+  if (!panel) return;
+
+  const row = (label, icon, expected, inputId, color = 'var(--gold)') => `
+    <div style="padding:14px 16px;border-radius:10px;background:var(--surface-3);border:1px solid var(--border);margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:13px;font-weight:700">${icon} ${label}</span>
+        <span style="font-size:12px;color:var(--text-muted)">Expected: <strong style="color:${color}">₱${expected.toLocaleString()}</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px;color:var(--text-muted)">₱</span>
+        <input type="number" id="${inputId}" min="0" step="1" placeholder="0"
+          style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:16px;font-family:inherit;font-weight:700;outline:none"
+          oninput="updateCashReconciliation()"
+          onfocus="this.style.borderColor='var(--gold)'"
+          onblur="this.style.borderColor='var(--border)'" />
+      </div>
+      <div id="${inputId}-result" style="margin-top:8px;font-size:12px;font-weight:600;text-align:right;min-height:16px"></div>
+    </div>`;
+
+  panel.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">
+        Count actual amounts in drawer / receipts
+      </div>
+      ${row('Cash (Drawer)', '💵', expectedCash, 'sc-actual-cash')}
+      ${row('GCash', '📱', expectedGcash, 'sc-actual-gcash', '#a5b4fc')}
+      ${row('Card / Online', '💳', expectedCard, 'sc-actual-card', '#93c5fd')}
+    </div>
+
+    <!-- Overall reconciliation result -->
+    <div id="sc-reconcile-total" style="padding:14px 16px;border-radius:10px;background:rgba(0,194,168,0.07);border:1px solid rgba(0,194,168,0.2);margin-bottom:16px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700">Total Over / Short</span>
+        <span id="sc-total-diff" style="font-size:20px;font-weight:900"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted)" id="sc-reconcile-detail"></div>
+    </div>
+
+    <!-- Staff info -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px">Closed by</label>
+        <input type="text" id="sc-closed-by" value="${localStorage.getItem('apexUser') || ''}"
+          style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:14px;font-family:inherit;outline:none"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px">Notes (optional)</label>
+        <textarea id="sc-notes" rows="2" placeholder="Any discrepancies or remarks..."
+          style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:none"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+    </div>`;
+}
+
+function updateCashReconciliation() {
+  const exp = window._scExpected || {};
+  const items = [
+    { inputId: 'sc-actual-cash',  expected: exp.cash  || 0, label: 'Cash' },
+    { inputId: 'sc-actual-gcash', expected: exp.gcash || 0, label: 'GCash' },
+    { inputId: 'sc-actual-card',  expected: exp.card  || 0, label: 'Card' },
+  ];
+
+  let totalActual = 0, totalExpected = 0, allFilled = true;
+
+  items.forEach(({ inputId, expected, label }) => {
+    const input = document.getElementById(inputId);
+    const result = document.getElementById(inputId + '-result');
+    if (!input || !result) return;
+    const val = parseFloat(input.value);
+    if (isNaN(val) || input.value === '') { allFilled = false; result.textContent = ''; return; }
+    const diff = val - expected;
+    totalActual   += val;
+    totalExpected += expected;
+    if (diff === 0) {
+      result.innerHTML = `<span style="color:#22c55e">✓ Balanced</span>`;
+    } else if (diff > 0) {
+      result.innerHTML = `<span style="color:#f97316">▲ Over ₱${Math.abs(diff).toLocaleString()}</span>`;
+    } else {
+      result.innerHTML = `<span style="color:#f87171">▼ Short ₱${Math.abs(diff).toLocaleString()}</span>`;
+    }
+  });
+
+  const totalPanel = document.getElementById('sc-reconcile-total');
+  const totalDiff  = document.getElementById('sc-total-diff');
+  const detail     = document.getElementById('sc-reconcile-detail');
+  if (allFilled && totalPanel && totalDiff) {
+    const diff = totalActual - totalExpected;
+    totalPanel.style.display = 'block';
+    if (diff === 0) {
+      totalPanel.style.borderColor = 'rgba(34,197,94,0.4)';
+      totalPanel.style.background  = 'rgba(34,197,94,0.07)';
+      totalDiff.textContent = '✓ Balanced';
+      totalDiff.style.color = '#22c55e';
+    } else if (diff > 0) {
+      totalPanel.style.borderColor = 'rgba(249,115,22,0.4)';
+      totalPanel.style.background  = 'rgba(249,115,22,0.07)';
+      totalDiff.textContent = `▲ Over ₱${Math.abs(diff).toLocaleString()}`;
+      totalDiff.style.color = '#f97316';
+    } else {
+      totalPanel.style.borderColor = 'rgba(239,68,68,0.4)';
+      totalPanel.style.background  = 'rgba(239,68,68,0.07)';
+      totalDiff.textContent = `▼ Short ₱${Math.abs(diff).toLocaleString()}`;
+      totalDiff.style.color = '#f87171';
+    }
+    if (detail) detail.textContent =
+      `Actual ₱${totalActual.toLocaleString()} vs Expected ₱${totalExpected.toLocaleString()}`;
+  }
+}
+
+function confirmShiftClose() {
+  // Validate cash count tab filled
+  const cashVal  = document.getElementById('sc-actual-cash')?.value;
+  const gcashVal = document.getElementById('sc-actual-gcash')?.value;
+  const cardVal  = document.getElementById('sc-actual-card')?.value;
+  const closedBy = document.getElementById('sc-closed-by')?.value?.trim();
+
+  if (!cashVal && !gcashVal && !cardVal) {
+    // Allow closing without cash count (just summary mode)
+    const ok = confirm('Cash count not entered. Close shift without reconciliation?');
+    if (!ok) { scTab('cash', document.getElementById('sc-tab-cash')); return; }
+  }
+
+  if (!closedBy) {
+    scTab('cash', document.getElementById('sc-tab-cash'));
+    const el = document.getElementById('sc-closed-by');
+    if (el) { el.style.borderColor = 'rgba(239,68,68,0.5)'; el.focus(); }
+    showToast('Please enter your name before closing shift.', true);
+    return;
+  }
+
+  const exp   = window._scExpected || {};
+  const notes = document.getElementById('sc-notes')?.value || '';
+  const record = {
+    closedAt:  new Date().toISOString(),
+    closedBy,
+    notes,
+    expected:  { cash: exp.cash, gcash: exp.gcash, card: exp.card, total: exp.grand },
+    actual: {
+      cash:  parseFloat(cashVal)  || null,
+      gcash: parseFloat(gcashVal) || null,
+      card:  parseFloat(cardVal)  || null,
+    },
+  };
+  record.actual.total = (record.actual.cash || 0) + (record.actual.gcash || 0) + (record.actual.card || 0);
+  record.diff = record.actual.total - (exp.grand || 0);
+
+  // Save shift close record
+  const history = JSON.parse(localStorage.getItem('apexShiftHistory') || '[]');
+  history.unshift(record);
+  localStorage.setItem('apexShiftHistory', JSON.stringify(history.slice(0, 30)));
+
+  document.getElementById('shiftCloseModal').classList.remove('open');
+
+  const diffMsg = record.diff === 0 ? 'Balanced ✓'
+    : record.diff > 0 ? `Over ₱${Math.abs(record.diff).toLocaleString()}`
+    : `Short ₱${Math.abs(record.diff).toLocaleString()}`;
+  showToast(`Shift closed by ${closedBy} · ${diffMsg}`);
+  printShiftSummary();
 }
 
 function renderInventoryPanel(bookings) {

@@ -1185,6 +1185,9 @@
       <button class="ca-tab" id="sc-tab-summary" onclick="scTab('summary',this)" style="flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:rgba(212,175,55,0.1);color:var(--gold);font-family:inherit">
         📊 Summary
       </button>
+      <button class="ca-tab" id="sc-tab-cash" onclick="scTab('cash',this)" style="flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);font-family:inherit">
+        💵 Cash Count
+      </button>
       <button class="ca-tab" id="sc-tab-inventory" onclick="scTab('inventory',this)" style="flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);font-family:inherit">
         📦 Inventory
       </button>
@@ -1193,11 +1196,15 @@
     <!-- Tab panels -->
     <div style="overflow-y:auto;flex:1">
       <div id="sc-panel-summary"><!-- populated by JS --></div>
+      <div id="sc-panel-cash" style="display:none"><!-- populated by JS --></div>
       <div id="sc-panel-inventory" style="display:none"><!-- populated by JS --></div>
     </div>
 
     <div class="modal-actions" style="margin-top:16px;flex-shrink:0">
-      <button class="modal-btn ghost" onclick="document.getElementById('shiftCloseModal').classList.remove('open')">Close</button>
+      <button class="modal-btn ghost" onclick="document.getElementById('shiftCloseModal').classList.remove('open')">Cancel</button>
+      <button class="modal-btn primary" id="scConfirmBtn" onclick="confirmShiftClose()" style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none">
+        ✓ Confirm &amp; Close Shift
+      </button>
     </div>
   </div>
 </div>
