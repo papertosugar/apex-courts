@@ -288,6 +288,65 @@ function calPickDate(isoStr) {
   jumpToCalendarDate(isoStr);
 }
 
+// ─── 예약 직전 실시간 충돌 체크 ───
+// 선택된 슬롯들을 Supabase + localStorage 양쪽에서 재확인
+// 충돌 있으면 충돌 슬롯 label 반환, 없으면 null
+async function checkConflictsBeforeBook() {
+  const step = getSlotStep();
+
+  // 1) localStorage 체크
+  const localBookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  for (const s of state.selectedSlots) {
+    const dateStr = s.date.toISOString().split('T')[0];
+    const slotH   = parseSlotHours(s.label);
+    const slotEnd = slotH + step;
+
+    const conflict = localBookings.some(b => {
+      if (b.status === 'cancelled') return false;
+      if (b.sport !== state.sport) return false;
+      return (b.slots || []).some(ls => {
+        if (ls.date !== dateStr || Number(ls.court) !== s.court) return false;
+        const bH = parseSlotHours(ls.time);
+        return bH < slotEnd && (bH + step) > slotH;
+      });
+    });
+    if (conflict) return `${s.label} · Court ${s.court} (${dateStr})`;
+  }
+
+  // 2) Supabase 체크 (연결된 경우)
+  if (window.apexDB) {
+    try {
+      const dates = [...new Set(state.selectedSlots.map(s => s.date.toISOString().split('T')[0]))];
+      for (const dateStr of dates) {
+        const { data } = await window.apexDB
+          .from('bookings')
+          .select('court_number, start_time, end_time, sport')
+          .eq('booking_date', dateStr)
+          .eq('sport', state.sport)
+          .neq('status', 'cancelled');
+
+        if (!data) continue;
+        for (const s of state.selectedSlots) {
+          if (s.date.toISOString().split('T')[0] !== dateStr) continue;
+          const slotH   = parseSlotHours(s.label);
+          const slotEnd = slotH + step;
+          const startT  = fhToTime(slotH);
+          const endT    = fhToTime(slotEnd);
+
+          const conflict = data.some(b =>
+            Number(b.court_number) === s.court &&
+            b.start_time < endT &&
+            b.end_time   > startT
+          );
+          if (conflict) return `${s.label} · Court ${s.court} (${dateStr})`;
+        }
+      }
+    } catch (_) { /* Supabase 오류는 무시 — localStorage 체크로 충분 */ }
+  }
+
+  return null;
+}
+
 // ─── SLOT STATUS ───
 function getSlotStatus(slotIdx, courtNum) {
   if (!state.selectedDate) return 'open';
@@ -632,21 +691,36 @@ function selectPayMethod(method, el) {
 }
 
 async function finalizePayment() {
-  const method     = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
+  const method     = document.getElementById('payConfirmBtn').dataset.method || 'cash';
   const code       = 'APX-' + Math.floor(1000 + Math.random() * 9000);
   const courtCost  = totalCourtCost();
   const extrasCost = Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
   const step       = getSlotStep();
 
-  // ── Save to Supabase ─────────────────────────────────────────
+  const btn = document.getElementById('payConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Checking availability…';
+
+  // ── Step 1: 예약 직전 실시간 중복 체크 ────────────────────────
+  const conflictSlot = await checkConflictsBeforeBook();
+  if (conflictSlot) {
+    btn.disabled = false;
+    btn.textContent = 'Confirm Booking';
+    document.getElementById('paymentModal').classList.remove('open');
+    showBookingError(`이미 예약된 시간입니다: ${conflictSlot}. 다른 시간을 선택해주세요.`);
+    renderAvailGrid();
+    return;
+  }
+
+  btn.textContent = 'Saving…';
+
+  // ── Step 2: Supabase에 저장 ───────────────────────────────────
   let supabaseSaved = false;
   if (window.ApexCourts) {
     try {
-      // Try to get courts (may be empty if DB not seeded — that's OK)
       let courts = [];
       try { courts = await ApexCourts.getCourts(state.sport); } catch(_) {}
 
-      // Group slots by date+court for contiguous bookings
       const byDateCourt = {};
       state.selectedSlots.forEach(s => {
         const key = s.dateKey + '_' + s.court;
@@ -654,8 +728,7 @@ async function finalizePayment() {
         byDateCourt[key].slots.push(s);
       });
 
-      const userName = localStorage.getItem('apexUser')
-        || document.getElementById('firstName')?.value || 'Guest';
+      const userName = localStorage.getItem('apexUser') || 'Guest';
 
       for (const block of Object.values(byDateCourt)) {
         block.slots.sort((a,b) => a.idx - b.idx);
@@ -666,7 +739,7 @@ async function finalizePayment() {
         const courtRow = courts.find(c => c.court_number === block.court);
 
         await ApexCourts.createBooking({
-          courtId:       courtRow?.id || null,   // null if courts table is empty — OK
+          courtId:       courtRow?.id || null,
           date:          dateStr,
           startTime:     fhToTime(startFH),
           endTime:       fhToTime(endFH),
@@ -682,12 +755,23 @@ async function finalizePayment() {
         });
       }
       supabaseSaved = true;
-      console.log('[Booking] ✅ Saved to Supabase');
     } catch (e) {
-      console.error('[Booking] ❌ Supabase save failed:', e.message, e);
-      // Continue — localStorage fallback below will still save
+      // 동시 예약 충돌 (unique constraint 위반)
+      if (e.message?.includes('unique') || e.code === '23505') {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Booking';
+        document.getElementById('paymentModal').classList.remove('open');
+        showBookingError('방금 다른 분이 같은 시간을 예약했습니다. 다른 슬롯을 선택해주세요.');
+        renderAvailGrid();
+        return;
+      }
+      console.error('[Booking] Supabase save failed:', e.message);
+      // DB 오류는 localStorage fallback으로 계속 진행
     }
   }
+
+  btn.disabled = false;
+  btn.textContent = 'Confirm Booking';
 
   // ── localStorage fallback ────────────────────────────────────
   const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
