@@ -708,9 +708,6 @@ async function finalizePayment() {
   document.getElementById('paymentModal').classList.remove('open');
   document.getElementById('bookingCode').textContent = code;
   document.getElementById('confirmModal').classList.add('open');
-  // Show sync status on confirm screen
-  const syncNote = document.getElementById('confirmSyncNote');
-  if (syncNote) syncNote.textContent = supabaseSaved ? '✅ Synced to server' : '⚠️ Saved locally only (check internet)';
   for (let i = 1; i <= 5; i++) markStep(i + 1);
 }
 

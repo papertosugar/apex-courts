@@ -663,22 +663,24 @@
     </div>
 
     <!-- Payment options -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
+      <button class="pay-opt selected" onclick="selectPayMethod('cash',this)" data-method="cash"
+        style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
+        <div style="font-size:22px;margin-bottom:6px">💵</div>
+        <div style="font-size:13px;font-weight:700">Cash</div>
+        <div style="font-size:10px;color:var(--cream-muted);margin-top:2px">Pay at venue</div>
+      </button>
       <button class="pay-opt" onclick="selectPayMethod('gcash',this)" data-method="gcash"
         style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
-        <div style="font-size:28px;margin-bottom:6px">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
-        </div>
-        <div style="font-size:14px;font-weight:700">GCash</div>
-        <div style="font-size:11px;color:var(--cream-muted);margin-top:2px">Mobile wallet</div>
+        <div style="font-size:22px;margin-bottom:6px">📱</div>
+        <div style="font-size:13px;font-weight:700">GCash</div>
+        <div style="font-size:10px;color:var(--cream-muted);margin-top:2px">Mobile wallet</div>
       </button>
       <button class="pay-opt" onclick="selectPayMethod('card',this)" data-method="card"
         style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
-        <div style="font-size:28px;margin-bottom:6px">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        </div>
-        <div style="font-size:14px;font-weight:700">Credit / Debit Card</div>
-        <div style="font-size:11px;color:var(--cream-muted);margin-top:2px">Visa, Mastercard</div>
+        <div style="font-size:22px;margin-bottom:6px">💳</div>
+        <div style="font-size:13px;font-weight:700">Card</div>
+        <div style="font-size:10px;color:var(--cream-muted);margin-top:2px">Visa / Mastercard</div>
       </button>
     </div>
 
@@ -699,7 +701,7 @@
 
     <div class="modal-actions">
       <button class="modal-btn ghost" onclick="closePaymentModal()">← Back</button>
-      <button class="modal-btn primary" id="payConfirmBtn" data-method="gcash" onclick="finalizePayment()">
+      <button class="modal-btn primary" id="payConfirmBtn" data-method="cash" onclick="finalizePayment()">
         Confirm Booking
       </button>
     </div>
@@ -717,8 +719,7 @@
     <div class="modal-title">Court Booked!</div>
     <div class="modal-sub">Your court is confirmed. See you on the court! A confirmation has been sent to your email.</div>
     <div class="booking-code" id="bookingCode">APX-0000</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Show this code at the front desk or scan the QR code in your email.</p>
-    <p id="confirmSyncNote" style="font-size:11px;color:var(--text-dim);margin-bottom:24px"></p>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Show this code at the front desk to complete check-in and payment.</p>
     <div class="modal-actions">
       <button class="modal-btn ghost" onclick="closeModal()">← Book Another</button>
       <button class="modal-btn primary" onclick="window.location.href='/'">Return Home</button>
