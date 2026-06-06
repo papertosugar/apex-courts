@@ -2187,6 +2187,8 @@ function buildReceiptHTML(d) {
 // ─── RECEIPT HISTORY ───
 function saveToReceiptHistory(data) {
   const hist = JSON.parse(localStorage.getItem('apexReceiptHistory') || '[]');
+  // Prevent duplicate save (same ID already at top)
+  if (hist.length && hist[0].id === data.id) return;
   hist.unshift({
     id:       data.id,
     time:     data.time,
@@ -2197,50 +2199,127 @@ function saveToReceiptHistory(data) {
     paymentMethod: data.paymentMethod || 'cash',
     data,
   });
-  // Keep last 100 receipts
-  localStorage.setItem('apexReceiptHistory', JSON.stringify(hist.slice(0, 100)));
+  // Keep last 500 receipts
+  localStorage.setItem('apexReceiptHistory', JSON.stringify(hist.slice(0, 500)));
+}
+
+// Active filters for receipt history
+let _rhTypeFilter = 'all';
+
+function setRhType(type, el) {
+  _rhTypeFilter = type;
+  document.querySelectorAll('.rh-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  _renderReceiptHistory();
+}
+
+function clearRhFilters() {
+  document.getElementById('rhSearch').value = '';
+  document.getElementById('rhDate').value = '';
+  _rhTypeFilter = 'all';
+  document.querySelectorAll('.rh-chip').forEach(c => c.classList.remove('active'));
+  const allChip = document.querySelector('.rh-chip');
+  if (allChip) allChip.classList.add('active');
+  _renderReceiptHistory();
+}
+
+function filterReceiptHistory() {
+  _renderReceiptHistory();
 }
 
 function openReceiptHistory() {
-  const modal  = document.getElementById('receiptHistoryModal');
-  const list   = document.getElementById('receiptHistoryList');
-  if (!modal || !list) return;
+  const modal = document.getElementById('receiptHistoryModal');
+  if (!modal) return;
+  // Reset filters
+  const si = document.getElementById('rhSearch');
+  const di = document.getElementById('rhDate');
+  if (si) si.value = '';
+  if (di) di.value = '';
+  _rhTypeFilter = 'all';
+  document.querySelectorAll('.rh-chip').forEach(c => c.classList.remove('active'));
+  const allChip = document.querySelector('.rh-chip');
+  if (allChip) allChip.classList.add('active');
+  _renderReceiptHistory();
+  modal.classList.add('open');
+}
+
+function _renderReceiptHistory() {
+  const list = document.getElementById('receiptHistoryList');
+  const cnt  = document.getElementById('rhResultCount');
+  if (!list) return;
+
+  const searchVal = (document.getElementById('rhSearch')?.value || '').toLowerCase().trim();
+  const dateVal   = document.getElementById('rhDate')?.value || '';
+  const allHist   = JSON.parse(localStorage.getItem('apexReceiptHistory') || '[]');
+  const isAdmin   = ['Admin','admin'].includes(localStorage.getItem('apexRole'));
+
+  let filtered = allHist.filter(h => {
+    if (_rhTypeFilter !== 'all' && h.type !== _rhTypeFilter) return false;
+    if (dateVal && h.date !== dateVal) return false;
+    if (searchVal) {
+      const haystack = [h.name, h.id, h.date, h.type, h.paymentMethod].join(' ').toLowerCase();
+      if (!haystack.includes(searchVal)) return false;
+    }
+    return true;
+  });
+
+  if (cnt) cnt.textContent = filtered.length
+    ? `${filtered.length} receipt${filtered.length !== 1 ? 's' : ''} found`
+    : 'No results';
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+      <div style="font-size:32px;margin-bottom:12px">🧾</div>
+      <div style="font-size:14px;font-weight:600">No receipts found</div>
+      <div style="font-size:12px;margin-top:6px">Try adjusting filters or search terms</div>
+    </div>`;
+    return;
+  }
+
+  const typeIcon = { session:'🎾', beverages:'🥤', items:'🛒', end:'✅' };
+  const pmIcon   = { cash:'💵', gcash:'📱', card:'💳' };
+
+  // Group by date
+  const groups = {};
+  filtered.forEach(h => {
+    const d = h.date || 'Unknown';
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(h);
+  });
 
   const today = new Date().toISOString().split('T')[0];
-  const hist  = JSON.parse(localStorage.getItem('apexReceiptHistory') || '[]')
-    .filter(h => h.data?.date === today || h.date === today);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-  const isAdmin = ['Admin','admin'].includes(localStorage.getItem('apexRole'));
-
-  if (!hist.length) {
-    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-dim)">No receipts today</div>';
-  } else {
-    const typeIcon = { session:'🎾', beverages:'🥤', items:'🛒', end:'✅' };
-    const pmIcon   = { cash:'💵', gcash:'📱', card:'💳' };
-    list.innerHTML = hist.map((h, i) => `
-      <div onclick="reprintFromHistory(${i})" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all 0.15s" onmouseenter="this.style.borderColor='rgba(0,194,168,0.4)'" onmouseleave="this.style.borderColor='var(--border)'">
+  let html = '';
+  Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(date => {
+    let label = date;
+    if (date === today) label = 'Today';
+    else if (date === yesterday) label = 'Yesterday';
+    html += `<div style="font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);padding:8px 4px 4px">${label}</div>`;
+    groups[date].forEach(h => {
+      html += `<div onclick="reprintFromHistory('${h.id}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all 0.15s" onmouseenter="this.style.borderColor='rgba(0,194,168,0.4)'" onmouseleave="this.style.borderColor='var(--border)'">
         <div style="font-size:22px">${typeIcon[h.type] || '🧾'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${h.name}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${h.time} · ${h.type} · ${pmIcon[h.paymentMethod]||''} ${h.paymentMethod}</div>
           <div style="font-size:10px;font-family:monospace;color:var(--text-dim);margin-top:1px">${h.id}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:15px;font-weight:800;color:var(--gold)">${isAdmin ? '₱'+h.total.toLocaleString() : '—'}</div>
+          <div style="font-size:15px;font-weight:800;color:var(--gold)">${isAdmin ? '₱'+Number(h.total).toLocaleString() : '—'}</div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px">tap to reprint</div>
         </div>
-      </div>`).join('');
-  }
-  modal.classList.add('open');
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
 }
 
-function reprintFromHistory(idx) {
+function reprintFromHistory(id) {
   const hist = JSON.parse(localStorage.getItem('apexReceiptHistory') || '[]');
-  const today = new Date().toISOString().split('T')[0];
-  const todayHist = hist.filter(h => h.data?.date === today || h.date === today);
-  if (!todayHist[idx]) return;
+  const entry = hist.find(h => h.id === id);
+  if (!entry) return;
   document.getElementById('receiptHistoryModal')?.classList.remove('open');
-  showReceiptPreview(todayHist[idx].data);
+  showReceiptPreview(entry.data);
 }
 
 // Show receipt modal
