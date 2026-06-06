@@ -1173,31 +1173,55 @@
 <!-- ─── SHIFT CLOSE MODAL ─── -->
 <!-- ─── SHIFT OPEN MODAL ─── -->
 <div class="modal-overlay" id="shiftOpenModal">
-  <div class="modal-card" style="max-width:400px">
-    <div class="modal-title">Open Shift</div>
-    <div class="modal-sub" id="shiftOpenDate">—</div>
+  <div class="modal-card" style="max-width:460px;max-height:90vh;display:flex;flex-direction:column">
 
-    <div style="margin:20px 0">
-      <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:8px">Opening Float (Cash in Drawer)</label>
-      <div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-radius:10px;background:var(--surface-3);border:1px solid var(--border)">
-        <span style="font-size:18px;font-weight:700;color:var(--text-muted)">₱</span>
-        <input type="number" id="soFloat" min="0" step="100" placeholder="0"
-          style="flex:1;border:none;background:transparent;color:var(--text);font-size:24px;font-weight:800;font-family:inherit;outline:none"
-          oninput="updateFloatPreview()" />
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-shrink:0">
+      <div>
+        <div class="modal-title" style="margin-bottom:2px">Open Shift</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="shiftOpenDate">—</div>
       </div>
-      <div id="soFloatPreview" style="margin-top:8px;font-size:12px;color:var(--text-muted);text-align:right"></div>
+      <button class="btn-sm gold" onclick="printShiftOpen()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
     </div>
 
-    <div style="margin-bottom:16px">
-      <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:8px">Opened by</label>
-      <input type="text" id="soStaff" style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:9px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:14px;font-family:inherit;outline:none"
-        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+    <div style="overflow-y:auto;flex:1;padding-right:2px">
+
+      <!-- Denomination table -->
+      <div style="margin:16px 0 8px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Cash in Drawer — Count by Denomination</div>
+
+        <!-- Header row -->
+        <div style="display:grid;grid-template-columns:1fr 80px 90px;gap:6px;margin-bottom:6px;padding:0 4px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim)">Denomination</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);text-align:center">Qty</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);text-align:right">Subtotal</div>
+        </div>
+
+        <div id="denomRows"></div>
+
+        <!-- Total -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:10px;background:rgba(0,194,168,0.08);border:1px solid rgba(0,194,168,0.25);margin-top:8px">
+          <span style="font-size:14px;font-weight:700">Opening Float Total</span>
+          <span id="soTotalDisplay" style="font-size:22px;font-weight:900;color:var(--gold)">₱0</span>
+        </div>
+      </div>
+
+      <!-- Staff -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:8px">Opened by</label>
+        <input type="text" id="soStaff"
+          style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:9px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:14px;font-family:inherit;outline:none"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+
+      <!-- Warning if already opened today -->
+      <div id="soCurrentFloat" style="display:none;padding:10px 14px;border-radius:9px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);font-size:12px;color:#fdba74;margin-bottom:14px;line-height:1.5"></div>
     </div>
 
-    <!-- Current float display (if already set today) -->
-    <div id="soCurrentFloat" style="display:none;padding:10px 14px;border-radius:9px;background:rgba(0,194,168,0.07);border:1px solid rgba(0,194,168,0.2);font-size:12px;color:var(--text-muted);margin-bottom:14px"></div>
-
-    <div class="modal-actions">
+    <div class="modal-actions" style="flex-shrink:0;margin-top:16px">
       <button class="modal-btn ghost" onclick="document.getElementById('shiftOpenModal').classList.remove('open')">Cancel</button>
       <button class="modal-btn primary" onclick="confirmShiftOpen()" style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none">
         ✓ Open Shift

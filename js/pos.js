@@ -1241,10 +1241,55 @@ function scTab(tab, btn) {
 /* ══════════════════════════════════════════════════════════
    SHIFT OPEN
    ══════════════════════════════════════════════════════════ */
+const DENOMS = [1000, 500, 200, 100, 50, 20, 5];
+
 function getOpeningFloat() {
   const today = new Date().toISOString().split('T')[0];
   const record = JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
   return record ? record.float : 0;
+}
+
+function buildDenomRows(prefill) {
+  const container = document.getElementById('denomRows');
+  if (!container) return;
+  container.innerHTML = DENOMS.map(d => {
+    const qty = prefill?.[d] || '';
+    const subtotal = qty ? (d * qty) : 0;
+    return `
+    <div style="display:grid;grid-template-columns:1fr 80px 90px;gap:6px;align-items:center;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;background:var(--surface-3);border:1px solid var(--border)">
+        <span style="font-size:15px;font-weight:800;color:${d>=500?'var(--gold)':'var(--text)'}"">₱${d.toLocaleString()}</span>
+        <span style="font-size:10px;color:var(--text-dim)">${d>=100?'bill':'coin'}</span>
+      </div>
+      <input type="number" min="0" step="1" placeholder="0" value="${qty}"
+        data-denom="${d}"
+        id="denom-${d}"
+        style="padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font-size:16px;font-weight:700;font-family:inherit;text-align:center;outline:none;width:100%;box-sizing:border-box"
+        oninput="updateDenomTotal()"
+        onfocus="this.style.borderColor='var(--gold)'"
+        onblur="this.style.borderColor='var(--border)'" />
+      <div id="sub-${d}" style="text-align:right;font-size:14px;font-weight:700;color:${subtotal>0?'var(--gold)':'var(--text-dim)'};padding-right:4px">
+        ${subtotal > 0 ? '₱' + subtotal.toLocaleString() : '—'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateDenomTotal() {
+  let total = 0;
+  DENOMS.forEach(d => {
+    const input = document.getElementById('denom-' + d);
+    const subEl = document.getElementById('sub-' + d);
+    const qty   = parseInt(input?.value) || 0;
+    const sub   = d * qty;
+    total += sub;
+    if (subEl) {
+      subEl.textContent  = sub > 0 ? '₱' + sub.toLocaleString() : '—';
+      subEl.style.color  = sub > 0 ? 'var(--gold)' : 'var(--text-dim)';
+    }
+  });
+  const el = document.getElementById('soTotalDisplay');
+  if (el) el.textContent = '₱' + total.toLocaleString();
 }
 
 function openShiftOpen() {
@@ -1255,15 +1300,16 @@ function openShiftOpen() {
   document.getElementById('shiftOpenDate').textContent =
     new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
   document.getElementById('soStaff').value = localStorage.getItem('apexUser') || '';
-  document.getElementById('soFloat').value = '';
-  document.getElementById('soFloatPreview').textContent = '';
 
-  // Show existing float if already opened today
+  // Pre-fill from existing if already opened today
   const existing = JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
+  buildDenomRows(existing?.denoms || null);
+  updateDenomTotal();
+
   const notice = document.getElementById('soCurrentFloat');
   if (existing) {
     notice.style.display = 'block';
-    notice.textContent = `⚠️ Shift already opened today by ${existing.openedBy} with ₱${existing.float.toLocaleString()} float. Submitting will update it.`;
+    notice.innerHTML = `⚠️ Shift already opened today by <strong>${existing.openedBy}</strong> with ₱${existing.float.toLocaleString()} float. Submitting will update it.`;
   } else {
     notice.style.display = 'none';
   }
@@ -1271,24 +1317,21 @@ function openShiftOpen() {
   modal.classList.add('open');
 }
 
-function updateFloatPreview() {
-  const val = parseFloat(document.getElementById('soFloat').value);
-  const el  = document.getElementById('soFloatPreview');
-  if (!isNaN(val) && val >= 0) {
-    el.textContent = `Opening drawer: ₱${val.toLocaleString()}`;
-    el.style.color = 'var(--gold)';
-  } else {
-    el.textContent = '';
-  }
+function getDenomValues() {
+  const denoms = {};
+  let total = 0;
+  DENOMS.forEach(d => {
+    const qty = parseInt(document.getElementById('denom-' + d)?.value) || 0;
+    denoms[d] = qty;
+    total += d * qty;
+  });
+  return { denoms, total };
 }
 
 function confirmShiftOpen() {
-  const floatVal = parseFloat(document.getElementById('soFloat').value);
-  const staff    = document.getElementById('soStaff').value.trim();
+  const { denoms, total } = getDenomValues();
+  const staff = document.getElementById('soStaff').value.trim();
 
-  if (isNaN(floatVal) || floatVal < 0) {
-    showToast('Please enter a valid opening float amount.', true); return;
-  }
   if (!staff) {
     document.getElementById('soStaff').style.borderColor = 'rgba(239,68,68,0.5)';
     document.getElementById('soStaff').focus();
@@ -1296,12 +1339,75 @@ function confirmShiftOpen() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const record = { float: floatVal, openedBy: staff, openedAt: new Date().toISOString(), date: today };
+  const record = {
+    float: total,
+    denoms,
+    openedBy: staff,
+    openedAt: new Date().toISOString(),
+    date: today,
+    venue: STUDIO_CONFIG?.name || 'Smash Studio'
+  };
   localStorage.setItem('apexShiftOpen_' + today, JSON.stringify(record));
 
   document.getElementById('shiftOpenModal').classList.remove('open');
-  showToast(`Shift opened by ${staff} · Float: ₱${floatVal.toLocaleString()}`);
+  showToast(`Shift opened by ${staff} · Float: ₱${total.toLocaleString()}`);
   updateFloatIndicator();
+  printShiftOpen(record);
+}
+
+function printShiftOpen(recordArg) {
+  const today  = new Date().toISOString().split('T')[0];
+  const record = recordArg || JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
+  if (!record) { showToast('No shift open record for today.', true); return; }
+
+  const openedAt = new Date(record.openedAt).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+  const dateStr  = new Date(record.openedAt).toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const denomRows = DENOMS.map(d => {
+    const qty = record.denoms?.[d] || 0;
+    const sub = d * qty;
+    return `<tr>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee">₱${d.toLocaleString()}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right">${sub > 0 ? '₱' + sub.toLocaleString() : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    <html><head><title>Shift Open — ${dateStr}</title>
+    <style>
+      body { font-family: 'Courier New', monospace; font-size: 13px; max-width: 320px; margin: 0 auto; padding: 20px; }
+      h2 { text-align: center; font-size: 16px; margin: 0 0 4px; }
+      .sub { text-align: center; font-size: 11px; color: #666; margin-bottom: 16px; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+      th { background: #f5f5f5; padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+      th:nth-child(2) { text-align: center; }
+      th:nth-child(3) { text-align: right; }
+      .total-row { font-size: 15px; font-weight: 900; border-top: 2px solid #000; }
+      .total-row td { padding: 8px 8px 4px; }
+      .footer { text-align: center; font-size: 11px; color: #999; margin-top: 16px; border-top: 1px dashed #ccc; padding-top: 12px; }
+      .sig-line { margin-top: 32px; border-top: 1px solid #ccc; padding-top: 6px; font-size: 11px; color: #666; }
+    </style></head>
+    <body>
+      <h2>SMASH STUDIO</h2>
+      <div class="sub">SHIFT OPEN REPORT<br>${dateStr}<br>Time: ${openedAt}</div>
+      <table>
+        <tr><th>Denomination</th><th>Qty</th><th>Amount</th></tr>
+        ${denomRows}
+        <tr class="total-row">
+          <td colspan="2"><strong>TOTAL FLOAT</strong></td>
+          <td style="text-align:right"><strong>₱${record.float.toLocaleString()}</strong></td>
+        </tr>
+      </table>
+      <div class="sig-line">Opened by: <strong>${record.openedBy}</strong></div>
+      <div class="footer">Keep this receipt for end-of-shift reconciliation.<br>Smash Studio POS</div>
+    </body></html>`;
+
+  const w = window.open('', '_blank', 'width=400,height=600');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 400);
 }
 
 function updateFloatIndicator() {
