@@ -86,15 +86,28 @@ async function signOut() {
 /** Get the current logged-in user + profile */
 async function getCurrentUser() {
   try {
-    const { data: { user } } = await db.auth.getUser();
-    if (!user) return null;
-    // profiles 테이블이 없거나 row가 없어도 에러 없이 처리
-    const { data: profile } = await db
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();   // single() → maybeSingle() : row 없어도 에러 안 남
-    return { ...user, profile: profile || {} };
+    const { data: { user }, error } = await db.auth.getUser();
+    if (error || !user) return null;
+
+    // user_metadata에서 이름/역할 먼저 읽기 (profiles 없어도 동작)
+    const meta = user.user_metadata || {};
+    const baseProfile = {
+      first_name: meta.first_name || meta.firstName || '',
+      last_name:  meta.last_name  || meta.lastName  || '',
+      role:       meta.role || 'member',
+    };
+
+    // profiles 테이블은 보너스 — 실패해도 로그인은 됨
+    try {
+      const { data: profile } = await db
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      return { ...user, profile: { ...baseProfile, ...(profile || {}) } };
+    } catch (_) {
+      return { ...user, profile: baseProfile };
+    }
   } catch (e) {
     console.warn('[getCurrentUser] error:', e.message);
     return null;

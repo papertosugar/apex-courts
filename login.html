@@ -315,16 +315,29 @@ async function doLogin() {
   btn.disabled = true; btn.textContent = 'Signing in…';
 
   try {
-    // ① Try Supabase Auth first (members + staff accounts in Supabase)
+    // ① Try Supabase Auth first (members)
     if (window.ApexCourts) {
-      const { session } = await ApexCourts.signIn(contact, password);
-      if (session) {
-        const user = await ApexCourts.getCurrentUser();
-        const role     = user?.profile?.role || 'member';
-        const fullName = `${user?.profile?.first_name || ''} ${user?.profile?.last_name || ''}`.trim() || contact;
+      const { data, error } = await window.apexDB.auth.signInWithPassword({ email: contact, password });
+
+      if (error) {
+        // 이메일 미인증, 비밀번호 틀림 등 → 명확한 메시지
+        if (error.message?.includes('Email not confirmed')) {
+          showError('이메일 인증이 완료되지 않았습니다. 가입 시 받은 이메일의 링크를 먼저 클릭해주세요.');
+          btn.disabled = false;
+          btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+          return;
+        }
+        // 비밀번호/이메일 틀림 → staff 계정으로 fallthrough
+      } else if (data?.session) {
+        const user = data.session.user;
+        const meta = user.user_metadata || {};
+        const firstName = meta.first_name || meta.firstName || '';
+        const lastName  = meta.last_name  || meta.lastName  || '';
+        const fullName  = [firstName, lastName].filter(Boolean).join(' ').trim() || user.email;
+        const role      = meta.role || 'member';
         const roleLabel = role === 'admin' ? 'Admin' : role === 'pos_staff' ? 'POS Staff' : 'member';
-        localStorage.setItem('apexUser', fullName);
-        localStorage.setItem('apexRole', roleLabel);
+        localStorage.setItem('apexUser',   fullName);
+        localStorage.setItem('apexRole',   roleLabel);
         localStorage.setItem('apexUserId', user.id);
         successRole = roleLabel;
         showSuccessPopup(fullName, roleLabel);
@@ -332,7 +345,8 @@ async function doLogin() {
       }
     }
   } catch (err) {
-    // Supabase auth failed — fall through to legacy check
+    console.warn('[Login] Supabase error:', err.message);
+    // fall through to staff accounts
   }
 
   // ② Legacy: hardcoded staff credentials (local dev fallback)
