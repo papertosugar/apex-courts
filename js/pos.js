@@ -45,6 +45,15 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+// Show float badge on load
+document.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('posFloatBadge');
+  if (badge) {
+    badge.style.display = 'block';
+    updateFloatIndicator();
+  }
+});
+
 // ─── DATA LAYER ───
 function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
 function saveBookings(b)  { localStorage.setItem('apexBookings', JSON.stringify(b)); }
@@ -1229,6 +1238,81 @@ function scTab(tab, btn) {
   });
 }
 
+/* ══════════════════════════════════════════════════════════
+   SHIFT OPEN
+   ══════════════════════════════════════════════════════════ */
+function getOpeningFloat() {
+  const today = new Date().toISOString().split('T')[0];
+  const record = JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
+  return record ? record.float : 0;
+}
+
+function openShiftOpen() {
+  const modal = document.getElementById('shiftOpenModal');
+  if (!modal) return;
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('shiftOpenDate').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('soStaff').value = localStorage.getItem('apexUser') || '';
+  document.getElementById('soFloat').value = '';
+  document.getElementById('soFloatPreview').textContent = '';
+
+  // Show existing float if already opened today
+  const existing = JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
+  const notice = document.getElementById('soCurrentFloat');
+  if (existing) {
+    notice.style.display = 'block';
+    notice.textContent = `⚠️ Shift already opened today by ${existing.openedBy} with ₱${existing.float.toLocaleString()} float. Submitting will update it.`;
+  } else {
+    notice.style.display = 'none';
+  }
+
+  modal.classList.add('open');
+}
+
+function updateFloatPreview() {
+  const val = parseFloat(document.getElementById('soFloat').value);
+  const el  = document.getElementById('soFloatPreview');
+  if (!isNaN(val) && val >= 0) {
+    el.textContent = `Opening drawer: ₱${val.toLocaleString()}`;
+    el.style.color = 'var(--gold)';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function confirmShiftOpen() {
+  const floatVal = parseFloat(document.getElementById('soFloat').value);
+  const staff    = document.getElementById('soStaff').value.trim();
+
+  if (isNaN(floatVal) || floatVal < 0) {
+    showToast('Please enter a valid opening float amount.', true); return;
+  }
+  if (!staff) {
+    document.getElementById('soStaff').style.borderColor = 'rgba(239,68,68,0.5)';
+    document.getElementById('soStaff').focus();
+    showToast('Please enter your name.', true); return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const record = { float: floatVal, openedBy: staff, openedAt: new Date().toISOString(), date: today };
+  localStorage.setItem('apexShiftOpen_' + today, JSON.stringify(record));
+
+  document.getElementById('shiftOpenModal').classList.remove('open');
+  showToast(`Shift opened by ${staff} · Float: ₱${floatVal.toLocaleString()}`);
+  updateFloatIndicator();
+}
+
+function updateFloatIndicator() {
+  // Show today's float in the topbar if element exists
+  const el = document.getElementById('posFloatBadge');
+  if (!el) return;
+  const f = getOpeningFloat();
+  el.textContent = f > 0 ? `Float ₱${f.toLocaleString()}` : 'Set Float';
+  el.style.color = f > 0 ? '#22c55e' : '#f97316';
+}
+
 function openShiftClose() {
   const modal   = document.getElementById('shiftCloseModal');
   if (!modal) return;
@@ -1292,25 +1376,30 @@ function openShiftClose() {
   renderInventoryPanel(bookings);
 
   // ── CASH COUNT PANEL ──
-  // Store expected amounts globally for reconciliation
-  window._scExpected = { cash: byPM.cash, gcash: byPM.gcash, card: byPM.card, grand };
-  renderCashCountPanel(byPM.cash, byPM.gcash, byPM.card);
+  const openingFloat = getOpeningFloat();
+  const expectedCashInDrawer = byPM.cash + openingFloat; // sales + float
+  window._scExpected = {
+    cash: byPM.cash, gcash: byPM.gcash, card: byPM.card, grand,
+    openingFloat, expectedCashInDrawer
+  };
+  renderCashCountPanel(expectedCashInDrawer, byPM.gcash, byPM.card, byPM.cash, openingFloat);
 
   // Reset to summary tab
   scTab('summary', document.getElementById('sc-tab-summary'));
   modal.classList.add('open');
 }
 
-function renderCashCountPanel(expectedCash, expectedGcash, expectedCard) {
+function renderCashCountPanel(expectedCash, expectedGcash, expectedCard, cashSales = 0, openingFloat = 0) {
   const panel = document.getElementById('sc-panel-cash');
   if (!panel) return;
 
-  const row = (label, icon, expected, inputId, color = 'var(--gold)') => `
+  const row = (label, icon, expected, inputId, color = 'var(--gold)', subNote = '') => `
     <div style="padding:14px 16px;border-radius:10px;background:var(--surface-3);border:1px solid var(--border);margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${subNote?'4px':'10px'}">
         <span style="font-size:13px;font-weight:700">${icon} ${label}</span>
         <span style="font-size:12px;color:var(--text-muted)">Expected: <strong style="color:${color}">₱${expected.toLocaleString()}</strong></span>
       </div>
+      ${subNote ? `<div style="font-size:11px;color:var(--text-dim);margin-bottom:10px">${subNote}</div>` : ''}
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px;color:var(--text-muted)">₱</span>
         <input type="number" id="${inputId}" min="0" step="1" placeholder="0"
@@ -1327,7 +1416,12 @@ function renderCashCountPanel(expectedCash, expectedGcash, expectedCard) {
       <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">
         Count actual amounts in drawer / receipts
       </div>
-      ${row('Cash (Drawer)', '💵', expectedCash, 'sc-actual-cash')}
+      ${openingFloat > 0
+        ? row('Cash (Drawer)', '💵', expectedCash, 'sc-actual-cash', 'var(--gold)',
+            `Opening float ₱${openingFloat.toLocaleString()} + Cash sales ₱${cashSales.toLocaleString()}`)
+        : row('Cash (Drawer)', '💵', expectedCash, 'sc-actual-cash', 'var(--gold)',
+            openingFloat === 0 ? '⚠️ No opening float set — <a onclick="document.getElementById(\'shiftCloseModal\').classList.remove(\'open\');openShiftOpen()" style="color:var(--gold);cursor:pointer;text-decoration:underline">set now</a>' : '')
+      }
       ${row('GCash', '📱', expectedGcash, 'sc-actual-gcash', '#a5b4fc')}
       ${row('Card / Online', '💳', expectedCard, 'sc-actual-card', '#93c5fd')}
     </div>
@@ -1361,7 +1455,7 @@ function renderCashCountPanel(expectedCash, expectedGcash, expectedCard) {
 function updateCashReconciliation() {
   const exp = window._scExpected || {};
   const items = [
-    { inputId: 'sc-actual-cash',  expected: exp.cash  || 0, label: 'Cash' },
+    { inputId: 'sc-actual-cash',  expected: exp.expectedCashInDrawer || exp.cash || 0, label: 'Cash' },
     { inputId: 'sc-actual-gcash', expected: exp.gcash || 0, label: 'GCash' },
     { inputId: 'sc-actual-card',  expected: exp.card  || 0, label: 'Card' },
   ];
