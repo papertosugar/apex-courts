@@ -89,8 +89,9 @@
       width: 100%; padding: 13px 16px; box-sizing: border-box;
       border-radius: 10px; border: 1px solid var(--stone-line);
       background: var(--ink); color: var(--cream);
-      font-size: 15px; font-family: inherit;
+      font-size: 16px; font-family: inherit;  /* 16px prevents iOS auto-zoom */
       outline: none; transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
     }
     .form-input:focus { border-color: var(--gold); }
     .form-input::placeholder { color: rgba(242,237,228,0.25); }
@@ -182,10 +183,27 @@
     .step-panel { display: none; }
     .step-panel.active { display: block; }
 
+    /* Password input wrapper with toggle */
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-input { padding-right: 48px; }
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--cream-muted); display: flex; align-items: center;
+      touch-action: manipulation;
+    }
+    .pw-toggle:hover { color: var(--cream); }
+
     @media(max-width: 480px) {
-      .auth-header, .auth-body, .auth-footer { padding-left: 24px; padding-right: 24px; }
+      .auth-header, .auth-body, .auth-footer { padding-left: 20px; padding-right: 20px; }
       .form-row { grid-template-columns: 1fr; }
       .otp-box { width: 40px; height: 50px; font-size: 18px; }
+      /* On very small screens, stack OTP send button below input */
+      .send-otp-row { flex-wrap: wrap; }
+      .send-otp-row .form-input { min-width: 0; }
+      .btn-send-otp { width: 100%; }
+      /* Ensure buttons are tall enough for fingers */
+      .btn-primary-full, .btn-send-otp, .contact-tab { min-height: 48px; }
     }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -265,7 +283,12 @@
 
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
-          <input class="form-input" type="password" id="password" autocomplete="new-password" placeholder="At least 8 characters" />
+          <div class="pw-wrap">
+            <input class="form-input" type="password" id="password" autocomplete="new-password" placeholder="At least 8 characters" />
+            <button type="button" class="pw-toggle" aria-label="비밀번호 표시/숨기기" onclick="togglePw('password',this)">
+              <svg id="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
 
         <!-- Contact method toggle -->
@@ -392,6 +415,18 @@ function setStep(n) {
     else if (i === n) step.classList.add('active');
   });
   clearMessages();
+}
+
+/* ── PASSWORD TOGGLE ── */
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  btn.setAttribute('aria-label', showing ? '비밀번호 표시' : '비밀번호 숨기기');
+  btn.querySelector('svg').innerHTML = showing
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
 }
 
 /* ── CONTACT METHOD TOGGLE ── */

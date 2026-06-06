@@ -856,4 +856,63 @@ document.addEventListener('DOMContentLoaded', () => {
     p.style.transition = `opacity 0.5s ${i*0.1}s, transform 0.5s ${i*0.1}s cubic-bezier(0.25,0.46,0.45,0.94)`;
     obs.observe(p);
   });
+
+  // ─── SUPABASE REALTIME — sync grid across devices ─────────────────
+  // Listens for INSERT/UPDATE/DELETE on bookings table and refreshes
+  // the availability grid in real time without a full page reload.
+  (function initRealtime() {
+    if (typeof supabase === 'undefined') return;
+
+    supabase
+      .channel('bookings-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookings' },
+        (payload) => {
+          // Re-pull bookings for the currently selected dates and refresh grid
+          // We refresh localStorage cache from Supabase, then re-render.
+          refreshBookingsFromDB();
+        }
+      )
+      .subscribe();
+
+    async function refreshBookingsFromDB() {
+      try {
+        // Fetch all non-cancelled bookings in the visible date window (today + 13 days)
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const end = new Date(today); end.setDate(end.getDate() + 14);
+
+        const toISO = d => d.toISOString().slice(0,10);
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('court_number,booking_date,start_time,sport,status')
+          .gte('booking_date', toISO(today))
+          .lte('booking_date', toISO(end))
+          .neq('status', 'cancelled');
+
+        if (error || !data) return;
+
+        // Merge into localStorage cache (don't overwrite own pending bookings)
+        const existing = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+        const userId   = localStorage.getItem('apexUserId');
+
+        // Keep only local user's own bookings; replace everything else with DB data
+        const ownLocal = existing.filter(b => b.userId === userId || b.source === 'local');
+        const dbNorm   = data.map(b => ({
+          courtNumber:  b.court_number,
+          date:         b.booking_date,
+          time:         b.start_time,
+          sport:        b.sport,
+          status:       b.status,
+          source:       'db',
+        }));
+
+        localStorage.setItem('apexBookings', JSON.stringify([...ownLocal, ...dbNorm]));
+
+        // Refresh grid if it's visible
+        renderAvailGrid();
+      } catch(e) { /* silent — realtime is best-effort */ }
+    }
+  })();
 });

@@ -61,8 +61,9 @@
       width: 100%; padding: 13px 16px; box-sizing: border-box;
       border-radius: 10px; border: 1px solid var(--stone-line);
       background: var(--ink); color: var(--cream);
-      font-size: 15px; font-family: inherit;
+      font-size: 16px; font-family: inherit; /* 16px prevents iOS auto-zoom */
       outline: none; transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
     }
     .form-input:focus { border-color: var(--gold); }
     .form-input::placeholder { color: rgba(242,237,228,0.25); }
@@ -144,7 +145,10 @@
     }
 
     @media(max-width: 480px) {
-      .auth-header, .auth-body, .auth-footer { padding-left: 24px; padding-right: 24px; }
+      .auth-header, .auth-body, .auth-footer { padding-left: 20px; padding-right: 20px; }
+      .btn-primary-full { min-height: 52px; }
+      .form-input { min-height: 50px; }
+      .pw-toggle { min-width: 44px; min-height: 44px; right: 4px; }
     }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -273,6 +277,15 @@ let successRole = null;
 (function() {
   const p = new URLSearchParams(window.location.search);
   if (p.get('redirect')) redirectTo = p.get('redirect');
+
+  // Show idle-logout notice
+  if (p.get('reason') === 'idle') {
+    const el = document.getElementById('errorMsg');
+    if (el) {
+      el.textContent = '30분 비활동으로 자동 로그아웃 되었습니다. 다시 로그인해 주세요.';
+      el.classList.add('show');
+    }
+  }
 
   // If already logged in, redirect immediately
   if (localStorage.getItem('apexUser')) {

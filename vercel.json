@@ -17,10 +17,7 @@
     { "src": "/admin/pos$",       "dest": "/admin/pos.html" },
     { "src": "/admin/dashboard$", "dest": "/admin/dashboard.html" },
     { "src": "/my-bookings$",     "dest": "/my-bookings.html" },
-    {
-      "src": "/((?!_vercel|images|js|css|admin).*)",
-      "dest": "/404.html"
-    },
+    { "src": "/404$",             "dest": "/404.html" },
     {
       "src": "/(.*)",
       "headers": {
