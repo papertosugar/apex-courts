@@ -2276,7 +2276,17 @@ function _renderReceiptHistory() {
     return;
   }
 
-  const typeIcon = { session:'🎾', beverages:'🥤', items:'🛒', end:'✅' };
+  const typeIcon = {
+    session:    h => h.data?.sport === 'badminton' ? '🏸' : h.data?.sport === 'drill' ? '🎯' : '🥒',
+    beverages:  () => '🥤',
+    items:      () => '🛒',
+    end:        () => '✅',
+  };
+  const getIcon = h => {
+    const fn = typeIcon[h.type];
+    if (!fn) return '🧾';
+    return typeof fn === 'function' ? fn(h) : fn;
+  };
   const pmIcon   = { cash:'💵', gcash:'📱', card:'💳' };
 
   // Group by date
@@ -2298,7 +2308,7 @@ function _renderReceiptHistory() {
     html += `<div style="font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);padding:8px 4px 4px">${label}</div>`;
     groups[date].forEach(h => {
       html += `<div onclick="reprintFromHistory('${h.id}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all 0.15s" onmouseenter="this.style.borderColor='rgba(0,194,168,0.4)'" onmouseleave="this.style.borderColor='var(--border)'">
-        <div style="font-size:22px">${typeIcon[h.type] || '🧾'}</div>
+        <div style="font-size:22px">${getIcon(h)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${h.time} · ${h.type} · ${pmIcon[h.paymentMethod]||''} ${h.paymentMethod}</div>
