@@ -181,7 +181,16 @@ async function createBooking({ courtId, date, startTime, endTime, durationMins, 
   if (bookingCode)   payload.booking_code      = bookingCode;
 
   const { data, error } = await db.from('bookings').insert(payload).select().single();
-  if (error) throw error;
+  if (error) {
+    // court_id NOT NULL 에러면 court_id=1 (기본값)로 재시도
+    if (error.message?.includes('court_id') || error.code === '23502') {
+      payload.court_id = courtNum || 1;
+      const { data: data2, error: error2 } = await db.from('bookings').insert(payload).select().single();
+      if (error2) throw error2;
+      return data2;
+    }
+    throw error;
+  }
   return data;
 }
 

@@ -291,12 +291,29 @@ function calPickDate(isoStr) {
 // ─── SLOT STATUS ───
 function getSlotStatus(slotIdx, courtNum) {
   if (!state.selectedDate) return 'open';
-  const seed = state.selectedDate.getDate() + courtNum * 17 + slotIdx * 3;
-  const rng = Math.sin(seed * 9301 + 49297) * 10000;
-  const r = rng - Math.floor(rng);
-  if (r < 0.28) return 'taken';
-  if (r > 0.92) return 'open-session';
-  return 'open';
+
+  const dateStr  = state.selectedDate.toISOString().split('T')[0];
+  const slots    = getSlots();
+  const label    = slots[slotIdx];   // e.g. "8 AM"
+  const slotH    = parseSlotHours(label);
+  const slotEnd  = slotH + getSlotStep();
+
+  // Read confirmed bookings from localStorage
+  const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const taken = bookings.some(b => {
+    if (b.status === 'cancelled') return false;
+    if (b.sport !== state.sport) return false;
+    return (b.slots || []).some(s => {
+      if (s.date !== dateStr) return false;
+      if (Number(s.court) !== courtNum) return false;
+      // Parse the booked slot time
+      const bH = parseSlotHours(s.time);
+      // Overlap check: booked slot overlaps this slot
+      return bH < slotEnd && (bH + getSlotStep()) > slotH;
+    });
+  });
+
+  return taken ? 'taken' : 'open';
 }
 
 // ─── AVAILABILITY GRID ───────────────────────────────────────────
