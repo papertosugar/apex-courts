@@ -242,10 +242,13 @@
       <p class="op-sub">Show up, meet players, and get on the court. No partner needed — just register for a session and we'll handle the rest.</p>
     </div>
     <div class="op-hero-right">
-      <button class="admin-create-btn" id="adminCreateBtn" onclick="openCreateModal()">
+      <button class="admin-create-btn" id="adminCreateBtn" onclick="openCreateModal()" style="display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Create Session
+        Host Session
       </button>
+      <a href="login.html?redirect=openplay.html" class="admin-create-btn" id="loginToHostBtn" style="display:none;text-decoration:none">
+        Sign in to Host
+      </a>
     </div>
   </div>
 
@@ -401,8 +404,9 @@
 <!-- ─── CREATE SESSION MODAL (Admin) ─── -->
 <div class="modal-overlay" id="createModal">
   <div class="modal-card">
-    <div class="modal-title">Create Open Play Session</div>
-    <div class="modal-sub">Session will be visible to all players immediately after publishing.</div>
+    <div class="modal-title">Host Open Play Session</div>
+    <div class="modal-sub">Any member can host up to <strong>2 sessions/week</strong> · max <strong>1 peak</strong> (2PM+) · max <strong>1 off-peak</strong></div>
+    <div id="csLimitInfo" style="margin:10px 0;padding:9px 14px;border-radius:8px;background:rgba(0,194,168,0.07);border:1px solid rgba(0,194,168,0.2);font-size:12px;color:var(--cream-muted);line-height:1.5"></div>
     <div class="form-row-2">
       <div class="form-group">
         <label class="form-label-sm">Date</label>
@@ -498,8 +502,45 @@
 const currentUser = localStorage.getItem('apexUser');
 const currentRole = localStorage.getItem('apexRole');
 
-if (currentRole === 'Admin') {
+/* ── PEAK DEFINITION: 14:00+ (2PM onwards) ── */
+const PEAK_HOUR = 14;
+
+/* ── BOOKING WINDOW: today → today + 7 days ── */
+function getWindowDates() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const max = new Date(today); max.setDate(max.getDate() + 7);
+  return { min: today.toISOString().split('T')[0], max: max.toISOString().split('T')[0] };
+}
+
+/* ── WEEK KEY (Mon-based) ── */
+function getWeekKey(d) {
+  const date = d ? new Date(d) : new Date();
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(date); mon.setDate(mon.getDate() + diff); mon.setHours(0,0,0,0);
+  return mon.toISOString().split('T')[0];
+}
+
+/* ── GET THIS MEMBER'S HOSTED SESSIONS THIS WEEK ── */
+function getMyHostedThisWeek() {
+  if (!currentUser) return { total: 0, peak: 0, offpeak: 0 };
+  const weekKey = getWeekKey();
+  const sessions = getSessions();
+  const myHosted = sessions.filter(s =>
+    s.hostedBy === currentUser &&
+    s.status !== 'cancelled' &&
+    getWeekKey(s.date) === weekKey
+  );
+  const peak    = myHosted.filter(s => parseInt(s.time.split(':')[0]) >= PEAK_HOUR).length;
+  const offpeak = myHosted.filter(s => parseInt(s.time.split(':')[0]) < PEAK_HOUR).length;
+  return { total: myHosted.length, peak, offpeak };
+}
+
+/* ── SHOW HOST BUTTON ── */
+if (currentUser) {
   document.getElementById('adminCreateBtn').style.display = 'inline-flex';
+} else {
+  document.getElementById('loginToHostBtn').style.display = 'inline-flex';
 }
 
 /* ── DATA ── (Supabase first, localStorage fallback) */
@@ -726,12 +767,34 @@ function renderSessionList(listId, emptyId, sessions, isClosed) {
 
 /* ── CREATE MODAL ── */
 function openCreateModal() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('csDate').min = today;
+  if (!currentUser) { window.location.href = 'login.html?redirect=openplay.html'; return; }
+
+  // Check weekly limits
+  const { total, peak, offpeak } = getMyHostedThisWeek();
+  if (total >= 2) {
+    showToast('You've already hosted 2 sessions this week (weekly limit reached).', true);
+    return;
+  }
+
+  const win = getWindowDates();
+  document.getElementById('csDate').min = win.min;
+  document.getElementById('csDate').max = win.max;
   document.getElementById('csDate').value = '';
   document.getElementById('csTime').value = '10:00';
   document.getElementById('csMaxPlayers').value = '12';
   document.getElementById('csNotes').value = '';
+
+  // Show limit status in modal
+  const limitEl = document.getElementById('csLimitInfo');
+  if (limitEl) {
+    const peakLeft    = Math.max(0, 1 - peak);
+    const offpeakLeft = Math.max(0, 1 - offpeak);
+    const sessLeft    = Math.max(0, 2 - total);
+    limitEl.innerHTML =
+      `<strong>${sessLeft} session${sessLeft !== 1 ? 's' : ''}</strong> left this week · ` +
+      `Peak (2PM+): <strong>${peakLeft}</strong> · Off-peak: <strong>${offpeakLeft}</strong>`;
+  }
+
   document.getElementById('createModal').classList.add('open');
 }
 function closeCreateModal() { document.getElementById('createModal').classList.remove('open'); }
@@ -740,19 +803,54 @@ function updateMaxPlayers() {
   document.getElementById('csMaxPlayers').value = type === 'extended' ? '20' : '12';
 }
 function submitCreateSession() {
-  const date = document.getElementById('csDate').value;
-  const time = document.getElementById('csTime').value;
+  if (!currentUser) { showToast('Please sign in to host a session.', true); return; }
+
+  const date  = document.getElementById('csDate').value;
+  const time  = document.getElementById('csTime').value;
   const sport = document.getElementById('csSport').value;
-  const type = document.getElementById('csType').value;
-  const max = parseInt(document.getElementById('csMaxPlayers').value);
+  const type  = document.getElementById('csType').value;
+  const max   = parseInt(document.getElementById('csMaxPlayers').value);
   const notes = document.getElementById('csNotes').value.trim();
+
   if (!date || !time) { showToast('Please fill in date and time.', true); return; }
+
+  // Validate booking window
+  const win = getWindowDates();
+  if (date < win.min || date > win.max) {
+    showToast(`Sessions can only be scheduled within the next 7 days (until ${win.max}).`, true); return;
+  }
+
+  // Check weekly limits
+  const { total, peak, offpeak } = getMyHostedThisWeek();
+  const sessionHour = parseInt(time.split(':')[0]);
+  const isPeak = sessionHour >= PEAK_HOUR;
+
+  if (total >= 2) {
+    showToast('Weekly limit reached. You can host up to 2 sessions per week.', true); return;
+  }
+  if (isPeak && peak >= 1) {
+    showToast('Peak time limit reached. You can only host 1 peak session (2PM+) per week.', true); return;
+  }
+  if (!isPeak && offpeak >= 1) {
+    showToast('Off-peak limit reached. You can only host 1 off-peak session per week.', true); return;
+  }
+
   const sessions = getSessions();
-  sessions.push({ id:'OP-' + Date.now(), type, sport, date, time, maxPlayers: max || 12, notes, registrations:[], status:'upcoming', createdAt:new Date().toISOString() });
+  sessions.push({
+    id: 'OP-' + Date.now(),
+    type, sport, date, time,
+    maxPlayers: max || 12,
+    notes,
+    hostedBy: currentUser,
+    hostedByRole: currentRole || 'member',
+    registrations: [],
+    status: 'upcoming',
+    createdAt: new Date().toISOString()
+  });
   saveSessions(sessions);
   closeCreateModal();
   render();
-  showToast('Session published!');
+  showToast('Session published! Players can now register.');
 }
 
 /* ── REGISTER MODAL ── */

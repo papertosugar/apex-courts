@@ -411,7 +411,7 @@
 // ── Auth guard ──
 (function() {
   const role = localStorage.getItem('apexRole');
-  if (!role || !['Admin','Staff','admin','pos_staff'].includes(role)) {
+  if (!role || !['Admin','Staff','admin','pos_staff','POS Staff'].includes(role)) {
     window.location.href = '../index.html'; return;
   }
   const u = localStorage.getItem('apexUser') || 'Admin';

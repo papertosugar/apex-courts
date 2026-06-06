@@ -76,8 +76,17 @@
     <li><a href="#availability">Schedule</a></li>
     <li><a href="openplay.html">Open Play</a></li>
     <li><a href="community.html">Community</a></li>
-    <li><a href="login.html">Sign In</a></li>
-    <li><a href="signup.html">Sign Up</a></li>
+    <li id="navAuthLinks">
+      <a href="login.html">Sign In</a>
+    </li>
+    <li id="navSignupLink"><a href="signup.html">Sign Up</a></li>
+    <li id="navUserArea" style="display:none">
+      <span id="navUserName" style="font-size:13px;color:var(--cream-muted);font-weight:500"></span>
+    </li>
+    <li id="navAdminLink" style="display:none"><a href="admin/dashboard.html">Admin</a></li>
+    <li id="navLogoutLink" style="display:none">
+      <a href="#" onclick="doNavLogout();return false" style="color:#f87171">Sign Out</a>
+    </li>
     <li><a href="book.html" class="nav-cta">Book a Court</a></li>
   </ul>
 
@@ -728,6 +737,30 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script>
+/* ── NAV AUTH STATE ── */
+(function() {
+  const user = localStorage.getItem('apexUser');
+  const role = localStorage.getItem('apexRole');
+  if (user) {
+    document.getElementById('navAuthLinks').style.display  = 'none';
+    document.getElementById('navSignupLink').style.display = 'none';
+    document.getElementById('navUserArea').style.display   = 'list-item';
+    document.getElementById('navLogoutLink').style.display = 'list-item';
+    document.getElementById('navUserName').textContent     = user.split(' ')[0];
+    if (role === 'Admin' || role === 'POS Staff') {
+      document.getElementById('navAdminLink').style.display = 'list-item';
+    }
+  }
+})();
+function doNavLogout() {
+  localStorage.removeItem('apexUser');
+  localStorage.removeItem('apexRole');
+  localStorage.removeItem('apexUserId');
+  if (window.apexDB) window.apexDB.auth.signOut().catch(()=>{});
+  window.location.reload();
+}
+</script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    HERO UNIFIED MEDIA CONTROLLER
