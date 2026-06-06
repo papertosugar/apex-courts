@@ -1347,11 +1347,53 @@ function confirmShiftOpen() {
     venue: STUDIO_CONFIG?.name || 'Smash Studio'
   };
   localStorage.setItem('apexShiftOpen_' + today, JSON.stringify(record));
+  // Keep rolling log (last 60 days)
+  const log = JSON.parse(localStorage.getItem('apexShiftOpenLog') || '[]');
+  const idx = log.findIndex(r => r.date === today);
+  if (idx >= 0) log[idx] = record; else log.unshift(record);
+  localStorage.setItem('apexShiftOpenLog', JSON.stringify(log.slice(0, 60)));
 
   document.getElementById('shiftOpenModal').classList.remove('open');
   showToast(`Shift opened by ${staff} · Float: ₱${total.toLocaleString()}`);
   updateFloatIndicator();
-  printShiftOpen(record);
+}
+
+function openShiftLog() {
+  const log = JSON.parse(localStorage.getItem('apexShiftOpenLog') || '[]');
+  const list = document.getElementById('shiftLogList');
+  if (!list) return;
+
+  if (!log.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:14px">No shift open records yet.</div>`;
+  } else {
+    list.innerHTML = log.map(r => {
+      const dt    = new Date(r.openedAt);
+      const dateStr = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+      const time    = dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+      const denomSummary = DENOMS
+        .filter(d => r.denoms?.[d] > 0)
+        .map(d => `₱${d.toLocaleString()}×${r.denoms[d]}`)
+        .join('  ');
+      return `
+        <div style="padding:14px 16px;border-radius:10px;background:var(--surface-3);border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text)">${dateStr}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${time} · ${r.openedBy}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:16px;font-weight:900;color:var(--gold)">₱${r.float.toLocaleString()}</span>
+              <button onclick='printShiftOpen(${JSON.stringify(r).replace(/'/g,"&#39;")})' style="padding:5px 10px;border-radius:7px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+                Print
+              </button>
+            </div>
+          </div>
+          ${denomSummary ? `<div style="font-size:11px;color:var(--text-dim);line-height:1.8">${denomSummary}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('shiftLogModal').classList.add('open');
 }
 
 function printShiftOpen(recordArg) {
