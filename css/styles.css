@@ -548,11 +548,18 @@ h2.section-title {
 }
 .slot.open {
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.35); cursor: pointer;
+  color: rgba(255,255,255,0.35); cursor: pointer; position: relative; overflow: hidden;
 }
+.slot.open::after { content: ''; }
 .slot.open:hover {
-  background: rgba(0,194,168,0.12); border-color: rgba(0,194,168,0.35);
-  color: var(--gold); transform: scaleY(1.06);
+  background: rgba(0,194,168,0.14); border-color: rgba(0,194,168,0.45);
+  color: var(--gold); transform: scaleY(1.08);
+  box-shadow: 0 0 0 1px rgba(0,194,168,0.2) inset;
+}
+.slot.open:hover::after {
+  content: 'BOOK';
+  font-size: 8px; font-weight: 800; letter-spacing: 0.08em;
+  color: var(--gold);
 }
 .slot.booked {
   background: rgba(239,68,68,0.12); border: 1px solid rgba(248,113,113,0.25);

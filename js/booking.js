@@ -135,6 +135,7 @@ function formatDow(d) {
   return d.toLocaleDateString('en-US', { weekday: 'short' });
 }
 function isToday(d) {
+  if (!d) return false;
   const t = new Date();
   return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
 }
@@ -815,12 +816,26 @@ function closeModal() {
 }
 
 // ─── URL PARAMS ───
+// 홈 그리드 클릭 시 sport/date 자동 선택
 function applyUrlParams() {
   const p = new URLSearchParams(window.location.search);
-  if (p.get('sport')) {
-    state.sport = p.get('sport');
-    const el = document.getElementById('opt-' + state.sport);
-    if (el) { document.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected')); el.classList.add('selected'); }
+
+  // sport — 'drillzone' → 'drill' 정규화
+  let sport = p.get('sport') || '';
+  if (sport === 'drillzone') sport = 'drill';
+  if (sport) {
+    state.sport = sport;
+    const el = document.getElementById('opt-' + sport);
+    if (el) {
+      document.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+  }
+
+  // 홈에서 클릭하면 오늘 날짜 자동 선택
+  if (p.get('sport') || p.get('time')) {
+    state.selectedDate = new Date();
+    state.dateOffset   = 0;
   }
 }
 
