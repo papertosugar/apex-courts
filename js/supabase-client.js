@@ -85,14 +85,20 @@ async function signOut() {
 
 /** Get the current logged-in user + profile */
 async function getCurrentUser() {
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await db
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-  return { ...user, profile };
+  try {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return null;
+    // profiles 테이블이 없거나 row가 없어도 에러 없이 처리
+    const { data: profile } = await db
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();   // single() → maybeSingle() : row 없어도 에러 안 남
+    return { ...user, profile: profile || {} };
+  } catch (e) {
+    console.warn('[getCurrentUser] error:', e.message);
+    return null;
+  }
 }
 
 
