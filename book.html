@@ -662,15 +662,12 @@
       <span style="font-size:24px;font-weight:800;color:var(--gold)" id="payModalTotal">₱0</span>
     </div>
 
-    <!-- Payment options -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
-      <button class="pay-opt selected" onclick="selectPayMethod('cash',this)" data-method="cash"
-        style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
-        <div style="font-size:22px;margin-bottom:6px">💵</div>
-        <div style="font-size:13px;font-weight:700">Cash</div>
-        <div style="font-size:10px;color:var(--cream-muted);margin-top:2px">Pay at venue</div>
-      </button>
-      <button class="pay-opt" onclick="selectPayMethod('gcash',this)" data-method="gcash"
+    <!-- Payment options (온라인 예약금) -->
+    <div style="margin-bottom:10px;padding:10px 14px;border-radius:8px;background:rgba(0,194,168,0.06);border:1px solid rgba(0,194,168,0.15);font-size:12px;color:var(--cream-muted);line-height:1.6">
+      💡 온라인 예약 시 예약금을 선결제합니다. 현금 결제는 워크인(현장 방문)만 가능합니다.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <button class="pay-opt selected" onclick="selectPayMethod('gcash',this)" data-method="gcash"
         style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
         <div style="font-size:22px;margin-bottom:6px">📱</div>
         <div style="font-size:13px;font-weight:700">GCash</div>
@@ -679,7 +676,7 @@
       <button class="pay-opt" onclick="selectPayMethod('card',this)" data-method="card"
         style="padding:16px;border-radius:12px;border:2px solid var(--stone-line);background:var(--stone);cursor:pointer;font-family:inherit;transition:all 0.2s;color:var(--cream)">
         <div style="font-size:22px;margin-bottom:6px">💳</div>
-        <div style="font-size:13px;font-weight:700">Card</div>
+        <div style="font-size:13px;font-weight:700">Credit / Debit Card</div>
         <div style="font-size:10px;color:var(--cream-muted);margin-top:2px">Visa / Mastercard</div>
       </button>
     </div>
@@ -701,7 +698,7 @@
 
     <div class="modal-actions">
       <button class="modal-btn ghost" onclick="closePaymentModal()">← Back</button>
-      <button class="modal-btn primary" id="payConfirmBtn" data-method="cash" onclick="finalizePayment()">
+      <button class="modal-btn primary" id="payConfirmBtn" data-method="gcash" onclick="finalizePayment()">
         Confirm Booking
       </button>
     </div>

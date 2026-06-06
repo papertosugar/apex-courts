@@ -691,7 +691,7 @@ function selectPayMethod(method, el) {
 }
 
 async function finalizePayment() {
-  const method     = document.getElementById('payConfirmBtn').dataset.method || 'cash';
+  const method     = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
   const code       = 'APX-' + Math.floor(1000 + Math.random() * 9000);
   const courtCost  = totalCourtCost();
   const extrasCost = Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
