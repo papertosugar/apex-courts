@@ -235,6 +235,11 @@ async function renderAvailability(sport) {
     html += '</div></div>';
   }
 
+  // Hide skeleton, show grid
+  const skel = document.getElementById('availSkeleton');
+  if (skel) skel.style.display = 'none';
+  grid.style.display = '';
+
   grid.innerHTML = html;
 
   // Stagger entrance — 30ms per slot (ui-ux-pro-max rule: stagger 30–50ms)

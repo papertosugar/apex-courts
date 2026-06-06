@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Page Not Found · Smash Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; text-align: center; padding: 40px 5%;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .err-logo {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 48px;
+      text-decoration: none; opacity: 0.7; transition: opacity 0.2s;
+    }
+    .err-logo:hover { opacity: 1; }
+    .err-logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gold); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .err-wordmark {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.06em; color: var(--cream);
+    }
+    .err-wordmark em { color: var(--gold); font-style: normal; }
+
+    .err-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(100px, 20vw, 180px);
+      line-height: 1; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--gold), rgba(0,194,168,0.6));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .err-title { font-size: clamp(22px, 4vw, 30px); font-weight: 800; margin-bottom: 12px; }
+    .err-sub { font-size: 15px; color: var(--cream-muted); line-height: 1.65; max-width: 420px; margin: 0 auto 36px; }
+    .err-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .err-btn-primary {
+      padding: 13px 28px; border-radius: 10px;
+      background: var(--gold); color: var(--ink);
+      font-size: 14px; font-weight: 800; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .err-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 24px rgba(212,175,55,0.35); }
+    .err-btn-ghost {
+      padding: 13px 28px; border-radius: 10px;
+      border: 1px solid var(--stone-line); color: var(--cream-muted);
+      font-size: 14px; font-weight: 600; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .err-btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--cream); }
+    .err-hint { margin-top: 48px; font-size: 12px; color: rgba(242,237,228,0.2); }
+  </style>
+</head>
+<body>
+  <a href="/" class="err-logo">
+    <div class="err-logo-mark">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="err-wordmark">SMASH <em>STUDIO</em></span>
+  </a>
+
+  <div class="err-num">404</div>
+  <h1 class="err-title">Page Not Found</h1>
+  <p class="err-sub">
+    Looks like this court is closed — the page you're looking for doesn't exist or has been moved.
+  </p>
+
+  <div class="err-actions">
+    <a href="/" class="err-btn-primary">← Back to Home</a>
+    <a href="book.html" class="err-btn-ghost">Book a Court</a>
+  </div>
+
+  <p class="err-hint">Error 404 · Smash Studio</p>
+</body>
+</html>

@@ -582,7 +582,7 @@ function seedSessions() {
     { id:'OP-002', type:'extended', sport:'badminton', date:daysFrom(5), time:'14:30', maxPlayers:16, notes:'Extended session — bring water and stamina!', registrations:[], status:'upcoming', price:300, createdAt:new Date().toISOString() },
     { id:'OP-003', type:'standard', sport:'mixed', date:daysFrom(7), time:'09:00', maxPlayers:8, notes:'Morning session. Great for beginners and intermediates.', registrations:[], status:'upcoming', price:200, createdAt:new Date().toISOString() },
     // Closed (past)
-    { id:'OP-000', type:'standard', sport:'pickleball', date:daysFrom(-5), time:'11:00', maxPlayers:12, notes:'', registrations:[{name:'Maria S.',contact:'',registeredAt:new Date().toISOString()},{name:'James R.',contact:'',registeredAt:new Date().toISOString()},{name:'Claire T.',contact:'',registeredAt:new Date().toISOString()},{name:'David K.',contact:'',registeredAt:new Date().toISOString()},{name:'Lynn B.',contact:'',registeredAt:new Date().toISOString()}], status:'closed', price:200, createdAt:new Date().toISOString() },
+    { id:'OP-000', type:'standard', sport:'pickleball', date:daysFrom(-5), time:'11:00', maxPlayers:12, notes:'', registrations:[], status:'closed', price:200, createdAt:new Date().toISOString() },
   ];
   saveSessions(demos);
 }

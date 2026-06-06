@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings — Smash Studio</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body { padding-top: 80px; font-family: 'DM Sans', system-ui, sans-serif; }
+
+    .mb-layout {
+      max-width: 860px; margin: 0 auto; padding: 48px 5% 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .mb-header { margin-bottom: 36px; }
+    .mb-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .mb-eyebrow-line { width: 28px; height: 2px; background: var(--gold); }
+    .mb-eyebrow-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .mb-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 52px); letter-spacing: 0.02em; line-height: 1; }
+    .mb-sub { font-size: 14px; color: var(--cream-muted); margin-top: 8px; }
+
+    /* ── FILTER TABS ── */
+    .mb-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--stone-line); margin-bottom: 28px; flex-wrap: wrap; }
+    .mb-tab {
+      padding: 12px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+      color: var(--cream-muted); background: none; border: none; font-family: inherit;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s; display: flex; align-items: center; gap: 7px;
+    }
+    .mb-tab:hover { color: var(--cream); }
+    .mb-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .mb-tab-count {
+      padding: 1px 7px; border-radius: 100px;
+      background: rgba(0,194,168,0.12); color: var(--gold);
+      font-size: 10px; font-weight: 800;
+    }
+
+    /* ── BOOKING CARD ── */
+    .mb-list { display: flex; flex-direction: column; gap: 14px; }
+    .mb-card {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 16px; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .mb-card:hover { border-color: rgba(0,194,168,0.2); }
+    .mb-card.cancelled { opacity: 0.5; }
+    .mb-card-body {
+      padding: 20px 24px;
+      display: grid; grid-template-columns: auto 1fr auto;
+      gap: 0 20px; align-items: center;
+    }
+    @media(max-width:600px) {
+      .mb-card-body { grid-template-columns: 1fr; gap: 14px; }
+      .mb-card-actions { justify-content: flex-start; }
+    }
+
+    /* Sport icon block */
+    .mb-sport-icon {
+      width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .mb-sport-icon.pickleball { background: rgba(0,194,168,0.1); }
+    .mb-sport-icon.badminton  { background: rgba(96,165,250,0.12); }
+    .mb-sport-icon.drill      { background: rgba(212,175,55,0.12); }
+
+    .mb-info { min-width: 0; }
+    .mb-code { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--gold); margin-bottom: 4px; font-family: monospace; }
+    .mb-sport-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .mb-details { font-size: 13px; color: var(--cream-muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    .mb-detail-item { display: flex; align-items: center; gap: 5px; }
+
+    .mb-card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+    .mb-status {
+      padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700;
+    }
+    .mb-status.confirmed { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .mb-status.cancelled { background: rgba(239,68,68,0.12); color: #f87171; }
+    .mb-status.completed { background: rgba(255,255,255,0.06); color: var(--cream-muted); }
+
+    .mb-cancel-btn {
+      padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700;
+      border: 1px solid rgba(239,68,68,0.3); background: transparent;
+      color: #f87171; cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .mb-cancel-btn:hover { background: rgba(239,68,68,0.08); border-color: #f87171; }
+
+    /* ── EMPTY STATE ── */
+    .mb-empty {
+      text-align: center; padding: 80px 20px;
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 16px;
+    }
+    .mb-empty-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(0,194,168,0.08); border: 1px solid rgba(0,194,168,0.15);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .mb-empty-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .mb-empty-sub { font-size: 14px; color: var(--cream-muted); margin-bottom: 24px; }
+
+    /* ── CANCEL MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .cancel-modal {
+      background: var(--stone); border: 1px solid var(--stone-line);
+      border-radius: 20px; padding: 36px 32px; max-width: 460px; width: 100%;
+      transform: scale(0.93); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .cancel-modal { transform: scale(1); }
+    .cancel-modal-icon {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; color: #f87171;
+    }
+    .cancel-modal-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 10px; }
+    .cancel-modal-sub { font-size: 14px; color: var(--cream-muted); text-align: center; line-height: 1.6; margin-bottom: 20px; }
+
+    /* Policy boxes */
+    .cancel-policy-box {
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+      border: 1px solid;
+    }
+    .cancel-policy-box.free { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.2); }
+    .cancel-policy-box.fee  { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.18); }
+    .cpb-title { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+    .cpb-title.free { color: #4ade80; }
+    .cpb-title.fee  { color: #f87171; }
+    .cpb-text { font-size: 13px; color: var(--cream-muted); line-height: 1.55; }
+
+    .cancel-highlight {
+      background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 22px;
+      font-size: 13px; line-height: 1.6; color: var(--cream-muted);
+    }
+    .cancel-highlight strong { color: var(--gold); }
+
+    .cancel-actions { display: flex; gap: 10px; }
+    .btn-keep {
+      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      background: var(--stone); border: 1px solid var(--stone-line); color: var(--cream);
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-keep:hover { border-color: rgba(255,255,255,0.2); }
+    .btn-confirm-cancel {
+      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      color: #f87171; cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-confirm-cancel:hover { background: rgba(239,68,68,0.2); }
+
+    /* ── SKELETON ── */
+    .mb-skeleton-card {
+      height: 100px; border-radius: 16px;
+      background: linear-gradient(90deg, var(--stone) 25%, rgba(255,255,255,0.04) 50%, var(--stone) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/js/supabase-client.js"></script>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav id="navbar" class="scrolled" style="justify-content:space-between">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 17H2L10 2Z" stroke="#09090B" stroke-width="2" fill="none"/>
+        <line x1="6" y1="12" x2="14" y2="12" stroke="#09090B" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">SMASH <em>STUDIO</em></span>
+  </a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span id="mbNavUser" style="font-size:13px;color:var(--cream-muted)"></span>
+    <a href="book.html" style="padding:7px 16px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none">+ Book</a>
+    <a href="/" style="padding:6px 14px;border-radius:7px;border:1px solid var(--stone-line);background:transparent;color:var(--cream-muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none">← Home</a>
+  </div>
+</nav>
+
+<div class="mb-layout">
+  <!-- Header -->
+  <div class="mb-header">
+    <div class="mb-eyebrow">
+      <div class="mb-eyebrow-line"></div>
+      <span class="mb-eyebrow-text">Court Reservations</span>
+    </div>
+    <h1 class="mb-title">My Bookings</h1>
+    <p class="mb-sub" id="mbSubLine">Loading your reservations…</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-tabs">
+    <button class="mb-tab active" onclick="filterTab('all',this)">
+      All <span class="mb-tab-count" id="cnt-all">0</span>
+    </button>
+    <button class="mb-tab" onclick="filterTab('confirmed',this)">
+      Upcoming <span class="mb-tab-count" id="cnt-confirmed">0</span>
+    </button>
+    <button class="mb-tab" onclick="filterTab('completed',this)">
+      Completed <span class="mb-tab-count" id="cnt-completed">0</span>
+    </button>
+    <button class="mb-tab" onclick="filterTab('cancelled',this)">
+      Cancelled <span class="mb-tab-count" id="cnt-cancelled">0</span>
+    </button>
+  </div>
+
+  <!-- Booking list -->
+  <div id="mbList" class="mb-list">
+    <!-- skeleton -->
+    <div class="mb-skeleton-card"></div>
+    <div class="mb-skeleton-card" style="animation-delay:0.15s"></div>
+    <div class="mb-skeleton-card" style="animation-delay:0.3s"></div>
+  </div>
+</div>
+
+<!-- ─── CANCEL MODAL ─── -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="cancel-modal">
+    <div class="cancel-modal-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div class="cancel-modal-title">Cancel Booking?</div>
+    <div class="cancel-modal-sub" id="cancelModalSub">Are you sure you want to cancel this booking?</div>
+
+    <div class="cancel-policy-box free" id="cancelFreeBox" style="display:none">
+      <div class="cpb-title free">✓ Free Cancellation</div>
+      <div class="cpb-text">You are within the 15-minute free cancellation window. Your booking will be cancelled at no charge.</div>
+    </div>
+    <div class="cancel-policy-box fee" id="cancelFeeBox" style="display:none">
+      <div class="cpb-title fee">⚠ Cancellation Fee Applies</div>
+      <div class="cpb-text">The 15-minute free cancellation period has passed. Refunds are subject to our cancellation policy.</div>
+    </div>
+
+    <div class="cancel-highlight">
+      <strong>Refund Policy:</strong><br>
+      • Cancel 24+ hours before: <strong style="color:#4ade80">100% credit</strong> to your account<br>
+      • Cancel 2–24 hours before: <strong style="color:var(--gold)">50% refund</strong><br>
+      • Cancel less than 2 hours before: <strong style="color:#f87171">No refund</strong><br>
+      • No-show: No refund. <a href="policy.html" target="_blank" style="color:var(--gold);text-decoration:none;font-weight:700">Full policy →</a>
+    </div>
+
+    <div class="cancel-actions">
+      <button class="btn-keep" onclick="closeCancelModal()">Keep Booking</button>
+      <button class="btn-confirm-cancel" id="confirmCancelBtn" onclick="executeCancelBooking()">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Auth guard ───────────────────────────────────────────────
+const _user = localStorage.getItem('apexUser');
+const _uid  = localStorage.getItem('apexUserId');
+if (!_user) { window.location.href = 'login.html?redirect=my-bookings.html'; }
+document.getElementById('mbNavUser').textContent = 'Hi, ' + (_user || '').split(' ')[0];
+
+// ─── State ───────────────────────────────────────────────────
+let allBookings   = [];
+let currentFilter = 'all';
+let cancelTargetId = null;
+
+// ─── Helpers ─────────────────────────────────────────────────
+const sportIcon = s => s === 'pickleball' ? '🥒' : s === 'badminton' ? '🏸' : '🎯';
+const sportName = s => s === 'pickleball' ? 'Pickleball' : s === 'badminton' ? 'Badminton' : 'Drill Zone';
+const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
+function formatDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-PH', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+function bookingStatus(b) {
+  if (b.status === 'cancelled') return 'cancelled';
+  const today = new Date().toISOString().split('T')[0];
+  if (b.date && b.date < today) return 'completed';
+  if (b.date && b.date === today) {
+    // Check if time has passed
+    const now = new Date();
+    const [h, m] = (b.time || '00:00').split(':').map(Number);
+    const bookEnd = new Date(); bookEnd.setHours(h + (b.duration || 1), m || 0, 0, 0);
+    return bookEnd < now ? 'completed' : 'confirmed';
+  }
+  return 'confirmed';
+}
+
+function isWithin15Min(b) {
+  if (!b.createdAt) return false;
+  const created = new Date(b.createdAt);
+  const now = new Date();
+  return (now - created) <= 15 * 60 * 1000;
+}
+
+function isCancellable(b) {
+  if (bookingStatus(b) !== 'confirmed') return false;
+  return true;
+}
+
+// ─── Load bookings ────────────────────────────────────────────
+async function loadBookings() {
+  let local = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  // Filter to current user
+  if (_uid) local = local.filter(b => b.userId === _uid || b.user_id === _uid);
+  else if (_user) local = local.filter(b => (b.userName || b.user_name || '').toLowerCase() === _user.toLowerCase());
+
+  // Try Supabase
+  let remote = [];
+  try {
+    const db = window.apexDB;
+    if (db && _uid) {
+      const { data } = await db.from('bookings').select('*')
+        .eq('user_id', _uid).order('booking_date', { ascending: false }).limit(200);
+      if (data) {
+        remote = data.map(r => ({
+          id: r.id, code: r.booking_code || r.id, sport: r.sport || 'pickleball',
+          court: r.court_number || r.court_id, date: r.booking_date,
+          time: r.start_time, duration: r.duration_hours || 1,
+          status: r.status || 'confirmed', totalAmount: r.total_amount || 0,
+          paymentMethod: r.payment_method || 'gcash',
+          userName: r.player_name, userId: r.user_id,
+          createdAt: r.created_at,
+        }));
+      }
+    }
+  } catch(e) { console.warn('Supabase fetch error:', e); }
+
+  // Merge: remote takes priority
+  const remoteIds = new Set(remote.map(r => String(r.id)));
+  const merged = [...remote, ...local.filter(b => !remoteIds.has(String(b.id)))];
+  merged.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  allBookings = merged;
+  renderBookings();
+}
+
+// ─── Render ──────────────────────────────────────────────────
+function filterTab(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.mb-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderBookings();
+}
+
+function renderBookings() {
+  const filtered = allBookings.filter(b => {
+    const s = bookingStatus(b);
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'confirmed') return s === 'confirmed';
+    if (currentFilter === 'completed') return s === 'completed';
+    if (currentFilter === 'cancelled') return s === 'cancelled';
+    return true;
+  });
+
+  // Update counts
+  const counts = { all: allBookings.length, confirmed: 0, completed: 0, cancelled: 0 };
+  allBookings.forEach(b => {
+    const s = bookingStatus(b);
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  document.getElementById('cnt-all').textContent       = counts.all;
+  document.getElementById('cnt-confirmed').textContent = counts.confirmed;
+  document.getElementById('cnt-completed').textContent = counts.completed;
+  document.getElementById('cnt-cancelled').textContent = counts.cancelled;
+  document.getElementById('mbSubLine').textContent = `${counts.all} reservation${counts.all !== 1 ? 's' : ''} found`;
+
+  const list = document.getElementById('mbList');
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div class="mb-empty">
+        <div class="mb-empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(0,194,168,0.6)" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div class="mb-empty-title">No bookings yet</div>
+        <div class="mb-empty-sub">When you book a court, it will appear here.</div>
+        <a href="book.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:10px;background:var(--gold);color:var(--ink);font-size:14px;font-weight:800;text-decoration:none">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Book a Court
+        </a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(b => {
+    const status = bookingStatus(b);
+    const sport  = b.sport || 'pickleball';
+    const code   = b.bookingCode || b.code || b.booking_code || b.id || '—';
+    const court  = b.court || b.court_number || '?';
+    const dur    = b.duration || b.duration_hours || 1;
+    const amt    = b.totalAmount || b.total_amount || 0;
+    const canCancel = isCancellable(b);
+
+    return `
+    <div class="mb-card ${status}" data-id="${b.id}">
+      <div class="mb-card-body">
+        <div class="mb-sport-icon ${sport}" aria-hidden="true">${sportIcon(sport)}</div>
+        <div class="mb-info">
+          <div class="mb-code">${code}</div>
+          <div class="mb-sport-name">${sportName(sport)} — Court ${court}</div>
+          <div class="mb-details">
+            <span class="mb-detail-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              ${formatDate(b.date)}
+            </span>
+            <span class="mb-detail-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${b.time || '—'} · ${dur}hr${dur > 1 ? 's' : ''}
+            </span>
+            ${amt > 0 ? `<span class="mb-detail-item" style="color:var(--gold);font-weight:700">₱${amt.toLocaleString()}</span>` : ''}
+          </div>
+        </div>
+        <div class="mb-card-actions">
+          <span class="mb-status ${status}">${capitalize(status === 'confirmed' ? 'upcoming' : status)}</span>
+          ${canCancel ? `<button class="mb-cancel-btn" onclick="openCancelModal('${b.id}')">Cancel</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Cancel modal ─────────────────────────────────────────────
+function openCancelModal(id) {
+  cancelTargetId = id;
+  const b = allBookings.find(x => String(x.id) === String(id));
+  if (!b) return;
+
+  const free = isWithin15Min(b);
+  document.getElementById('cancelFreeBox').style.display = free ? 'block' : 'none';
+  document.getElementById('cancelFeeBox').style.display  = free ? 'none' : 'block';
+  document.getElementById('cancelModalSub').textContent  =
+    `Booking: ${b.sport || ''} Court ${b.court || b.court_number || '?'} on ${formatDate(b.date)} at ${b.time || '—'}`;
+
+  document.getElementById('cancelModal').classList.add('open');
+}
+function closeCancelModal() {
+  document.getElementById('cancelModal').classList.remove('open');
+  cancelTargetId = null;
+}
+document.getElementById('cancelModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeCancelModal();
+});
+
+async function executeCancelBooking() {
+  if (!cancelTargetId) return;
+  const btn = document.getElementById('confirmCancelBtn');
+  btn.textContent = 'Cancelling…'; btn.disabled = true;
+
+  // Cancel in localStorage
+  let local = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  local = local.map(b => String(b.id) === String(cancelTargetId) ? { ...b, status: 'cancelled' } : b);
+  localStorage.setItem('apexBookings', JSON.stringify(local));
+
+  // Cancel in Supabase
+  try {
+    const db = window.apexDB;
+    if (db) {
+      await db.from('bookings').update({ status: 'cancelled' }).eq('id', cancelTargetId);
+    }
+  } catch(e) { console.warn('Supabase cancel error:', e); }
+
+  // Update local state
+  allBookings = allBookings.map(b => String(b.id) === String(cancelTargetId) ? { ...b, status: 'cancelled' } : b);
+
+  closeCancelModal();
+  renderBookings();
+
+  // Show toast
+  showToast('Booking cancelled successfully.');
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed', bottom:'28px', left:'50%', transform:'translateX(-50%)',
+    background:'#1e1e26', border:'1px solid rgba(0,194,168,0.3)',
+    color:'var(--cream)', padding:'12px 24px', borderRadius:'10px',
+    fontSize:'13px', fontWeight:'600', zIndex:'9999',
+    boxShadow:'0 8px 32px rgba(0,0,0,0.4)',
+    transition:'opacity 0.3s',
+  });
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ─── Init ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', loadBookings);
+</script>
+</body>
+</html>

@@ -83,6 +83,7 @@
     <li id="navUserArea" style="display:none">
       <span id="navUserName" style="font-size:13px;color:var(--cream-muted);font-weight:500"></span>
     </li>
+    <li id="navMyBookingsLink" style="display:none"><a href="my-bookings.html">My Bookings</a></li>
     <li id="navAdminLink" style="display:none"><a href="admin/dashboard.html">Admin</a></li>
     <li id="navLogoutLink" style="display:none">
       <a href="#" onclick="doNavLogout();return false" style="color:#f87171">Sign Out</a>
@@ -480,7 +481,25 @@
         Drill Zone
       </button>
     </div>
-    <div class="avail-grid" id="availGrid" role="tabpanel"></div>
+    <!-- Skeleton shown while grid loads -->
+    <div id="availSkeleton" style="padding:16px 0;display:flex;flex-direction:column;gap:8px" aria-hidden="true">
+      <style>
+        .avail-skel-row { display:flex; gap:6px; }
+        .avail-skel-cell {
+          height:38px; border-radius:6px; flex:1;
+          background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+          background-size: 200% 100%;
+          animation: skshimmer 1.5s infinite;
+        }
+        .avail-skel-cell.label { flex:0 0 70px; }
+        @keyframes skshimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+      </style>
+      <div class="avail-skel-row"><div class="avail-skel-cell label"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div></div>
+      <div class="avail-skel-row"><div class="avail-skel-cell label"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div></div>
+      <div class="avail-skel-row"><div class="avail-skel-cell label"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div></div>
+      <div class="avail-skel-row"><div class="avail-skel-cell label"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div><div class="avail-skel-cell"></div></div>
+    </div>
+    <div class="avail-grid" id="availGrid" role="tabpanel" style="display:none"></div>
     <div class="avail-legend" role="list" aria-label="Legend">
       <div class="legend-item" role="listitem">
         <div class="legend-dot" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14)" aria-hidden="true"></div>
@@ -649,6 +668,125 @@
   </div>
 </section>
 
+<!-- ════════════ FAQ ════════════ -->
+<section id="faq" class="section" aria-labelledby="faq-heading">
+  <style>
+    .faq-grid { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--stone-line);
+    }
+    .faq-item:first-child { border-top: 1px solid var(--stone-line); }
+    .faq-btn {
+      width: 100%; background: none; border: none; padding: 22px 0;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      cursor: pointer; font-family: inherit; text-align: left; color: var(--cream);
+    }
+    .faq-question { font-size: 16px; font-weight: 600; line-height: 1.4; }
+    .faq-chevron {
+      width: 20px; height: 20px; flex-shrink: 0; color: var(--gold);
+      transition: transform 0.25s;
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer { display: none; padding: 0 0 22px; }
+    .faq-answer p { font-size: 14px; color: var(--cream-muted); line-height: 1.75; margin: 0; }
+    .faq-answer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+    .faq-answer a:hover { text-decoration: underline; }
+    .faq-item.open .faq-answer { display: block; }
+  </style>
+
+  <div class="section-header center reveal from-below">
+    <div class="section-label">
+      <div class="section-label-line" aria-hidden="true"></div>
+      <span class="section-label-text">Common Questions</span>
+    </div>
+    <h2 id="faq-heading" class="section-title">FAQ</h2>
+  </div>
+
+  <div class="faq-grid reveal from-below">
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">What are the operating hours?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>We are open <strong>daily from 7:00 AM to 12:00 AM (midnight)</strong>. Peak hours are 2:00 PM – 12:00 AM on weekdays and all day on weekends. Courts can be booked up to 7 days in advance.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">How do I pay? Do I need to pay online?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>Online bookings require a <strong>reservation deposit</strong> via GCash or Credit/Debit Card. The remaining balance is settled at the venue. Walk-in bookings (via front desk) can be paid in cash. We do not store card details.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">What is the cancellation policy?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>
+          • <strong>Within 15 minutes</strong> of booking: Free cancellation, full refund<br>
+          • <strong>24+ hours</strong> before session: 100% credit to your account<br>
+          • <strong>2–24 hours</strong> before session: 50% refund<br>
+          • <strong>Less than 2 hours</strong> before session: No refund<br><br>
+          <a href="policy.html">Read the full cancellation policy →</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">Do I need to bring my own equipment?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>No equipment required. We offer <strong>racket rental</strong>, pickleball paddles, and shoe rental at the venue. You can add equipment rental when booking online. Shuttlecocks and pickleballs are available for purchase at the front desk.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">What is Open Play?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>Open Play sessions are <strong>drop-in games</strong> where players of all levels join together on shared courts. It's the perfect way to meet the community, find playing partners, and enjoy affordable court time without a reservation. <a href="openplay.html">View upcoming sessions →</a></p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">Do I need to create an account to book?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>Yes, a free account is required for online bookings so we can keep your reservation history and send confirmation codes. <a href="signup.html">Sign up in under 2 minutes →</a> Walk-in bookings at the front desk do not require an account.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">
+        <span class="faq-question">How many courts are available?</span>
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer"><p>We have <strong>9 indoor courts</strong> total: 4 Pickleball courts, 4 Badminton courts, and 1 Drill Zone. All courts are climate-controlled with professional flooring and lighting. Tennis courts are coming in Q4 2025.</p></div>
+    </div>
+
+  </div>
+
+  <script>
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item.open').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-btn').setAttribute('aria-expanded','false');
+    });
+    if (!isOpen) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+    }
+  }
+  </script>
+</section>
+
 <!-- ════════════ CTA BAND ════════════ -->
 <section class="cta-band" aria-labelledby="cta-heading">
   <div class="reveal from-below">
@@ -749,9 +887,10 @@
   if (user) {
     document.getElementById('navAuthLinks').style.display  = 'none';
     document.getElementById('navSignupLink').style.display = 'none';
-    document.getElementById('navUserArea').style.display   = 'list-item';
-    document.getElementById('navLogoutLink').style.display = 'list-item';
-    document.getElementById('navUserName').textContent     = user.split(' ')[0];
+    document.getElementById('navUserArea').style.display        = 'list-item';
+    document.getElementById('navLogoutLink').style.display      = 'list-item';
+    document.getElementById('navMyBookingsLink').style.display  = 'list-item';
+    document.getElementById('navUserName').textContent          = user.split(' ')[0];
     if (role === 'Admin' || role === 'POS Staff') {
       document.getElementById('navAdminLink').style.display = 'list-item';
     }

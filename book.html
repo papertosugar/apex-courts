@@ -32,6 +32,7 @@
     @media(max-width:768px) {
       .booking-layout { padding: 80px 4% 40px; gap: 16px; }
       .book-panel-header { padding: 14px 16px; }
+      .book-panel-body { padding: 16px; }
       .avail-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       /* Step progress — compact scroll on small screens */
       .step-progress { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; gap: 0; flex-wrap: nowrap; }
@@ -41,6 +42,23 @@
       /* Date strip */
       .date-strip { gap: 4px; }
       .date-btn { padding: 6px 10px; font-size: 11px; min-width: 44px; }
+      /* Grid cells — readable on mobile */
+      .ag-header-time { padding: 8px 6px; font-size: 9px; }
+      .ag-header-court { padding: 8px 4px; font-size: 10px; }
+      .ag-time { padding: 0 6px; font-size: 10px; min-height: 40px; }
+      .ag-cell { min-height: 40px; }
+      .ag-cell.available .ag-cell-inner,
+      .ag-cell.selected-start .ag-cell-inner,
+      .ag-cell.selected-end .ag-cell-inner,
+      .ag-cell.selected-mid .ag-cell-inner { width: 22px; height: 22px; }
+      /* Sport options — 2 col on mobile */
+      .sport-selector { grid-template-columns: 1fr 1fr !important; }
+      .sport-option { padding: 14px 10px; }
+      .sport-option-icon { font-size: 24px; }
+      .sport-option-name { font-size: 13px; }
+    }
+    @media(max-width:400px) {
+      .avail-grid { min-width: 320px; }
     }
     @media(max-width:480px) {
       .booking-layout { padding: 72px 3% 32px; }
@@ -583,10 +601,27 @@
           <div id="gridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Click slots to select · Multiple dates supported</div>
         </div>
         <div class="avail-grid-wrap">
-          <div class="avail-grid" id="availGrid" role="grid" aria-label="Court availability grid"></div>
+          <!-- Skeleton shown while grid loads -->
+          <div id="gridSkeleton" style="display:flex;flex-direction:column;gap:6px;padding:4px 0" aria-hidden="true">
+            <style>
+              .gs-row { display:flex; gap:5px; }
+              .gs-cell { height:44px; border-radius:7px; flex:1;
+                background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);
+                background-size:200% 100%; animation:gsshim 1.5s infinite; }
+              .gs-cell.hdr { flex:0 0 70px; }
+              @keyframes gsshim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+            </style>
+            <div class="gs-row"><div class="gs-cell hdr"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div></div>
+            <div class="gs-row"><div class="gs-cell hdr"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div></div>
+            <div class="gs-row"><div class="gs-cell hdr"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div></div>
+            <div class="gs-row"><div class="gs-cell hdr"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div><div class="gs-cell"></div></div>
+          </div>
+          <div class="avail-grid" id="availGrid" role="grid" aria-label="Court availability grid" style="display:none"></div>
         </div>
 
-        <!-- Legend -->
+        <!-- Legend — prominent + sticky on mobile -->
+        <div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">Legend</div>
         <div class="ag-legend" aria-hidden="true">
           <div class="ag-legend-item">
             <div class="ag-legend-dot" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15)"></div>
@@ -605,6 +640,7 @@
             <span style="color:#60a5fa">Open Session</span>
           </div>
         </div>
+        </div><!-- /legend box -->
 
       </div>
     </div>

@@ -396,6 +396,11 @@ function renderAvailGrid() {
       : `${n} slot${n > 1 ? 's' : ''} selected · Click again to deselect`;
   }
 
+  // Hide skeleton, show grid
+  const gridSkel = document.getElementById('gridSkeleton');
+  if (gridSkel) gridSkel.style.display = 'none';
+  grid.style.display = '';
+
   grid.innerHTML = '';
 
   // ── header ──
