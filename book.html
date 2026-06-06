@@ -185,38 +185,39 @@
       transition: all 0.15s;
       position: relative;
     }
-    /* BOOKED */
+    /* BOOKED — 빨간색 */
     .ag-cell.booked {
-      background: rgba(239,68,68,0.04);
+      background: rgba(239,68,68,0.13);
       cursor: not-allowed;
     }
     .ag-cell.booked::after {
       content: 'BOOKED';
-      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
-      color: rgba(252,165,165,0.55);
+      font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+      color: #f87171;
     }
-    /* OPEN SESSION */
+    /* OPEN SESSION — 파란색 */
     .ag-cell.open-session {
-      background: rgba(34,197,94,0.04);
+      background: rgba(59,130,246,0.12);
       cursor: pointer;
     }
     .ag-cell.open-session::after {
       content: 'OPEN';
       font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
-      color: #22c55e;
+      color: #60a5fa;
     }
-    /* AVAILABLE — empty box outline */
+    /* AVAILABLE — 회색 박스 */
     .ag-cell.available {
-      background: transparent;
+      background: rgba(255,255,255,0.04);
     }
     .ag-cell.available .ag-cell-inner {
       width: 28px; height: 28px; border-radius: 6px;
-      border: 1.5px solid rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
       transition: all 0.15s;
     }
     .ag-cell.available:hover .ag-cell-inner {
       border-color: var(--gold);
-      background: rgba(0,194,168,0.08);
+      background: rgba(0,194,168,0.12);
     }
     .ag-cell.available:hover .ag-cell-inner::after {
       content: '';
@@ -588,16 +589,20 @@
         <!-- Legend -->
         <div class="ag-legend" aria-hidden="true">
           <div class="ag-legend-item">
-            <div class="ag-legend-dot" style="border:1.5px solid rgba(255,255,255,0.18);background:transparent"></div> Available
+            <div class="ag-legend-dot" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15)"></div>
+            <span style="color:var(--text-muted)">Available</span>
           </div>
           <div class="ag-legend-item">
-            <div class="ag-legend-dot" style="background:rgba(0,194,168,0.25);border:2px solid var(--gold)"></div> Selected
+            <div class="ag-legend-dot" style="background:rgba(0,194,168,0.25);border:2px solid var(--gold)"></div>
+            <span style="color:var(--text-muted)">Selected</span>
           </div>
           <div class="ag-legend-item">
-            <div class="ag-legend-dot" style="background:rgba(255,255,255,0.06)"></div> Booked
+            <div class="ag-legend-dot" style="background:rgba(239,68,68,0.18);border:1px solid rgba(248,113,113,0.4)"></div>
+            <span style="color:#f87171">Booked</span>
           </div>
           <div class="ag-legend-item">
-            <div class="ag-legend-dot" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3)"></div> Open Session
+            <div class="ag-legend-dot" style="background:rgba(59,130,246,0.18);border:1px solid rgba(96,165,250,0.4)"></div>
+            <span style="color:#60a5fa">Open Session</span>
           </div>
         </div>
 

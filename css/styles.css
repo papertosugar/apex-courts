@@ -547,14 +547,22 @@ h2.section-title {
   transition: transform var(--dur-fast), background var(--dur-fast);
 }
 .slot.open {
-  background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15);
-  color: #4ade80; cursor: pointer;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); cursor: pointer;
 }
-.slot.open:hover { background: rgba(74,222,128,0.15); transform: scaleY(1.06); }
+.slot.open:hover {
+  background: rgba(0,194,168,0.12); border-color: rgba(0,194,168,0.35);
+  color: var(--gold); transform: scaleY(1.06);
+}
 .slot.booked {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04);
-  color: var(--cream-dim); cursor: default;
+  background: rgba(239,68,68,0.12); border: 1px solid rgba(248,113,113,0.25);
+  color: #f87171; cursor: default;
 }
+.slot.open-session {
+  background: rgba(59,130,246,0.12); border: 1px solid rgba(96,165,250,0.3);
+  color: #60a5fa; cursor: pointer;
+}
+.slot.open-session:hover { background: rgba(59,130,246,0.2); transform: scaleY(1.06); }
 .slot.mine {
   background: var(--gold-dim); border: 1px solid var(--gold-line);
   color: var(--gold);

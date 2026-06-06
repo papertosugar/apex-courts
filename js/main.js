@@ -196,8 +196,8 @@ async function renderAvailability(sport) {
       const h = parseInt(tLabel) + (tLabel.includes('PM') && tLabel !== '12PM' ? 12 : 0);
       const isPast = isToday() && h < now;
       const cls = isPast && s !== 'mine' ? 'booked' : s;
-      const slotLabel = cls === 'open' && !isPast ? 'OPEN' : (cls === 'mine' ? 'MINE' : '');
-      const ariaLabel = `${tLabel}: ${cls === 'open' && !isPast ? 'Available' : cls === 'mine' ? 'Your booking' : 'Booked'}`;
+      const slotLabel = cls === 'open-session' ? 'OPEN' : cls === 'mine' ? 'MINE' : cls === 'booked' ? 'BOOKED' : '';
+      const ariaLabel = `${tLabel}: ${cls === 'open' ? 'Available' : cls === 'open-session' ? 'Open Session' : cls === 'mine' ? 'Your booking' : 'Booked'}`;
       html += `<div class="slot ${cls}"
         role="${cls === 'open' && !isPast ? 'button' : 'cell'}"
         tabindex="${cls === 'open' && !isPast ? '0' : '-1'}"
