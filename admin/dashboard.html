@@ -137,6 +137,10 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       <span style="color:var(--gold);font-weight:700">Open POS</span>
     </a>
+    <a class="sb-item" id="sb-shifts" href="#" onclick="navSidebar('shifts',this);return false;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Shift Logs
+    </a>
     <div class="sb-section">Site</div>
     <a class="sb-item" href="../index.html" target="_blank">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Homepage
@@ -203,6 +207,10 @@
       <button class="dash-tab" onclick="switchTab('revenue',this)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         Revenue
+      </button>
+      <button class="dash-tab" onclick="switchTab('shifts',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Shifts
       </button>
     </div>
 
@@ -400,6 +408,45 @@
       </div>
     </div>
 
+    <!-- ══ TAB: SHIFTS ══ -->
+    <div id="tab-shifts" style="display:none">
+
+      <!-- Sub-tabs: Open / Close -->
+      <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;max-width:360px">
+        <button id="shift-sub-open" onclick="switchShiftSub('open')"
+          style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;background:rgba(212,175,55,0.1);color:var(--gold)">
+          📂 Shift Open
+        </button>
+        <button id="shift-sub-close" onclick="switchShiftSub('close')"
+          style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;background:transparent;color:var(--text-muted)">
+          📁 Shift Close
+        </button>
+      </div>
+
+      <!-- Shift Open log -->
+      <div id="shift-panel-open">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div class="card-title" style="margin:0">Shift Open History</div>
+            <span style="font-size:12px;color:var(--text-dim)">Last 60 days</span>
+          </div>
+          <div id="adminShiftOpenList"></div>
+        </div>
+      </div>
+
+      <!-- Shift Close log -->
+      <div id="shift-panel-close" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div class="card-title" style="margin:0">Shift Close History</div>
+            <span style="font-size:12px;color:var(--text-dim)">Last 30 records</span>
+          </div>
+          <div id="adminShiftCloseList"></div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
@@ -461,15 +508,14 @@ function switchTab(name, btn) {
   if (name==='bookings') renderAllBookings();
   if (name==='members')  loadMembers();
   if (name==='revenue')  renderRevenue();
+  if (name==='shifts')   renderShiftLogs();
 }
 
 // Called from sidebar — mirrors switchTab but triggered by sidebar click
 function navSidebar(name, sbItem) {
-  // sync top tab buttons
   const tabBtn = document.querySelector(`.dash-tab[onclick*="'${name}'"]`);
   if (tabBtn) switchTab(name, tabBtn);
   else {
-    // fallback: manually switch
     document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display='none');
     document.getElementById('tab-'+name).style.display='block';
     document.querySelectorAll('.sb-item[id^="sb-"]').forEach(s => s.classList.remove('active'));
@@ -478,7 +524,159 @@ function navSidebar(name, sbItem) {
     if (name==='bookings') renderAllBookings();
     if (name==='members')  loadMembers();
     if (name==='revenue')  renderRevenue();
+    if (name==='shifts')   renderShiftLogs();
   }
+}
+
+/* ══════════════════════════════════════
+   SHIFT LOGS
+   ══════════════════════════════════════ */
+const DENOMS = [1000, 500, 200, 100, 50, 20, 5];
+
+function switchShiftSub(sub) {
+  ['open','close'].forEach(s => {
+    document.getElementById('shift-panel-' + s).style.display = s === sub ? 'block' : 'none';
+    const btn = document.getElementById('shift-sub-' + s);
+    btn.style.background = s === sub ? 'rgba(212,175,55,0.1)' : 'transparent';
+    btn.style.color      = s === sub ? 'var(--gold)' : 'var(--text-muted)';
+  });
+}
+
+function renderShiftLogs() {
+  renderShiftOpenLog();
+  renderShiftCloseLog();
+}
+
+function renderShiftOpenLog() {
+  const list = document.getElementById('adminShiftOpenList');
+  if (!list) return;
+  const log = JSON.parse(localStorage.getItem('apexShiftOpenLog') || '[]');
+
+  if (!log.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-size:14px">No shift open records found.</div>`;
+    return;
+  }
+
+  list.innerHTML = `
+    <table class="data-table" style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Opened By</th>
+          <th>Denominations</th>
+          <th style="text-align:right">Float Total</th>
+          <th style="text-align:center">Print</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${log.map(r => {
+          const dt      = new Date(r.openedAt);
+          const dateStr = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+          const time    = dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+          const denoms  = DENOMS.filter(d => r.denoms?.[d] > 0)
+            .map(d => `<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--surface-3);margin-right:3px">₱${d.toLocaleString()}×${r.denoms[d]}</span>`)
+            .join('');
+          const safeRecord = encodeURIComponent(JSON.stringify(r));
+          return `<tr>
+            <td><strong style="color:var(--text)">${dateStr}</strong></td>
+            <td>${time}</td>
+            <td>${r.openedBy}</td>
+            <td>${denoms || '—'}</td>
+            <td style="text-align:right;font-weight:800;color:var(--gold)">₱${r.float.toLocaleString()}</td>
+            <td style="text-align:center">
+              <button onclick='printShiftOpenRecord("${safeRecord}")'
+                style="padding:4px 10px;border-radius:6px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+                Print
+              </button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderShiftCloseLog() {
+  const list = document.getElementById('adminShiftCloseList');
+  if (!list) return;
+  const log = JSON.parse(localStorage.getItem('apexShiftHistory') || '[]');
+
+  if (!log.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-size:14px">No shift close records found.</div>`;
+    return;
+  }
+
+  list.innerHTML = `
+    <table class="data-table" style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Closed By</th>
+          <th style="text-align:right">Expected</th>
+          <th style="text-align:right">Actual</th>
+          <th style="text-align:right">Over / Short</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${log.map(r => {
+          const dt      = new Date(r.closedAt);
+          const dateStr = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+          const time    = dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+          const diff    = r.diff || 0;
+          const diffColor = diff === 0 ? '#22c55e' : diff > 0 ? '#f97316' : '#f87171';
+          const diffText  = diff === 0 ? '✓ Balanced'
+            : diff > 0 ? `▲ +₱${Math.abs(diff).toLocaleString()}`
+            : `▼ -₱${Math.abs(diff).toLocaleString()}`;
+          const actualTotal = r.actual?.total || 0;
+          const expTotal    = r.expected?.total || 0;
+          return `<tr>
+            <td><strong style="color:var(--text)">${dateStr}</strong></td>
+            <td>${time}</td>
+            <td>${r.closedBy}</td>
+            <td style="text-align:right">₱${expTotal.toLocaleString()}</td>
+            <td style="text-align:right;font-weight:700">₱${actualTotal.toLocaleString()}</td>
+            <td style="text-align:right;font-weight:800;color:${diffColor}">${diffText}</td>
+            <td style="font-size:12px;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.notes || '—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function printShiftOpenRecord(encoded) {
+  const r = JSON.parse(decodeURIComponent(encoded));
+  const openedAt = new Date(r.openedAt).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+  const dateStr  = new Date(r.openedAt).toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const denomRows = DENOMS.map(d => {
+    const qty = r.denoms?.[d] || 0;
+    const sub = d * qty;
+    return `<tr>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee">₱${d.toLocaleString()}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right">${sub>0?'₱'+sub.toLocaleString():'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = `<html><head><title>Shift Open — ${dateStr}</title>
+    <style>body{font-family:'Courier New',monospace;font-size:13px;max-width:320px;margin:0 auto;padding:20px}
+    h2{text-align:center;font-size:16px;margin:0 0 4px}.sub{text-align:center;font-size:11px;color:#666;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    th{background:#f5f5f5;padding:6px 8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+    th:nth-child(2){text-align:center}th:nth-child(3){text-align:right}
+    .total-row{font-size:15px;font-weight:900;border-top:2px solid #000}.total-row td{padding:8px 8px 4px}
+    .footer{text-align:center;font-size:11px;color:#999;margin-top:16px;border-top:1px dashed #ccc;padding-top:12px}
+    .sig{margin-top:32px;border-top:1px solid #ccc;padding-top:6px;font-size:11px;color:#666}</style></head>
+    <body><h2>SMASH STUDIO</h2>
+    <div class="sub">SHIFT OPEN REPORT<br>${dateStr}<br>Time: ${openedAt}</div>
+    <table><tr><th>Denomination</th><th>Qty</th><th>Amount</th></tr>
+    ${denomRows}
+    <tr class="total-row"><td colspan="2"><strong>TOTAL FLOAT</strong></td><td style="text-align:right"><strong>₱${r.float.toLocaleString()}</strong></td></tr>
+    </table><div class="sig">Opened by: <strong>${r.openedBy}</strong></div>
+    <div class="footer">Smash Studio POS</div></body></html>`;
+  const w = window.open('', '_blank', 'width=400,height=600');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(() => w.print(), 400);
 }
 
 // ═══════════════════ OVERVIEW TAB ═══════════════════
