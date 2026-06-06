@@ -731,9 +731,10 @@
   const userEl = document.getElementById('bookNavUser');
   const roleEl = document.getElementById('bookNavRole');
   if (userEl && user) userEl.textContent = 'Hi, ' + user.split(' ')[0];
-  if (roleEl && role) {
+  // POS/Admin 버튼은 Admin, POS Staff 에게만 표시
+  if (roleEl && (role === 'Admin' || role === 'POS Staff')) {
     roleEl.style.display = 'inline-block';
-    const href = role === 'Admin' ? 'admin/dashboard.html' : 'admin/pos.html';
+    const href  = role === 'Admin' ? 'admin/dashboard.html' : 'admin/pos.html';
     const label = role === 'Admin' ? 'Admin Dashboard' : 'POS';
     roleEl.innerHTML = `<a href="${href}" style="padding:6px 14px;border-radius:7px;background:rgba(0,194,168,0.12);border:1px solid rgba(0,194,168,0.3);color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">${label}</a>`;
   }
