@@ -959,11 +959,68 @@ function renderBookings() {
       <td style="font-weight:700;color:var(--gold)">₱${(b.totalAmount||0).toLocaleString()}</td>
       <td>
         <div style="display:flex;gap:6px">
+          <button class="btn-sm outline" style="padding:5px 10px;font-size:11px" onclick="openEditModal('${b.id}')">Edit</button>
           <button class="btn-sm red" style="padding:5px 10px;font-size:11px" onclick="confirmCancelBooking('${b.id}')">Cancel</button>
         </div>
       </td>`;
     tbody.appendChild(tr);
   });
+}
+
+// ─── EDIT BOOKING ───
+function openEditModal(id) {
+  const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const b = bookings.find(b => b.id === id);
+  if (!b) return;
+
+  const slot = b.slots?.[0] || {};
+  document.getElementById('editBookingId').value  = id;
+  document.getElementById('editBookingUser').textContent = `#${id} · ${b.userName || 'Guest'}`;
+  document.getElementById('editDate').value    = slot.date  || b.date  || '';
+  document.getElementById('editTime').value    = slot.time  || b.time  || '';
+  document.getElementById('editCourt').value   = slot.court || b.court || 1;
+  document.getElementById('editDuration').value = String(b.duration || 1);
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal')?.classList.remove('open');
+}
+
+function saveEditBooking() {
+  const id       = document.getElementById('editBookingId').value;
+  const newDate  = document.getElementById('editDate').value;
+  const newTime  = document.getElementById('editTime').value;
+  const newCourt = parseInt(document.getElementById('editCourt').value) || 1;
+  const newDur   = parseFloat(document.getElementById('editDuration').value) || 1;
+
+  if (!newDate || !newTime) {
+    showToast('날짜와 시간을 입력해주세요.', 'error'); return;
+  }
+
+  const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const idx = bookings.findIndex(b => b.id === id);
+  if (idx === -1) { showToast('Booking not found.', 'error'); return; }
+
+  // Update fields
+  bookings[idx].duration = newDur;
+  if (bookings[idx].slots?.length) {
+    bookings[idx].slots[0].date  = newDate;
+    bookings[idx].slots[0].time  = newTime;
+    bookings[idx].slots[0].court = newCourt;
+  } else {
+    bookings[idx].date  = newDate;
+    bookings[idx].time  = newTime;
+    bookings[idx].court = newCourt;
+  }
+
+  localStorage.setItem('apexBookings', JSON.stringify(bookings));
+  closeEditModal();
+  showToast(`Booking #${id} updated.`, 'success');
+
+  // Refresh current view
+  if (typeof renderCourtsView === 'function')   renderCourtsView();
+  if (typeof renderBookingList === 'function')  renderBookingList();
 }
 
 // ─── CANCEL BOOKING ───
