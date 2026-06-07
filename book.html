@@ -546,6 +546,43 @@
 
     /* ── select dropdown styling ─────────────────────── */
     select.form-input option { background: #1a1a22; color: var(--cream); }
+
+    /* ── Mobile overrides ─────────────────────────────── */
+    @media (max-width: 640px) {
+      /* Queue time grid: 2-column on phone */
+      .q-slot-grid { grid-template-columns: repeat(2, 1fr); }
+      .q-slot-cell:nth-child(4n)   { border-right: 1px solid var(--border); }
+      .q-slot-cell:nth-child(2n)   { border-right: none; }
+      .q-slot-cell { min-height: 48px; font-size: 14px; }
+
+      /* Page tab pills — equal width */
+      .page-tabs { width: 100%; }
+      .page-tab  { flex: 1; text-align: center; font-size: 13px; padding: 10px 8px; }
+
+      /* Step progress — hide labels, show only circles */
+      .sp-label { display: none; }
+      .sp-line  { min-width: 16px; }
+
+      /* Summary panel — don't sticky on small screens */
+      .booking-summary { position: static !important; }
+
+      /* Availability grid cells compact */
+      .ag-time { padding: 0 4px; font-size: 9px; min-height: 36px; }
+      .ag-cell { min-height: 36px; }
+
+      /* Book panel body padding tighter */
+      .book-panel-body { padding: 14px 12px; }
+      .book-panel-header { padding: 12px 14px; }
+
+      /* Date chips — smaller gap */
+      .date-chip { padding: 8px 12px; }
+      .dc-day { font-size: 17px; }
+    }
+    @media (max-width: 390px) {
+      .booking-layout { padding: 68px 2% 28px; }
+      .book-panel-body { padding: 12px 10px; }
+      .dc-day { font-size: 15px; }
+    }
   </style>
 <script src="/js/utils.js"></script>
 <script src="/js/auto-logout.js"></script>

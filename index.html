@@ -88,22 +88,27 @@
 /* ── Page loader progress controller ── */
 window._setProgress = (function () {
   let cur = 0;
+  function dismiss() {
+    var ov = document.getElementById('_ldOverlay');
+    if (!ov || ov._gone) return;
+    ov._gone = true;
+    ov.style.opacity = '0';
+    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
+  }
+  // Safety: force-dismiss after 6s no matter what (slow network / script error)
+  setTimeout(dismiss, 6000);
+  // Also dismiss on window load
+  window.addEventListener('load', function () { setTimeout(dismiss, 300); });
+
   return function set(p) {
     if (p <= cur) return;
     cur = p;
     requestAnimationFrame(function () {
-      var bar  = document.getElementById('_ldBar');
-      var pct  = document.getElementById('_ldPct');
+      var bar = document.getElementById('_ldBar');
+      var pct = document.getElementById('_ldPct');
       if (bar) bar.style.width = p + '%';
-      if (pct) pct.textContent  = Math.round(p) + '%';
-      if (p >= 100) {
-        setTimeout(function () {
-          var ov = document.getElementById('_ldOverlay');
-          if (!ov) return;
-          ov.style.opacity = '0';
-          setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
-        }, 180);
-      }
+      if (pct) pct.textContent = Math.round(p) + '%';
+      if (p >= 100) setTimeout(dismiss, 180);
     });
   };
 })();
