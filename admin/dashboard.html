@@ -754,11 +754,6 @@ function buildRevenueChart() {
     const rev=all.filter(b=>b.date===iso&&b.status!=='cancelled').reduce((s,b)=>s+(b.totalAmount||0),0);
     days.push({ label:d.toLocaleDateString('en-US',{weekday:'short'}), rev });
   }
-  // Pad with demo data if all zero
-  if (days.every(d=>d.rev===0)) {
-    const demo=[18200,24600,20300,29100,23400,34200,3600];
-    days.forEach((d,i)=>d.rev=demo[i]);
-  }
   const maxRev=Math.max(...days.map(d=>d.rev),1);
   days.forEach(({label,rev})=>{
     const pct=(rev/maxRev*100).toFixed(1);
