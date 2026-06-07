@@ -329,8 +329,22 @@ async function doLogin() {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = 'Signing in…';
 
+  // ① Check hardcoded staff accounts FIRST (before Supabase)
+  const staffMatch = STAFF_ACCOUNTS.find(a =>
+    a.username.toLowerCase() === contact.toLowerCase() && a.password === password
+  );
+  if (staffMatch) {
+    localStorage.setItem('apexUser', staffMatch.name);
+    localStorage.setItem('apexRole', staffMatch.role);
+    successRole = staffMatch.role;
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    showSuccessPopup(staffMatch.name, staffMatch.role);
+    return;
+  }
+
   try {
-    // ① Try Supabase Auth first (members)
+    // ② Try Supabase Auth (members)
     if (window.ApexCourts) {
       const { data, error } = await window.apexDB.auth.signInWithPassword({ email: contact, password });
 
@@ -375,20 +389,6 @@ async function doLogin() {
     showError('로그인 실패: ' + (err.message || '알 수 없는 오류'));
     btn.disabled = false;
     btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-    return;
-  }
-
-  // ② Legacy: hardcoded staff credentials (local dev fallback)
-  const staffMatch = STAFF_ACCOUNTS.find(a =>
-    a.username.toLowerCase() === contact.toLowerCase() && a.password === password
-  );
-  if (staffMatch) {
-    localStorage.setItem('apexUser', staffMatch.name);
-    localStorage.setItem('apexRole', staffMatch.role);
-    successRole = staffMatch.role;
-    btn.disabled = false;
-    btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-    showSuccessPopup(staffMatch.name, staffMatch.role);
     return;
   }
 
