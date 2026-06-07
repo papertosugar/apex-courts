@@ -169,8 +169,8 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
         </div>
         <div class="kpi-label">Courts Occupied</div>
-        <div class="kpi-value" id="kpi-courts">4<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)">/9</span></div>
-        <div class="kpi-change up">Pickleball + Badminton + Drill</div>
+        <div class="kpi-value" id="kpi-courts">0<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)" id="kpi-courts-total">/9</span></div>
+        <div class="kpi-change" id="kpi-courts-change" style="color:var(--text-muted)">No active sessions</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon">
@@ -178,15 +178,15 @@
         </div>
         <div class="kpi-label">Bookings Today</div>
         <div class="kpi-value" id="kpi-book">0</div>
-        <div class="kpi-change up" id="kpi-walkin-change">↑ 0 walk-ins</div>
+        <div class="kpi-change" id="kpi-walkin-change" style="color:var(--text-muted)">↑ 0 walk-ins</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div class="kpi-label">Active Members</div>
-        <div class="kpi-value">347</div>
-        <div class="kpi-change up">↑ 5 new this week</div>
+        <div class="kpi-value" id="kpi-members">0</div>
+        <div class="kpi-change" id="kpi-members-change" style="color:var(--text-muted)">Loading…</div>
       </div>
     </div>
 
@@ -724,21 +724,78 @@ function printShiftOpenRecord(encoded) {
 function loadKPIs() {
   const today = new Date().toISOString().split('T')[0];
   const all = getBookings();
-  const todayB = all.filter(b => b.date===today && b.status!=='cancelled');
-  const rev    = todayB.reduce((s,b)=>s+(b.totalAmount||0),0);
-  const walkins= todayB.filter(b=>b.status==='walkin').length;
+  const todayB  = all.filter(b => b.date===today && b.status!=='cancelled');
+  const rev     = todayB.reduce((s,b)=>s+(b.totalAmount||0),0);
+  const walkins = todayB.filter(b=>b.status==='walkin').length;
 
+  // Revenue (no fake fallback)
   const revEl = document.getElementById('kpi-rev');
   if (revEl) {
-    let c=0; const t=rev||3600;
-    const id=setInterval(()=>{ c=Math.min(c+Math.ceil(t/40),t); revEl.textContent=fmt(c); if(c>=t)clearInterval(id); },20);
+    if (rev > 0) {
+      let c=0;
+      const id=setInterval(()=>{ c=Math.min(c+Math.ceil(rev/40),rev); revEl.textContent=fmt(c); if(c>=rev)clearInterval(id); },20);
+    } else {
+      revEl.textContent = '₱0';
+    }
   }
-  const rcEl=document.getElementById('kpi-rev-change');
-  if(rcEl) rcEl.textContent=rev>0?`${todayB.length} bookings today`:'No bookings yet';
-  const bkEl=document.getElementById('kpi-book');
-  if(bkEl) bkEl.textContent=todayB.length||0;
-  const wiEl=document.getElementById('kpi-walkin-change');
-  if(wiEl) wiEl.textContent=`↑ ${walkins} walk-in${walkins!==1?'s':''}`;
+  const rcEl = document.getElementById('kpi-rev-change');
+  if (rcEl) rcEl.textContent = rev > 0 ? `${todayB.length} bookings today` : 'No bookings yet';
+
+  // Bookings
+  const bkEl = document.getElementById('kpi-book');
+  if (bkEl) bkEl.textContent = todayB.length;
+  const wiEl = document.getElementById('kpi-walkin-change');
+  if (wiEl) wiEl.textContent = `↑ ${walkins} walk-in${walkins!==1?'s':''}`;
+
+  // Courts occupied — count distinct court+hour slots active right now
+  const nowH = new Date().getHours();
+  const activeSports = new Set(
+    todayB.filter(b => {
+      const h = parseInt((b.time||'0:00').split(':')[0]);
+      return h <= nowH && nowH < h + (b.duration||1);
+    }).map(b=>b.sport)
+  );
+  const occupied = todayB.filter(b => {
+    const h = parseInt((b.time||'0:00').split(':')[0]);
+    return h <= nowH && nowH < h + (b.duration||1);
+  }).length;
+  const totalCourts = 9;
+  const courtsEl = document.getElementById('kpi-courts');
+  if (courtsEl) {
+    // Update the text node before the <span>, preserve the /9 span
+    const spanEl = document.getElementById('kpi-courts-total');
+    courtsEl.innerHTML = occupied + (spanEl ? spanEl.outerHTML : '<span style="font-size:16px;background:none;-webkit-text-fill-color:var(--text-muted)" id="kpi-courts-total">/9</span>');
+  }
+  const courtsChangeEl = document.getElementById('kpi-courts-change');
+  if (courtsChangeEl) {
+    courtsChangeEl.textContent = occupied > 0
+      ? [...activeSports].map(s=>s==='pickleball'?'Pickleball':s==='badminton'?'Badminton':'Drill').join(' + ')
+      : 'No active sessions';
+  }
+
+  // Members — from localStorage accounts + Supabase profiles
+  const lsAccounts = JSON.parse(localStorage.getItem('apexAccounts')||'[]').length;
+  const membersEl = document.getElementById('kpi-members');
+  if (membersEl) membersEl.textContent = lsAccounts || 0;
+  const membersChangeEl = document.getElementById('kpi-members-change');
+  // New this week
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+  const accts = JSON.parse(localStorage.getItem('apexAccounts')||'[]');
+  const newThisWeek = accts.filter(a => a.createdAt && new Date(a.createdAt) >= weekAgo).length;
+  if (membersChangeEl) membersChangeEl.textContent = newThisWeek > 0 ? `↑ ${newThisWeek} new this week` : 'No new members this week';
+
+  // Async: load from Supabase if available
+  if (window.apexDB) {
+    window.apexDB.from('profiles').select('id,created_at',{count:'exact'}).then(({data,count,error})=>{
+      if (!error) {
+        const total = count || (data||[]).length;
+        if (membersEl) membersEl.textContent = total;
+        const wk = new Date(); wk.setDate(wk.getDate()-7);
+        const fresh = (data||[]).filter(m=>m.created_at && new Date(m.created_at)>=wk).length;
+        if (membersChangeEl) membersChangeEl.textContent = fresh > 0 ? `↑ ${fresh} new this week` : 'No new members this week';
+      }
+    }).catch(()=>{});
+  }
 }
 
 function buildRevenueChart() {
@@ -779,7 +836,7 @@ function buildUtilBars() {
   sports.forEach(({label,key,courts})=>{
     const booked=all.filter(b=>b.sport===key).length;
     const totalSlots=courts*16; // 16 hrs
-    const pct=Math.min(100,Math.round(booked/Math.max(totalSlots,1)*100))||Math.floor(Math.random()*60+20);
+    const pct=Math.min(100,Math.round(booked/Math.max(totalSlots,1)*100));
     const div=document.createElement('div');
     div.className='util-row';
     div.innerHTML=`<div class="util-label">${label}</div>
