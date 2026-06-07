@@ -554,17 +554,129 @@
       </a>
     </div>
 
-    <!-- Right: live session cards -->
+    <!-- Right: live session cards + queue tabs -->
     <div class="reveal from-below" style="transition-delay:120ms">
-      <div class="op-sessions-list" id="homeOpSessions">
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:16px" role="tablist" aria-label="Community board">
+        <button id="homeTabSessions" role="tab" aria-selected="true"
+          onclick="homeSetTab('sessions')"
+          style="padding:7px 16px;border-radius:8px;border:1.5px solid rgba(96,165,250,0.35);background:rgba(96,165,250,0.1);color:#60a5fa;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s">
+          Open Play
+        </button>
+        <button id="homeTabQueues" role="tab" aria-selected="false"
+          onclick="homeSetTab('queues')"
+          style="padding:7px 16px;border-radius:8px;border:1.5px solid rgba(212,175,55,0.2);background:transparent;color:var(--cream-muted);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s">
+          Queues
+        </button>
+      </div>
+
+      <div id="homeOpSessions" class="op-sessions-list">
         <div class="op-skel"></div>
         <div class="op-skel" style="animation-delay:0.15s"></div>
         <div class="op-skel" style="animation-delay:0.3s"></div>
+      </div>
+
+      <div id="homeQueues" style="display:none">
+        <div class="op-sessions-list" id="homeQueuesInner">
+          <div class="op-skel"></div>
+          <div class="op-skel" style="animation-delay:0.15s"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+  function homeSetTab(tab) {
+    const isQ = tab === 'queues';
+    const tS = document.getElementById('homeTabSessions');
+    const tQ = document.getElementById('homeTabQueues');
+    tS.setAttribute('aria-selected', String(!isQ));
+    tQ.setAttribute('aria-selected', String(isQ));
+    tS.style.background = isQ ? 'transparent' : 'rgba(96,165,250,0.1)';
+    tS.style.borderColor = isQ ? 'rgba(96,165,250,0.15)' : 'rgba(96,165,250,0.35)';
+    tS.style.color       = isQ ? 'var(--cream-muted)' : '#60a5fa';
+    tQ.style.background  = isQ ? 'rgba(212,175,55,0.08)' : 'transparent';
+    tQ.style.borderColor = isQ ? 'rgba(212,175,55,0.35)' : 'rgba(212,175,55,0.2)';
+    tQ.style.color       = isQ ? 'var(--gold)' : 'var(--cream-muted)';
+    document.getElementById('homeOpSessions').style.display = isQ ? 'none' : '';
+    document.getElementById('homeQueues').style.display = isQ ? '' : 'none';
+    if (isQ) renderQueues();
+  }
+
+  function renderQueues() {
+    const container = document.getElementById('homeQueuesInner');
+    if (!container) return;
+
+    const today = getTodayPH();
+    const nowH  = getNowHPH();
+
+    let queues = [];
+    try { queues = JSON.parse(localStorage.getItem('apexQueues') || '[]'); } catch(e) { queues = []; }
+
+    // Auto-expire
+    queues = queues.filter(q => {
+      if (q.date < today) return false;
+      if (q.date === today && parseHourStr(q.time) <= nowH) return false;
+      return q.status === 'open';
+    });
+
+    if (!queues.length) {
+      container.innerHTML = `
+        <div style="padding:32px 20px;text-align:center;border:1px dashed rgba(212,175,55,0.2);border-radius:16px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.4)" stroke-width="1.5" style="margin-bottom:10px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div style="font-size:14px;font-weight:600;color:var(--cream-muted);margin-bottom:6px">No open queues yet</div>
+          <div style="font-size:12px;color:var(--cream-muted);opacity:0.6;margin-bottom:14px">Be the first — book a court and open a queue!</div>
+          <a href="book.html" onclick="setTimeout(()=>{if(typeof switchPageTab==='function')switchPageTab('queue')},200)"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">
+            Open a Queue →
+          </a>
+        </div>`;
+      return;
+    }
+
+    const sportLabel = s => s === 'pickleball' ? 'Pickleball' : 'Badminton';
+    const sportColor = s => s === 'pickleball' ? '#00C2A8' : '#60a5fa';
+
+    container.innerHTML = queues.slice(0, 4).map(q => {
+      const d   = phDateObj(q.date);
+      const mon = d.toLocaleDateString('en-US', { timeZone:'Asia/Manila', month:'short' }).toUpperCase();
+      const day = parseInt(q.date.split('-')[2]);
+      const isToday = q.date === today;
+      const joined = (q.participants || []).length;
+      const filled = joined >= q.needed;
+      const col = sportColor(q.sport);
+      const nick = q.creatorNick || q.creatorName || 'Anonymous';
+
+      return `
+      <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:16px;padding:16px 20px;display:flex;gap:14px;align-items:center">
+        <div style="width:48px;flex-shrink:0;text-align:center;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);border-radius:10px;padding:6px 4px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold)">${isToday ? 'TODAY' : mon}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--cream)">${day}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;color:var(--cream);margin-bottom:3px">${sportLabel(q.sport)} Queue</div>
+          <div style="font-size:12px;color:var(--cream-muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            <span style="color:${col}">● ${q.time}</span>
+            <span style="color:rgba(238,240,245,0.3)">·</span>
+            <span>Host: <strong style="color:var(--cream)">${nick}</strong></span>
+          </div>
+          ${q.note ? `<div style="font-size:11px;color:var(--cream-muted);opacity:0.6;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.note.substring(0,40)}${q.note.length>40?'…':''}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${filled
+            ? `<span style="padding:3px 10px;border-radius:100px;background:rgba(248,113,113,0.12);color:#f87171;font-size:10px;font-weight:700">FULL</span>`
+            : `<span style="padding:3px 10px;border-radius:100px;background:rgba(212,175,55,0.1);color:var(--gold);font-size:10px;font-weight:700">+${q.needed - joined} needed</span>`
+          }
+          <div style="font-size:10px;color:var(--cream-muted);margin-top:4px">${joined}/${q.needed} joined</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    if (queues.length > 4) {
+      container.innerHTML += `<div style="text-align:center;padding:12px;font-size:12px;color:var(--cream-muted)">+${queues.length - 4} more queues</div>`;
+    }
+  }
+
   (function() {
     // Load sessions from localStorage (seeded by openplay.html)
     function getSessions() {
