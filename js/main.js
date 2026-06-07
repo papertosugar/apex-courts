@@ -1,5 +1,16 @@
 /* ─── SMASH STUDIO — main.js v2 ─── */
 
+// ── Philippines timezone helper (UTC+8, always) ──────────────
+function getTodayPH() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  // en-CA gives YYYY-MM-DD format natively
+}
+function getNowHPH() {
+  const now = new Date();
+  const ph = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  return ph.getHours() + ph.getMinutes() / 60;
+}
+
 // ─── NAVBAR ───
 const navbar = document.getElementById('navbar');
 if (navbar) {
@@ -100,7 +111,7 @@ function slotTimeToKey(t) {
 
 // ── Build slot map from localStorage bookings ─────────────────
 function buildSlotMapFromLocal(sport, timeArr) {
-  const today     = new Date().toISOString().split('T')[0];
+  const today     = getTodayPH();
   const myUserId  = localStorage.getItem('apexUserId');
   const bookings  = JSON.parse(localStorage.getItem('apexBookings') || '[]');
   const openPlays = JSON.parse(localStorage.getItem('apexOpenSessions') || '[]');
@@ -159,7 +170,7 @@ async function renderAvailability(sport) {
   const timeArr = isDZ ? DZ_TIMES : TIMES;
   const n       = COURTS[sport];
   const label   = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
-  const now     = new Date().getHours();
+  const now     = Math.floor(getNowHPH());
 
   // ── Show loading state ────────────────────────────────────
   const liveEl = document.getElementById('availLiveTag');
@@ -172,7 +183,7 @@ async function renderAvailability(sport) {
   // ── 2) Supabase에서 추가 데이터 머지 (bookings 테이블 직접 쿼리) ──
   if (window.apexDB) {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayPH();
       // Query bookings table directly — no v_court_availability view dependency
       // drillzone: DB stores as 'drillzone'; pickleball/badminton as-is
       const { data: dbRows, error } = await window.apexDB
@@ -300,7 +311,7 @@ renderAvailability('pickleball');
 // ─── ALWAYS-ON CANVAS SYNC (no Supabase dependency) ──────────────
 // Reads localStorage + Supabase (if available) and updates the court
 // animation. Called on load, every 30s, and on storage events.
-const today = new Date().toISOString().split('T')[0];
+const today = getTodayPH();
 
 function parseHours(t) {
   if (!t) return -1;
@@ -322,8 +333,7 @@ function getActiveSport() {
 function syncCanvasNow() {
   if (!window.updateCourtActivity) return;
 
-  const now = new Date();
-  const nowH = now.getHours() + now.getMinutes() / 60;
+  const nowH = getNowHPH();
 
   const act = { P1:false, P2:false, P3:false, P4:false,
                 B1:false, B2:false, B3:false, B4:false, DZ:false };

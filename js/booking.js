@@ -1,5 +1,18 @@
 /* ─── SMASH STUDIO — Booking System JS ─── */
 
+// Philippines timezone (UTC+8)
+function getTodayPH() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+function getPhDate(d) {
+  // Convert a Date object's date portion to Philippines local date string
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+function getNowHPH() {
+  const ph = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  return ph.getHours() + ph.getMinutes() / 60;
+}
+
 // ─── AUTH GUARD ───
 (function() {
   const user = localStorage.getItem('apexUser');
@@ -136,8 +149,7 @@ function formatDow(d) {
 }
 function isToday(d) {
   if (!d) return false;
-  const t = new Date();
-  return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+  return getPhDate(d) === getTodayPH();
 }
 
 function renderDates() {
@@ -298,7 +310,7 @@ async function checkConflictsBeforeBook() {
   // 1) localStorage 체크
   const localBookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
   for (const s of state.selectedSlots) {
-    const dateStr = s.date.toISOString().split('T')[0];
+    const dateStr = getPhDate(s.date);
     const slotH   = parseSlotHours(s.label);
     const slotEnd = slotH + step;
 
@@ -317,7 +329,7 @@ async function checkConflictsBeforeBook() {
   // 2) Supabase 체크 (연결된 경우)
   if (window.apexDB) {
     try {
-      const dates = [...new Set(state.selectedSlots.map(s => s.date.toISOString().split('T')[0]))];
+      const dates = [...new Set(state.selectedSlots.map(s => getPhDate(s.date)))];
       for (const dateStr of dates) {
         const { data } = await window.apexDB
           .from('bookings')
@@ -328,7 +340,7 @@ async function checkConflictsBeforeBook() {
 
         if (!data) continue;
         for (const s of state.selectedSlots) {
-          if (s.date.toISOString().split('T')[0] !== dateStr) continue;
+          if (getPhDate(s.date) !== dateStr) continue;
           const slotH   = parseSlotHours(s.label);
           const slotEnd = slotH + step;
           const startT  = fhToTime(slotH);
@@ -385,8 +397,8 @@ function renderAvailGrid() {
   const count  = COURT_COUNT[state.sport] || 1;
   const label  = state.sport === 'pickleball' ? 'PB' : state.sport === 'badminton' ? 'BD' : 'DZ';
   const colW   = `52px repeat(${count}, 1fr)`;
-  const nowH   = new Date().getHours();
-  const nowM   = new Date().getMinutes();
+  const nowH   = Math.floor(getNowHPH());
+  const nowM   = Math.round((getNowHPH() % 1) * 60);
 
   // Hint text
   const hint = document.getElementById('gridHint');
@@ -738,7 +750,7 @@ async function finalizePayment() {
 
       for (const block of Object.values(byDateCourt)) {
         block.slots.sort((a,b) => a.idx - b.idx);
-        const dateStr  = block.date.toISOString().split('T')[0];
+        const dateStr  = getPhDate(block.date);
         const startFH  = parseSlotHours(block.slots[0].label);
         const endFH    = parseSlotHours(block.slots[block.slots.length-1].label) + step;
         const dur      = block.slots.length * step;
@@ -786,7 +798,7 @@ async function finalizePayment() {
     id: code, userName: user, sport: state.sport,
     userId: localStorage.getItem('apexUserId') || null,
     slots: state.selectedSlots.map(s => ({
-      date: s.date.toISOString().split('T')[0], court: s.court, time: s.label,
+      date: getPhDate(s.date), court: s.court, time: s.label,
     })),
     duration: totalDuration(),
     extras: Array.from(state.extras),
@@ -881,16 +893,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshBookingsFromDB() {
       try {
         // Fetch all non-cancelled bookings in the visible date window (today + 13 days)
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const end = new Date(today); end.setDate(end.getDate() + 14);
-
-        const toISO = d => d.toISOString().slice(0,10);
+        const todayStr = getTodayPH();
+        const endDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+        endDate.setDate(endDate.getDate() + 14);
+        const toISO = d => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
         const { data, error } = await supabase
           .from('bookings')
           .select('court_number,booking_date,start_time,sport,status')
-          .gte('booking_date', toISO(today))
-          .lte('booking_date', toISO(end))
+          .gte('booking_date', todayStr)
+          .lte('booking_date', toISO(endDate))
           .neq('status', 'cancelled');
 
         if (error || !data) return;
