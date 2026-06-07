@@ -514,6 +514,22 @@ function isWithin15Min(b) {
 
 function isCancellable(b) {
   if (bookingStatus(b) !== 'confirmed') return false;
+  // Cannot cancel past bookings
+  const firstSlot = (b.slots && b.slots[0]) || {};
+  const dateStr = b.date || b.booking_date || firstSlot.date || '';
+  const timeStr = b.time || b.start_time   || firstSlot.time || '';
+  if (!dateStr) return false;
+  const todayPH = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  if (dateStr < todayPH) return false;          // past date
+  if (dateStr === todayPH && timeStr) {         // today — check if slot already started
+    const ph = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+    const nowH = ph.getHours() + ph.getMinutes() / 60;
+    const parts = String(timeStr).replace(/\s*(AM|PM)/i,'').trim().split(':');
+    let h = parseInt(parts[0]) || 0;
+    if (/PM/i.test(timeStr) && h !== 12) h += 12;
+    if (/AM/i.test(timeStr) && h === 12) h = 0;
+    if (nowH >= h) return false;               // slot already started
+  }
   return true;
 }
 

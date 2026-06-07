@@ -132,10 +132,12 @@ function getBookingMaxDate() {
 
 function getDateRange() {
   const dates = [];
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // Start from today in Philippines time (UTC+8)
+  const todayStr = getTodayPH(); // 'YYYY-MM-DD'
+  const base = new Date(todayStr + 'T00:00:00');
   for (let i = 0; i < BOOKING_WINDOW_DAYS; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
     dates.push(d);
   }
   return dates;
@@ -194,7 +196,7 @@ function renderDates() {
 function jumpToCalendarDate(isoStr) {
   if (!isoStr) return;
   const picked = new Date(isoStr + 'T00:00:00');
-  const today  = new Date(); today.setHours(0,0,0,0);
+  const today  = new Date(getTodayPH() + 'T00:00:00');
   const maxDate = getBookingMaxDate();
   if (picked < today || picked > maxDate) return;
   state.selectedDate = picked;
@@ -236,7 +238,7 @@ function renderCalPopup() {
   const popup = document.getElementById('calPopup');
   if (!popup || !calPopupMonth) return;
   const { year, month } = calPopupMonth;
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(getTodayPH() + 'T00:00:00');
   const maxDate = getBookingMaxDate();
 
   const MONTH_NAMES = ['January','February','March','April','May','June',
