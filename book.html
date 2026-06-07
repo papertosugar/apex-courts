@@ -151,7 +151,14 @@
     }
     .date-chip:hover { border-color: rgba(212,175,55,0.3); }
     .date-chip.selected { border-color: var(--gold); background: rgba(212,175,55,0.1); }
-    .date-chip.today .dc-day { color: var(--gold); }
+    .date-chip.today {
+      border-color: var(--gold);
+      background: rgba(212,175,55,0.1);
+    }
+    .date-chip.today .dc-dow,
+    .date-chip.today .dc-day,
+    .date-chip.today .dc-mon { color: var(--gold); }
+    .date-chip.today .dc-day { font-weight: 900; }
     .dc-dow { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
     .dc-day { font-size: 20px; font-weight: 800; }
     .dc-mon { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
