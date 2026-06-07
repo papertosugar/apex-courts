@@ -24,10 +24,16 @@
   <meta name="twitter:description" content="World-class indoor pickleball and badminton. Book now." />
 
   <!-- ② Typography — Bebas Neue (display) + DM Sans (body). Neither Inter nor Roboto. -->
-  <!-- font-display:swap baked into Google Fonts URL -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <!-- Google Fonts: non-blocking load (media=print trick → swap to all) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap"
+    rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
+  </noscript>
 
   <link rel="stylesheet" href="css/styles.css" />
 
@@ -1487,7 +1493,7 @@ window._setProgress = (function () {
 
 <!-- Supabase + client: body 끝에서 로드 → 렌더링 블록 없음 -->
 <script>_setProgress(35);</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onload="_setProgress(72)"></script>
+<script src="/js/vendor/supabase.min.js" onload="_setProgress(72)"></script>
 <script src="/js/supabase-client.js" onload="_setProgress(86)"></script>
 <script src="js/main.js" onload="_setProgress(100)"></script>
 <script src="js/auto-logout.js" defer></script>

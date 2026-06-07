@@ -38,15 +38,7 @@ document.addEventListener('click', e => {
   }
 });
 
-// ─── SCROLL REVEAL ───────────────────────────────────────────
-const revealObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    entry.target.classList.add('visible');
-    revealObserver.unobserve(entry.target);
-  });
-}, { threshold: 0.08, rootMargin: '0px 0px -48px 0px' });
-document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+// scroll-reveal is now handled in index.html <head> (DOMContentLoaded)
 
 // ─── MAGNETIC BUTTON ─────────────────────────────────────────
 document.querySelectorAll('.btn-primary, .nav-cta').forEach(btn => {
