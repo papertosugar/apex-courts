@@ -81,7 +81,15 @@
     </li>
     <li id="navSignupLink"><a href="signup.html">Sign Up</a></li>
     <li id="navUserArea" style="display:none">
-      <span id="navUserName" style="font-size:13px;color:var(--cream-muted);font-weight:500"></span>
+      <span id="navUserName" style="
+        display:inline-flex;align-items:center;gap:6px;
+        font-size:13px;font-weight:600;
+        color:#0d0d0d;
+        background:var(--accent);
+        padding:4px 12px;
+        border-radius:20px;
+        letter-spacing:0.02em;
+      "></span>
     </li>
     <li id="navMyBookingsLink" style="display:none"><a href="my-bookings.html">My Bookings</a></li>
     <li id="navAdminLink" style="display:none"><a href="admin/dashboard.html">Admin</a></li>
@@ -1153,7 +1161,7 @@
     document.getElementById('navUserArea').style.display        = 'list-item';
     document.getElementById('navLogoutLink').style.display      = 'list-item';
     document.getElementById('navMyBookingsLink').style.display  = 'list-item';
-    document.getElementById('navUserName').textContent          = user.split(' ')[0];
+    document.getElementById('navUserName').innerHTML = '👤 ' + user.split(' ')[0];
     if (role === 'Admin' || role === 'POS Staff') {
       document.getElementById('navAdminLink').style.display = 'list-item';
     }
