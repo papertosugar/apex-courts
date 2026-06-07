@@ -877,29 +877,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listens for INSERT/UPDATE/DELETE on bookings table and refreshes
   // the availability grid in real time without a full page reload.
   (function initRealtime() {
-    if (typeof supabase === 'undefined') return;
+    const db = window.apexDB;
+    if (!db) return;
 
-    supabase
-      .channel('bookings-realtime')
+    db.channel('bookings-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'bookings' },
-        (payload) => {
-          // Re-pull bookings for the currently selected dates and refresh grid
-          // We refresh localStorage cache from Supabase, then re-render.
-          refreshBookingsFromDB();
-        }
+        () => refreshBookingsFromDB()
       )
       .subscribe();
 
     async function refreshBookingsFromDB() {
       try {
-        // Fetch all non-cancelled bookings in the visible date window (today + 13 days)
         const todayStr = getTodayPH();
         const endDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
         endDate.setDate(endDate.getDate() + 14);
         const toISO = d => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-        const { data, error } = await supabase
+        const { data, error } = await db
           .from('bookings')
           .select('court_number,booking_date,start_time,sport,status')
           .gte('booking_date', todayStr)
