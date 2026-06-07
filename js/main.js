@@ -297,119 +297,113 @@ const todayEl = document.getElementById('todayDate');
 if (todayEl) todayEl.textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 renderAvailability('pickleball');
 
-// ── Real-time: subscribe all 3 sports, refresh active grid ───
-(function setupRealtime() {
-  if (!window.ApexCourts) return;
-  const today = new Date().toISOString().split('T')[0];
+// ─── ALWAYS-ON CANVAS SYNC (no Supabase dependency) ──────────────
+// Reads localStorage + Supabase (if available) and updates the court
+// animation. Called on load, every 30s, and on storage events.
+const today = new Date().toISOString().split('T')[0];
 
-  function getActiveSport() {
-    const tab = document.querySelector('.avail-tab.active');
-    if (!tab) return 'pickleball';
-    // extract sport from onclick attr or data-sport
-    const m = (tab.getAttribute('onclick') || '').match(/'([a-z]+)'/);
-    return m ? m[1] : 'pickleball';
-  }
+function parseHours(t) {
+  if (!t) return -1;
+  const parts = String(t).replace(/\s*(AM|PM)/i, '').trim().split(':');
+  let h = parseInt(parts[0]) || 0;
+  const m = parseInt(parts[1]) || 0;
+  if (/PM/i.test(t) && h !== 12) h += 12;
+  if (/AM/i.test(t) && h === 12) h = 0;
+  return h + m / 60;
+}
 
-  // ── Court canvas: map bookings → animation active states ──
-  // ALWAYS checks BOTH Supabase AND localStorage — results are OR'd together.
-  // This ensures bookings saved only in localStorage (Supabase offline / RLS blocked)
-  // still light up the canvas.
-  async function syncCanvasActivity() {
-    if (!window.updateCourtActivity) return;
+function getActiveSport() {
+  const tab = document.querySelector('.avail-tab.active');
+  if (!tab) return 'pickleball';
+  const m = (tab.getAttribute('onclick') || '').match(/'([a-z]+)'/);
+  return m ? m[1] : 'pickleball';
+}
 
-    const nowStr = new Date().toTimeString().slice(0,5); // "HH:MM"
-    const nowH   = parseInt(nowStr) + parseInt(nowStr.slice(3)) / 60;
+function syncCanvasNow() {
+  if (!window.updateCourtActivity) return;
 
-    // Start with all courts off
-    const act = {
-      P1:false, P2:false, P3:false, P4:false,
-      B1:false, B2:false, B3:false, B4:false, DZ:false,
-    };
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
 
-    // ── 1) localStorage (ALWAYS — never skip) ──────────────────
-    try {
-      const local = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const act = { P1:false, P2:false, P3:false, P4:false,
+                B1:false, B2:false, B3:false, B4:false, DZ:false };
 
-      function parseH(t) {
-        if (!t) return -1;
-        const s = String(t).replace(/[AP]M/gi,'').trim().split(':');
-        let h = parseInt(s[0]) || 0, m = parseInt(s[1]) || 0;
-        if (/PM/i.test(t) && h !== 12) h += 12;
-        if (/AM/i.test(t) && h === 12) h = 0;
-        // Pure 24h string (no AM/PM): h already correct
-        return h + m / 60;
-      }
-
-      local.forEach(b => {
-        if (b.status === 'cancelled') return;
-        const isDrill = b.sport === 'drill' || b.sport === 'drillzone';
-        const step = isDrill ? 0.5 : 1;
-        (b.slots || []).forEach(s => {
-          if (s.date !== today) return;
-          const startH = parseH(s.time);
-          if (startH < 0) return;
-          const endH = startH + step;
-          if (nowH < startH || nowH >= endH) return;   // not active right now
-          const c = Number(s.court);
-          if (b.sport === 'pickleball') { if (c >= 1 && c <= 4) act['P'+c] = true; }
-          else if (b.sport === 'badminton') { if (c >= 1 && c <= 4) act['B'+c] = true; }
-          else if (isDrill) { act.DZ = true; }
-        });
+  // ── Step 1: localStorage (always works, zero latency) ───────
+  try {
+    const local = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+    local.forEach(b => {
+      if (b.status === 'cancelled') return;
+      const isDrill = b.sport === 'drill' || b.sport === 'drillzone';
+      const step = isDrill ? 0.5 : 1;
+      (b.slots || []).forEach(s => {
+        if (s.date !== today) return;
+        const startH = parseHours(s.time);
+        if (startH < 0 || nowH < startH || nowH >= startH + step) return;
+        const c = Number(s.court);
+        if (b.sport === 'pickleball' && c >= 1 && c <= 4)  act['P'+c] = true;
+        else if (b.sport === 'badminton' && c >= 1 && c <= 4) act['B'+c] = true;
+        else if (isDrill) act.DZ = true;
       });
-    } catch(_) {}
+    });
+  } catch(_) {}
 
-    // ── 2) Supabase (additive — OR with localStorage results) ──
-    try {
-      const { data, error } = await window.apexDB
-        .from('bookings')
-        .select('court_number,sport,status,start_time,end_time')
-        .eq('booking_date', today)
-        .neq('status', 'cancelled');
+  // Apply what we have immediately (localStorage result)
+  window.updateCourtActivity({ ...act });
 
-      if (!error && data) {
+  // ── Step 2: Supabase (async, additive) ──────────────────────
+  if (window.apexDB) {
+    window.apexDB
+      .from('bookings')
+      .select('court_number,sport,status,start_time,end_time')
+      .eq('booking_date', today)
+      .neq('status', 'cancelled')
+      .then(({ data, error }) => {
+        if (error || !data) return;
         data.forEach(r => {
           if (r.status === 'cancelled') return;
-          const startH = parseFloat(r.start_time?.replace(':','.')?.split(':')[0]) || 0;
-          // Proper 24h parse: '15:00:00' → 15
-          const parts = (r.start_time || '').split(':');
-          const sh = parseInt(parts[0]) || 0;
-          const sm = parseInt(parts[1]) || 0;
-          const ep = (r.end_time || '23:00:00').split(':');
-          const eh = parseInt(ep[0]) || sh + 1;
-          const em = parseInt(ep[1]) || 0;
-          const sH = sh + sm / 60;
-          const eH = eh + em / 60;
-          if (nowH < sH || nowH >= eH) return;   // not active right now
-
-          const c = Number(r.court_number) || 1;  // default to court 1 if null
-          if (r.sport === 'pickleball') { if (c >= 1 && c <= 4) act['P'+c] = true; }
-          else if (r.sport === 'badminton') { if (c >= 1 && c <= 4) act['B'+c] = true; }
-          else if (r.sport === 'drillzone' || r.sport === 'drill') { act.DZ = true; }
+          const sh = parseHours(r.start_time);
+          const eh = parseHours(r.end_time || '23:00:00');
+          if (sh < 0 || nowH < sh || nowH >= eh) return;
+          const c = Math.max(1, Number(r.court_number) || 1);
+          if (r.sport === 'pickleball' && c >= 1 && c <= 4)             act['P'+c] = true;
+          else if (r.sport === 'badminton' && c >= 1 && c <= 4)          act['B'+c] = true;
+          else if (r.sport === 'drillzone' || r.sport === 'drill')        act.DZ    = true;
         });
-      }
-    } catch(_) {}
-
-    window.updateCourtActivity(act);
+        window.updateCourtActivity({ ...act });
+      })
+      .catch(() => {});
   }
+}
+
+// ── Initial canvas sync (runs always, no Supabase guard) ─────
+syncCanvasNow();
+
+// ── Cross-tab sync: when book.html writes apexBookings, re-render ─
+window.addEventListener('storage', e => {
+  if (e.key !== 'apexBookings') return;
+  renderAvailability(getActiveSport());
+  syncCanvasNow();
+});
+
+// ── Poll every 30s — catches time-based transitions ───────────
+setInterval(() => {
+  renderAvailability(getActiveSport());
+  syncCanvasNow();
+}, 30_000);
+
+// ── Supabase Realtime (bonus layer — works even if this fails) ─
+(function setupRealtime() {
+  if (!window.ApexCourts) return;  // optional — localStorage already drives everything
 
   function onBookingChange() {
     renderAvailability(getActiveSport());
-    syncCanvasActivity();           // also update the animation
+    syncCanvasNow();
   }
 
-  // Subscribe to all sports so any booking triggers a refresh
+  // Subscribe to all sports so any DB booking triggers a refresh
   ['pickleball', 'badminton', 'drillzone'].forEach(sport => {
     ApexCourts.subscribeAvailability(sport, today, onBookingChange);
   });
-
-  // Initial sync on load
-  syncCanvasActivity();
-
-  // Poll every 60s — catches time-based transitions (booking starts/ends)
-  setInterval(() => {
-    renderAvailability(getActiveSport());
-    syncCanvasActivity();
-  }, 60_000);
 })()
 
 // ─── TESTIMONIALS — infinite marquee ───
