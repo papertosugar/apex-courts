@@ -151,7 +151,8 @@ function formatDow(d) {
 }
 function isToday(d) {
   if (!d) return false;
-  return getPhDate(d) === getTodayPH();
+  // Compare YYYY-MM-DD strings in PH timezone
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) === getTodayPH();
 }
 
 function renderDates() {
@@ -435,8 +436,8 @@ function renderAvailGrid() {
     const slotM = parts[1] ? parseInt(parts[1]) : 0;
     if (timeLabel.includes('PM') && slotH !== 12) slotH += 12;
     if (timeLabel.includes('AM') && slotH === 12) slotH = 0;
-    const isPast = isToday(state.selectedDate) &&
-      (slotH < nowH || (slotH === nowH && slotM <= nowM));
+    const slotTotalH = slotH + slotM / 60;
+    const isPast = isToday(state.selectedDate) && slotTotalH <= getNowHPH();
 
     const row = document.createElement('div');
     row.className = 'ag-row' + (isPast ? ' past' : '');
@@ -850,7 +851,7 @@ function applyUrlParams() {
 
   // 홈에서 클릭하면 오늘 날짜 자동 선택
   if (p.get('sport') || p.get('time')) {
-    state.selectedDate = new Date();
+    state.selectedDate = new Date(getTodayPH() + 'T00:00:00');
     state.dateOffset   = 0;
   }
 }
