@@ -412,8 +412,10 @@ function onNickInput() {
       fb.style.color = 'var(--cream-muted)'; return;
     }
     try {
-      const sb = window.supabase || window.apexDB;
-      const { data } = await sb.from('profiles').select('id').eq('nickname', val).maybeSingle();
+      const sb = window.apexDB;
+      if (!sb) throw new Error('no db');
+      const { data, error } = await sb.from('profiles').select('id').eq('nickname', val).maybeSingle();
+      if (error) throw error;
       if (data) {
         fb.textContent = '이미 사용 중인 닉네임입니다 ❌';
         fb.style.color = '#f87171';
@@ -422,10 +424,17 @@ function onNickInput() {
         fb.style.color = '#4ade80';
         btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
       }
-    } catch(_) {
-      fb.textContent = '중복 확인 실패 — 저장은 가능합니다';
-      fb.style.color = 'var(--gold)';
-      btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    } catch(err) {
+      // Column may not exist yet — tell user to run SQL setup
+      const isColMissing = err?.message?.includes('column') || err?.message?.includes('does not exist');
+      if (isColMissing) {
+        fb.textContent = '⚠ Supabase에 nickname 컬럼이 없습니다. SQL 설정을 먼저 실행해주세요.';
+        fb.style.color = '#f87171';
+      } else {
+        fb.textContent = '확인 중 오류 발생 — 저장을 눌러 시도하세요';
+        fb.style.color = 'var(--gold)';
+        btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+      }
     }
   }, 500);
 }
@@ -436,7 +445,7 @@ async function saveNickname() {
   const fb  = document.getElementById('nickFeedback');
   btn.disabled = true; btn.textContent = '저장 중…';
   try {
-    const sb = window.supabase || window.apexDB;
+    const sb = window.apexDB;
     const { error } = await sb.from('profiles')
       .upsert({ id: _uid, nickname: val }, { onConflict: 'id' });
     if (error) throw error;
