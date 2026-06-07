@@ -69,7 +69,7 @@
     }
     .op-tab:hover { color: var(--cream); }
     .op-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-    .op-tab.active.queue-tab { color: var(--gold); border-bottom-color: var(--gold); }
+    #tab-queue.active { color: #a78bfa !important; border-bottom-color: #a78bfa !important; }
     .op-tab-count {
       padding: 2px 7px; border-radius: 100px;
       background: rgba(0,194,168,0.12); color: var(--gold);
@@ -380,6 +380,11 @@
       Closed
       <span class="op-tab-count" id="closedCount">0</span>
     </button>
+    <button class="op-tab" id="tab-queue" role="tab" aria-selected="false" onclick="switchTab('queue',this)" style="color:#a78bfa;border-color:rgba(139,92,246,0.25)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Queue
+      <span class="op-tab-count" id="queueCount" style="background:rgba(139,92,246,0.15);color:#a78bfa">0</span>
+    </button>
 
   </div>
 
@@ -416,20 +421,20 @@
             display: flex; gap: 18px; align-items: center;
             transition: border-color 0.2s, background 0.2s;
           }
-          .q-card:hover { border-color: rgba(212,175,55,0.25); background: rgba(212,175,55,0.02); }
-          .q-card.recruiting { border-left: 3px solid rgba(212,175,55,0.55); }
+          .q-card:hover { border-color: rgba(139,92,246,0.25); background: rgba(139,92,246,0.02); }
+          .q-card.recruiting { border-left: 3px solid rgba(139,92,246,0.55); }
           .q-card.full-card { border-left: 3px solid rgba(248,113,113,0.45); opacity:0.75; }
           .q-date {
             width: 52px; flex-shrink: 0; text-align: center;
-            background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2);
+            background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2);
             border-radius: 10px; padding: 7px 4px;
           }
-          .q-date-mon { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+          .q-date-mon { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #a78bfa; }
           .q-date-day { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; color: var(--cream); }
           .q-info { flex: 1; min-width: 0; }
           .q-title { font-size: 15px; font-weight: 800; color: var(--cream); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
           .q-badge { padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; }
-          .q-badge.open  { background: rgba(212,175,55,0.12); color: var(--gold); border: 1px solid rgba(212,175,55,0.25); }
+          .q-badge.open  { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
           .q-badge.full  { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
           .q-meta { font-size: 13px; color: var(--cream-muted); line-height: 1.7; }
           .q-meta strong { color: var(--cream); }
@@ -442,11 +447,11 @@
           .q-join-btn {
             margin-top: 8px; display: inline-flex; align-items: center; gap: 5px;
             padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
-            background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3);
-            color: var(--gold); text-decoration: none; cursor: pointer; transition: all 0.2s;
+            background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3);
+            color: #a78bfa; text-decoration: none; cursor: pointer; transition: all 0.2s;
             font-family: inherit;
           }
-          .q-join-btn:hover { background: rgba(212,175,55,0.18); border-color: rgba(212,175,55,0.5); }
+          .q-join-btn:hover { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.5); }
           .q-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cream-muted); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--stone-line); }
         </style>
 
@@ -1476,6 +1481,12 @@ function showToast(msg, isError) {
   purgeOld();
   updateStatuses();
   render();
+
+  // Auto-switch to Queue tab if URL hash is #queue
+  if (window.location.hash === '#queue') {
+    const qTabBtn = document.getElementById('tab-queue');
+    if (qTabBtn) switchTab('queue', qTabBtn);
+  }
 
   // Real-time: refresh when sessions/registrations change
   if (window.ApexCourts) {

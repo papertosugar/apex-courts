@@ -529,6 +529,10 @@ window._setProgress = function(){};
         <span style="color:#60a5fa">Open Session</span>
       </div>
       <div class="legend-item" role="listitem">
+        <div class="legend-dot" style="background:rgba(139,92,246,0.18);border:1px solid rgba(167,139,250,0.4)" aria-hidden="true"></div>
+        <span style="color:#a78bfa">Queue</span>
+      </div>
+      <div class="legend-item" role="listitem">
         <div class="legend-dot" style="background:rgba(0,194,168,0.18);border:1px solid rgba(0,194,168,0.35)" aria-hidden="true"></div>
         <span style="color:var(--gold)">My Booking</span>
       </div>
@@ -672,7 +676,7 @@ window._setProgress = function(){};
         <div class="op-skel" style="animation-delay:0.15s"></div>
         <div class="op-skel" style="animation-delay:0.3s"></div>
       </div>
-      <a href="openplay.html" class="cp-panel-cta cp-panel-cta-op">
+      <a href="openplay.html" class="cp-panel-cta cp-panel-cta-op" style="margin-top:auto">
         View All Sessions
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
@@ -686,18 +690,19 @@ window._setProgress = function(){};
           Queue
         </span>
         <div class="cp-panel-title">FIND YOUR<br><span style="color:#a78bfa">PARTNER</span></div>
-        <p class="cp-panel-sub" style="margin-top:8px">Book a court and open a queue to gather players. Join an existing queue and get notified when your spot is confirmed.</p>
+        <p class="cp-panel-sub" style="margin-top:8px">Need players? Open a queue and fill your court. Join an existing queue and get confirmed when enough players sign up.</p>
       </div>
       <div class="cp-feats">
-        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Open a queue when you need more players</div>
-        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Up to 16 players per queue session</div>
-        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Real-time availability — join instantly</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Min 6 · Max 16 players per session</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>2-hour sessions · all skill levels</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>₱200 off-peak · ₱300 peak (after 2 PM)</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Full refund if minimum not reached</div>
       </div>
       <div class="op-sessions-list" id="homeQueuesInner">
         <div class="q-skel"></div>
         <div class="q-skel" style="animation-delay:0.15s"></div>
       </div>
-      <a href="book.html#queue" class="cp-panel-cta cp-panel-cta-q">
+      <a href="openplay.html#queue" class="cp-panel-cta cp-panel-cta-q" style="margin-top:auto">
         Browse Queues
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
@@ -764,12 +769,12 @@ window._setProgress = function(){};
 
     if (!queues.length) {
       container.innerHTML = `
-        <div style="padding:32px 20px;text-align:center;border:1px dashed rgba(212,175,55,0.2);border-radius:16px">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.4)" stroke-width="1.5" style="margin-bottom:10px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div style="padding:32px 20px;text-align:center;border:1px dashed rgba(139,92,246,0.25);border-radius:16px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.5)" stroke-width="1.5" style="margin-bottom:10px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <div style="font-size:14px;font-weight:600;color:var(--cream-muted);margin-bottom:6px">No open queues yet</div>
           <div style="font-size:12px;color:var(--cream-muted);opacity:0.6;margin-bottom:14px">Be the first — book a court and open a queue!</div>
-          <a href="book.html" onclick="setTimeout(()=>{if(typeof switchPageTab==='function')switchPageTab('queue')},200)"
-            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">
+          <a href="book.html#queue"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;font-size:12px;font-weight:700;text-decoration:none">
             Open a Queue →
           </a>
         </div>`;
