@@ -949,6 +949,7 @@ function makeQueueCard(q) {
         </div>
         <div class="session-meta" style="margin-top:4px">
           <strong>${tStr}</strong>
+          ${q.skill && q.skill !== 'all' ? ` · <span style="font-size:11px;padding:2px 7px;border-radius:5px;background:rgba(167,139,250,0.12);color:#a78bfa;font-weight:600">${q.skill.charAt(0).toUpperCase()+q.skill.slice(1)}</span>` : ''}
           ${q.note ? `<br>${q.note.substring(0,60)}${q.note.length>60?'…':''}` : ''}
         </div>
       </div>
@@ -1535,6 +1536,7 @@ function renderQueuePanel() {
           <span style="color:${col}">● ${q.time || ''}</span>
           &nbsp;·&nbsp; Host: <strong>${nick}</strong>
           &nbsp;·&nbsp; ${joined}/${needed} joined
+          ${q.skill && q.skill !== 'all' ? `&nbsp;·&nbsp; <span style="font-size:11px;padding:2px 7px;border-radius:5px;background:rgba(167,139,250,0.12);color:#a78bfa;font-weight:600">${q.skill.charAt(0).toUpperCase()+q.skill.slice(1)}</span>` : ''}
           ${q.note ? `<br><span style="opacity:0.6">${q.note.substring(0,50)}${q.note.length>50?'…':''}</span>` : ''}
         </div>
       </div>

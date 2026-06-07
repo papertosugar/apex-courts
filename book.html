@@ -655,6 +655,19 @@
     .q-time-chip.past { opacity: 0.3; pointer-events: none; }
     /* TODAY chip - same structure as regular chip, no special teal border */
     .date-chip.today { border-color: var(--border); background: var(--surface-3); }
+    /* Skill level buttons */
+    .q-skill-btn {
+      padding: 11px 8px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surface-3);
+      font-size: 13px; font-weight: 700; color: var(--text-muted);
+      transition: all 0.15s; font-family: inherit; text-align: center;
+    }
+    .q-skill-btn:hover { border-color: rgba(139,92,246,0.4); color: var(--cream); }
+    .q-skill-btn.selected {
+      border-color: rgba(139,92,246,0.8);
+      background: rgba(139,92,246,0.18);
+      color: #c4b5fd;
+    }
   </style>
 <script src="/js/utils.js"></script>
 </head>
@@ -935,42 +948,56 @@
         </div>
         <div class="book-panel-body">
           <div class="form-group">
-            <label class="form-label" for="qNeedSelect">How many more players are you looking for?</label>
+            <label class="form-label" for="qNeedSelect">Total players for this session (min 6)</label>
             <div style="position:relative">
               <select id="qNeedSelect" class="form-input" onchange="qSetNeed(parseInt(this.value))"
                 style="appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer">
-                <option value="1">1 player needed</option>
-                <option value="2">2 players needed</option>
-                <option value="3">3 players needed</option>
-                <option value="4">4 players needed</option>
-                <option value="5">5 players needed</option>
-                <option value="6">6 players needed</option>
-                <option value="7">7 players needed</option>
-                <option value="8">8 players needed</option>
-                <option value="9">9 players needed</option>
-                <option value="10">10 players needed</option>
-                <option value="11">11 players needed</option>
-                <option value="12">12 players needed</option>
-                <option value="13">13 players needed</option>
-                <option value="14">14 players needed</option>
-                <option value="15">15 players needed</option>
-                <option value="16">16 players needed</option>
+                <option value="6" selected>6 players</option>
+                <option value="7">7 players</option>
+                <option value="8">8 players</option>
+                <option value="9">9 players</option>
+                <option value="10">10 players</option>
+                <option value="11">11 players</option>
+                <option value="12">12 players</option>
+                <option value="13">13 players</option>
+                <option value="14">14 players</option>
+                <option value="15">15 players</option>
+                <option value="16">16 players</option>
               </select>
               <svg style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
           <p style="margin-top:4px;font-size:12px;color:var(--cream-muted)">
-            Maximum 16 players per queue · Open to all skill levels by default
+            Minimum 6 · Maximum 16 · Queue is cancelled if under 6 players join
           </p>
+        </div>
+      </div>
+
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">Skill Level</div><div class="section-divider-line"></div></div>
+
+      <!-- PANEL 4: Skill Level -->
+      <div class="book-panel" style="margin-bottom:20px">
+        <div class="book-panel-header">
+          <div class="book-panel-num">4</div>
+          <div class="book-panel-title">Skill Level</div>
+        </div>
+        <div class="book-panel-body">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px" id="qSkillGrid">
+            <button id="qsk-all"          onclick="qSetSkill('all')"          class="q-skill-btn selected">All Levels</button>
+            <button id="qsk-beginner"     onclick="qSetSkill('beginner')"     class="q-skill-btn">Beginner</button>
+            <button id="qsk-intermediate" onclick="qSetSkill('intermediate')" class="q-skill-btn">Intermediate</button>
+            <button id="qsk-advanced"     onclick="qSetSkill('advanced')"     class="q-skill-btn">Advanced</button>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--cream-muted)" id="qSkillNote">Open to players of any skill level.</p>
         </div>
       </div>
 
       <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">Optional</div><div class="section-divider-line"></div></div>
 
-      <!-- PANEL 4: Message -->
+      <!-- PANEL 5: Message -->
       <div class="book-panel" style="margin-bottom:20px">
         <div class="book-panel-header">
-          <div class="book-panel-num">4</div>
+          <div class="book-panel-num">5</div>
           <div class="book-panel-title">Message <span style="font-size:11px;color:var(--cream-muted);font-weight:400">(optional)</span></div>
         </div>
         <div class="book-panel-body">
@@ -1184,7 +1211,8 @@ const qState = {
   sport: 'pickleball',
   date: getTodayPH(),
   times: [],
-  needed: 1
+  needed: 6,
+  skill: 'all'
 };
 
 const Q_TIMES = [
@@ -1396,11 +1424,21 @@ function qRenderTimePills() {
     chip.textContent = label;
     if (!past) {
       chip.onclick = () => {
-        const idx = qState.times.indexOf(label);
-        if (idx === -1) qState.times.push(label);
-        else            qState.times.splice(idx, 1);
-        chip.classList.toggle('selected', qState.times.includes(label));
-        qRenderDates(); // refresh dot indicators
+        // Auto-select 2-hour block (this slot + next slot)
+        const slotIdx  = Q_TIMES.indexOf(label);
+        const nextSlot = slotIdx < Q_TIMES.length - 1 ? Q_TIMES[slotIdx + 1] : null;
+        const pair = nextSlot ? [label, nextSlot] : [label];
+
+        // If clicking a slot that is part of current selection, deselect the pair
+        const alreadySelected = qState.times.includes(label);
+        if (alreadySelected) {
+          qState.times = qState.times.filter(t => !pair.includes(t));
+        } else {
+          // Replace selection with this 2-hr pair (one block at a time)
+          qState.times = [...pair];
+        }
+        qRenderTimePills(); // re-render to reflect new selection
+        qRenderDates();
         qUpdateSummary();
         qUpdateSteps();
       };
@@ -1414,6 +1452,25 @@ function qSetNeed(n) {
   qState.needed = n;
   qUpdateSummary();
   qUpdateSteps();
+}
+
+// ── Skill level ───────────────────────────────────────────────
+const SKILL_LABELS = { all: 'All Levels', beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+const SKILL_NOTES  = {
+  all:          'Open to players of any skill level.',
+  beginner:     'Suitable for beginners and first-timers.',
+  intermediate: 'Looking for players with some experience.',
+  advanced:     'Experienced players only.'
+};
+function qSetSkill(skill) {
+  qState.skill = skill;
+  ['all','beginner','intermediate','advanced'].forEach(s => {
+    const btn = document.getElementById('qsk-' + s);
+    if (btn) btn.classList.toggle('selected', s === skill);
+  });
+  const note = document.getElementById('qSkillNote');
+  if (note) note.textContent = SKILL_NOTES[skill] || '';
+  qUpdateSummary();
 }
 
 // ── Note char counter ─────────────────────────────────────────
@@ -1430,9 +1487,9 @@ function qUpdateSummary() {
 
   // sync needed from dropdown
   const sel = document.getElementById('qNeedSelect');
-  if (sel) qState.needed = parseInt(sel.value) || 1;
+  if (sel) qState.needed = parseInt(sel.value) || 6;
 
-  const { sport, date, times, needed } = qState;
+  const { sport, date, times, needed, skill } = qState;
   if (!times || times.length === 0) {
     body.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px 0">Select a date and time to preview your queue</p>';
     return;
@@ -1467,8 +1524,16 @@ function qUpdateSummary() {
       <div style="display:flex;align-items:center;gap:10px">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <div>
-          <div style="font-size:11px;color:var(--cream-muted);text-transform:uppercase;letter-spacing:0.06em">Players Needed</div>
-          <div style="font-size:14px;font-weight:700;color:var(--cream)">${needed} more player${needed > 1 ? 's' : ''}</div>
+          <div style="font-size:11px;color:var(--cream-muted);text-transform:uppercase;letter-spacing:0.06em">Players</div>
+          <div style="font-size:14px;font-weight:700;color:var(--cream)">${needed} total</div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--stone-line)"></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div>
+          <div style="font-size:11px;color:var(--cream-muted);text-transform:uppercase;letter-spacing:0.06em">Skill Level</div>
+          <div style="font-size:14px;font-weight:700;color:var(--cream)">${SKILL_LABELS[skill] || 'All Levels'}</div>
         </div>
       </div>
     </div>`;
@@ -1501,6 +1566,7 @@ function openQueue() {
     creatorName: user,
     creatorNick: nick,
     needed: parseInt((document.getElementById('qNeedSelect') || {}).value) || qState.needed,
+    skill: qState.skill || 'all',
     participants: [],
     note: (document.getElementById('qNote') || {}).value || '',
     status: 'open',
@@ -1562,6 +1628,7 @@ function showQueueSuccess(queue) {
 window.switchPageTab   = switchPageTab;
 window.qSelectSport    = qSelectSport;
 window.qSetNeed        = qSetNeed;
+window.qSetSkill       = qSetSkill;
 window.qNoteUpdate     = qNoteUpdate;
 window.openQueue       = openQueue;
 window.qToggleCalPopup = qToggleCalPopup;
