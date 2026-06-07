@@ -634,12 +634,17 @@
       .book-panel-body { padding: 12px 10px; }
       .dc-day { font-size: 15px; }
     }
-    /* ── Queue time chips (purple, multi-select) ── */
+    /* ── Queue time chips (purple, multi-select, grid) ── */
+    #qTimeChips {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+      gap: 8px;
+    }
     .q-time-chip {
-      padding: 8px 16px; border-radius: 8px; cursor: pointer;
+      padding: 10px 6px; border-radius: 8px; cursor: pointer;
       border: 1px solid var(--border); background: var(--surface-3);
       font-size: 13px; font-weight: 600; color: var(--text-muted);
-      transition: all 0.15s; user-select: none; white-space: nowrap;
+      transition: all 0.15s; user-select: none; text-align: center;
     }
     .q-time-chip:hover { border-color: rgba(139,92,246,0.4); color: var(--cream); }
     .q-time-chip.selected {
@@ -914,7 +919,7 @@
             <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
             <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Multiple slots OK</div>
           </div>
-          <div id="qTimeChips" style="display:none;flex-wrap:wrap;gap:8px"></div>
+          <div id="qTimeChips" style="display:none"></div>
           <div id="qTimeEmpty" style="margin-top:4px;color:var(--text-dim);font-size:13px">Select a date first</div>
 
         </div>
@@ -1382,7 +1387,7 @@ function qRenderTimePills() {
   }
 
   if (emptyEl) emptyEl.style.display = 'none';
-  wrap.style.display = 'flex';
+  wrap.style.display = 'grid';
   wrap.innerHTML = '';
 
   slots.forEach(({ label, past }) => {

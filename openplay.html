@@ -239,7 +239,7 @@
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="/">Home</a></li>
     <li><a href="/#sports">Sports</a></li>
-    <li><a href="openplay.html" style="color:var(--gold)">Open Play</a></li>
+    <li><a href="openplay.html" style="color:var(--gold)">Open / Queue</a></li>
     <li><a href="community.html">Community</a></li>
     <li><a href="book.html" class="nav-cta">Book a Court</a></li>
   </ul>
@@ -273,14 +273,20 @@
 
   <!-- Policy Banner -->
   <div class="op-policy">
-    <div class="policy-banner" role="list" aria-label="Open Play policy highlights">
+    <!-- Open Play -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(96,165,250,0.8);white-space:nowrap">Open Play</span>
+      <div style="flex:1;height:1px;background:rgba(96,165,250,0.15)"></div>
+    </div>
+    <div class="policy-banner" role="list" aria-label="Open Play policy highlights" style="border-color:rgba(96,165,250,0.18)">
       <div class="policy-item" role="listitem">
         <div class="policy-icon" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div>
-          <div class="policy-item-label">Min Players</div>
-          <div class="policy-item-value">4 standard · 8 extended</div>
+          <div class="policy-item-label">Players</div>
+          <div class="policy-item-value">4 – 50 players</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Courts adjust by headcount</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -289,7 +295,7 @@
         </div>
         <div>
           <div class="policy-item-label">Reg. Closes</div>
-          <div class="policy-item-value">2 days before at 12:00 AM</div>
+          <div class="policy-item-value">2 days before</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -298,7 +304,8 @@
         </div>
         <div>
           <div class="policy-item-label">Pricing</div>
-          <div class="policy-item-value">₱200/person · ₱300 peak (after 2 PM)</div>
+          <div class="policy-item-value">₱200/person</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">₱300 peak (after 2 PM)</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -306,8 +313,52 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div>
-          <div class="policy-item-label">Refund Policy</div>
-          <div class="policy-item-value">Full refund if minimum not reached</div>
+          <div class="policy-item-label">Refund</div>
+          <div class="policy-item-value">Full refund if min not reached</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue -->
+    <div style="display:flex;align-items:center;gap:8px;margin-top:16px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(167,139,250,0.8);white-space:nowrap">Queue</span>
+      <div style="flex:1;height:1px;background:rgba(167,139,250,0.15)"></div>
+    </div>
+    <div class="policy-banner" role="list" aria-label="Queue policy highlights" style="border-color:rgba(167,139,250,0.2)">
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.9)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Players</div>
+          <div class="policy-item-value">4 – 16 players max</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.9)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Closes</div>
+          <div class="policy-item-value">48 hours before</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.9)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Pricing</div>
+          <div class="policy-item-value">By agreement with host</div>
+        </div>
+      </div>
+      <div class="policy-item" role="listitem">
+        <div class="policy-icon" aria-hidden="true" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.9)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div class="policy-item-label">Refund</div>
+          <div class="policy-item-value">Full refund if not opened</div>
         </div>
       </div>
     </div>
