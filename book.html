@@ -514,17 +514,31 @@
     .page-tab.active { background: var(--gold); color: var(--ink); }
     .page-tab:not(.active):hover { background: rgba(255,255,255,0.04); color: var(--cream); }
 
-    /* ── Queue time slot chips ───────────────────────── */
-    .q-time-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .q-time-chip {
-      padding: 10px 18px; border-radius: 10px;
-      border: 1.5px solid var(--border); background: var(--surface-3);
-      font-size: 13px; font-weight: 600; color: var(--text-muted);
-      cursor: pointer; font-family: inherit; transition: all 0.18s;
-      min-height: 44px; touch-action: manipulation;
+    /* ── Queue time slot grid (Book tab grid style, blue) ── */
+    .q-slot-grid {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
     }
-    .q-time-chip:hover { border-color: rgba(212,175,55,0.3); color: var(--cream); background: rgba(212,175,55,0.04); }
-    .q-time-chip.selected { border-color: var(--gold); background: rgba(212,175,55,0.1); color: var(--gold); font-weight: 700; }
+    .q-slot-cell {
+      min-height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; font-family: inherit;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-3);
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      touch-action: manipulation; position: relative;
+    }
+    .q-slot-cell:nth-child(4n)   { border-right: none; }
+    .q-slot-cell:hover:not(.past){ background: rgba(59,130,246,0.08); color: #93c5fd; }
+    .q-slot-cell.selected        { background: rgba(59,130,246,0.18); color: #60a5fa; font-weight: 700;
+                                   box-shadow: inset 0 0 0 2px rgba(96,165,250,0.7); }
+    .q-slot-cell.past            { opacity: 0.28; pointer-events: none; }
+    .q-slot-grid-empty { color: var(--text-dim); font-size: 13px; padding: 20px; text-align: center; }
 
     /* ── select dropdown styling ─────────────────────── */
     select.form-input option { background: #1a1a22; color: var(--cream); }
@@ -783,10 +797,12 @@
           </div>
 
           <!-- Time slot grid -->
-          <div style="margin-top:20px;margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
-          <div class="q-time-grid" id="qTimeGrid">
-            <p style="color:var(--text-dim);font-size:13px">Select a date first</p>
+          <div style="margin-top:20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
+            <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Select one slot</div>
           </div>
+          <div class="q-slot-grid" id="qTimeGrid" style="display:none"></div>
+          <div id="qTimeEmpty" style="margin-top:4px;color:var(--text-dim);font-size:13px">Select a date first</div>
 
         </div>
       </div>
@@ -1146,39 +1162,50 @@ function qRenderDates() {
   });
 }
 
-// ── Time grid ─────────────────────────────────────────────────
+// ── Time grid (Book tab-style grid, blue) ─────────────────────
 function qRenderTimeGrid() {
-  const grid = document.getElementById('qTimeGrid');
+  const grid    = document.getElementById('qTimeGrid');
+  const emptyEl = document.getElementById('qTimeEmpty');
   if (!grid) return;
 
-  const today = getTodayPH();
-  const nowH  = getNowHPH();
+  const today   = getTodayPH();
+  const nowH    = getNowHPH();
   const isToday = qState.date === today;
 
-  const available = Q_TIMES.filter(t => {
-    if (!isToday) return true;
-    const h = parseHourStr(t);
-    return h > nowH; // strictly future
-  });
+  // Mark past vs available
+  const slots = Q_TIMES.map(t => ({
+    label: t,
+    past: isToday && parseHourStr(t) <= nowH
+  }));
 
-  if (!available.length) {
-    grid.innerHTML = '<p style="color:var(--text-dim);font-size:13px">No available times for today. Select a future date.</p>';
+  const hasFuture = slots.some(s => !s.past);
+  if (!hasFuture) {
+    grid.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = '';
+    emptyEl.textContent = 'No available times for today. Select a future date.';
     return;
   }
 
+  if (emptyEl) emptyEl.style.display = 'none';
+  grid.style.display = 'grid';
   grid.innerHTML = '';
-  available.forEach(t => {
-    const chip = document.createElement('button');
-    chip.className = 'q-time-chip' + (t === qState.time ? ' selected' : '');
-    chip.textContent = t;
-    chip.onclick = () => {
-      qState.time = t;
-      document.querySelectorAll('#qTimeGrid .q-time-chip').forEach(c => c.classList.remove('selected'));
-      chip.classList.add('selected');
-      qUpdateSummary();
-      qUpdateSteps();
-    };
-    grid.appendChild(chip);
+
+  slots.forEach(({ label, past }) => {
+    const cell = document.createElement('div');
+    cell.className = 'q-slot-cell' +
+      (past ? ' past' : '') +
+      (label === qState.time ? ' selected' : '');
+    cell.textContent = label;
+    if (!past) {
+      cell.onclick = () => {
+        qState.time = label;
+        document.querySelectorAll('#qTimeGrid .q-slot-cell').forEach(c => c.classList.remove('selected'));
+        cell.classList.add('selected');
+        qUpdateSummary();
+        qUpdateSteps();
+      };
+    }
+    grid.appendChild(cell);
   });
 }
 
