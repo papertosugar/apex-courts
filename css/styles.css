@@ -574,6 +574,11 @@ h2.section-title {
   background: var(--gold-dim); border: 1px solid var(--gold-line);
   color: var(--gold);
 }
+/* Walk-in: slot has started, online booking closed — walk-in only */
+.slot.walk-in {
+  background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+  color: rgba(251,191,36,0.55); cursor: default; font-size: 9px; letter-spacing: 0.06em;
+}
 .avail-legend {
   display: flex; gap: var(--s3); padding: var(--s2) var(--s4);
   border-top: 1px solid var(--stone-line);

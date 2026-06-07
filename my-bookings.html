@@ -362,13 +362,17 @@ const _uid  = localStorage.getItem('apexUserId');
 if (!_user) { window.location.href = 'login.html?redirect=my-bookings.html'; }
 
 // ── Nickname card init ────────────────────────────────────────
-(function initNickCard() {
+let _nickLocked = false; // true once we confirm nick_change_count >= 1 from DB
+
+(async function initNickCard() {
   const nick     = localStorage.getItem('apexNick');
   const firstName = (_user || '').split(' ')[0];
   const display  = nick || firstName;
   const avatarEl = document.getElementById('nickAvatar');
   const dispEl   = document.getElementById('nickDisplay');
   const realEl   = document.getElementById('nickReal');
+  const editBtn  = document.querySelector('.nick-edit-btn');
+
   avatarEl.textContent  = display[0].toUpperCase();
   if (nick) {
     dispEl.textContent = nick;
@@ -380,10 +384,29 @@ if (!_user) { window.location.href = 'login.html?redirect=my-bookings.html'; }
   }
   document.getElementById('mbNavUser').innerHTML =
     '👤 ' + (nick || firstName);
+
+  // Check DB for nick_change_count
+  if (_uid && window.apexDB) {
+    try {
+      const { data } = await window.apexDB.from('profiles')
+        .select('nick_change_count').eq('id', _uid).maybeSingle();
+      if (data && data.nick_change_count >= 1) {
+        _nickLocked = true;
+        if (editBtn) {
+          editBtn.disabled = true;
+          editBtn.title = 'Nickname can only be set once';
+          editBtn.style.opacity = '0.35';
+          editBtn.style.cursor = 'not-allowed';
+          editBtn.textContent = 'Locked';
+        }
+      }
+    } catch (_) {}
+  }
 })();
 
 // ── Nickname modal logic ──────────────────────────────────────
 function openNickModal() {
+  if (_nickLocked) return; // already used their one change
   const input = document.getElementById('nickInput');
   input.value = localStorage.getItem('apexNick') || '';
   document.getElementById('nickFeedback').textContent = '';
@@ -451,16 +474,19 @@ function onNickInput() {
 }
 
 async function saveNickname() {
+  if (_nickLocked) return;
   const val = document.getElementById('nickInput').value.trim();
   const btn = document.getElementById('nickSaveBtn');
   const fb  = document.getElementById('nickFeedback');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     const sb = window.apexDB;
+    // Increment nick_change_count so this can only happen once
     const { error } = await sb.from('profiles')
-      .upsert({ id: _uid, nickname: val }, { onConflict: 'id' });
+      .upsert({ id: _uid, nickname: val, nick_change_count: 1 }, { onConflict: 'id' });
     if (error) throw error;
     localStorage.setItem('apexNick', val);
+    _nickLocked = true; // lock immediately in this session
     fb.textContent = 'Saved!'; fb.style.color = '#4ade80';
     // Refresh card
     const dispEl = document.getElementById('nickDisplay');
@@ -468,6 +494,15 @@ async function saveNickname() {
     dispEl.textContent = val; dispEl.classList.add('is-nickname');
     document.getElementById('nickReal').textContent = 'Real name: ' + _user;
     document.getElementById('mbNavUser').innerHTML = '👤 ' + val;
+    // Disable edit button
+    const editBtn = document.querySelector('.nick-edit-btn');
+    if (editBtn) {
+      editBtn.disabled = true;
+      editBtn.title = 'Nickname can only be set once';
+      editBtn.style.opacity = '0.35';
+      editBtn.style.cursor = 'not-allowed';
+      editBtn.textContent = 'Locked';
+    }
     setTimeout(closeNickModal, 800);
   } catch(e) {
     fb.textContent = 'Save failed: ' + (e.message || 'Please try again');

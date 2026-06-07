@@ -129,13 +129,15 @@ async function renderAvailability(sport) {
   const n        = COURTS[sport];
   const abbr     = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
 
-  // Only show time slots from now onward — past slots hidden entirely
+  // Show from current floor-hour onward.
+  // Slots that have already started (h < nowH) are marked 'walk-in' —
+  // they cannot be booked online but are available at the front desk.
   const allTimes = isDZ ? DZ_TIMES : TIMES;
   const timeArr  = allTimes.filter(t => {
     let h = parseInt(t);
     if (t.includes('PM') && h !== 12) h += 12;
     if (t.includes('AM') && h === 12) h = 0;
-    return h >= Math.floor(nowH); // show current hour and future
+    return h >= Math.floor(nowH); // show current floor-hour + future
   });
 
   // Step 1 — localStorage (instant, always available)
@@ -218,16 +220,32 @@ async function renderAvailability(sport) {
 
     slots[c].forEach((s, i) => {
       const tLabel = timeArr[i];
-      const status     = s;
+
+      // Determine if this slot has already started (past online booking window)
+      let slotH = parseInt(tLabel);
+      if (tLabel.includes('PM') && slotH !== 12) slotH += 12;
+      if (tLabel.includes('AM') && slotH === 12) slotH = 0;
+      const hasStarted = slotH < nowH; // slot started, can't book online
+
+      // Walk-in override: open slots that have started become walk-in
+      const rawStatus  = s;
+      const status     = (rawStatus === 'open' && hasStarted) ? 'walk-in' : rawStatus;
       const isBookable = status === 'open';
+      const isWalkIn   = status === 'walk-in';
+
       const slotLabel  = status === 'open-session' ? 'OPEN'
                        : status === 'mine'         ? 'MINE'
-                       : status === 'booked'       ? 'BOOKED' : '';
+                       : status === 'booked'       ? 'BOOKED'
+                       : isWalkIn                  ? 'DOOR' : '';
+
+      const walkInTitle = isWalkIn ? ' title="Walk-in available · Visit front desk"' : '';
+
       html += `<div class="slot ${status}"
         role="${isBookable ? 'button' : 'cell'}"
         tabindex="${isBookable ? '0' : '-1'}"
-        aria-label="${tLabel}: ${isBookable ? 'Available' : slotLabel || status}"
+        aria-label="${tLabel}: ${isWalkIn ? 'Walk-in only' : isBookable ? 'Available' : slotLabel || status}"
         style="${!isBookable ? 'pointer-events:none;cursor:default' : 'cursor:pointer'}"
+        ${walkInTitle}
         ${isBookable ? `onclick="window.location.href='book.html?sport=${sport}&court=${c}&time=${tLabel}'"
           onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"` : ''}
       >${slotLabel}</div>`;

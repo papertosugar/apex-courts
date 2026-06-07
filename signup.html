@@ -162,6 +162,21 @@
     .btn-primary-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .terms-note { font-size: 12px; color: var(--cream-muted); text-align: center; margin-top: 14px; line-height: 1.6; }
+
+    /* Skill level selector */
+    .skill-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 6px; }
+    .skill-card {
+      position: relative; border: 1.5px solid var(--stone-line); border-radius: 12px;
+      padding: 14px 10px 12px; text-align: center; cursor: pointer;
+      background: transparent; color: inherit; font-family: inherit;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .skill-card:hover { border-color: rgba(212,175,55,0.5); }
+    .skill-card.active { border-color: var(--gold); background: rgba(212,175,55,0.07); }
+    .skill-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .skill-icon { font-size: 20px; margin-bottom: 6px; display: block; }
+    .skill-name { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--cream); }
+    .skill-desc { font-size: 10px; color: var(--cream-muted); margin-top: 3px; line-height: 1.4; }
     .terms-note a { color: var(--gold); text-decoration: none; }
 
     .auth-footer { padding: 20px 36px; border-top: 1px solid var(--stone-line); text-align: center; font-size: 14px; color: var(--cream-muted); }
@@ -292,6 +307,31 @@
           </div>
         </div>
 
+        <!-- Skill level -->
+        <div class="form-group">
+          <div class="form-label">Your Skill Level</div>
+          <div class="skill-grid" role="radiogroup" aria-label="Skill level">
+            <label class="skill-card active" id="skill-beginner">
+              <input type="radio" name="skillLevel" value="beginner" checked onchange="setSkill(this)">
+              <span class="skill-icon">🌱</span>
+              <div class="skill-name">Beginner</div>
+              <div class="skill-desc">Learning the basics</div>
+            </label>
+            <label class="skill-card" id="skill-intermediate">
+              <input type="radio" name="skillLevel" value="intermediate" onchange="setSkill(this)">
+              <span class="skill-icon">⚡</span>
+              <div class="skill-name">Intermediate</div>
+              <div class="skill-desc">Competitive rallies</div>
+            </label>
+            <label class="skill-card" id="skill-advanced">
+              <input type="radio" name="skillLevel" value="advanced" onchange="setSkill(this)">
+              <span class="skill-icon">🏆</span>
+              <div class="skill-name">Advanced</div>
+              <div class="skill-desc">Tournament-ready</div>
+            </label>
+          </div>
+        </div>
+
         <!-- Contact method toggle -->
         <div class="form-group">
           <div class="form-label">Verify via</div>
@@ -419,6 +459,16 @@ function setStep(n) {
 }
 
 /* ── PASSWORD TOGGLE ── */
+function setSkill(radio) {
+  document.querySelectorAll('.skill-card').forEach(c => c.classList.remove('active'));
+  radio.closest('.skill-card').classList.add('active');
+}
+
+function getSkillLevel() {
+  const checked = document.querySelector('input[name="skillLevel"]:checked');
+  return checked ? checked.value : 'beginner';
+}
+
 function togglePw(inputId, btn) {
   const inp = document.getElementById(inputId);
   if (!inp) return;
@@ -581,22 +631,27 @@ async function verifyOtp() {
     if (!window.ApexCourts) throw new Error('Supabase not loaded');
 
     const isEmail = contact.includes('@');
+    let verifiedUser = null;
     if (isEmail) {
       // Verify email OTP (type: 'signup' = confirmation code from signUp)
       const result = await ApexCourts.verifyEmailOTP(contact, entered);
-      const user = result?.user;
-      const fullName = `${firstName} ${lastName}`.trim();
-      localStorage.setItem('apexUser', fullName);
-      localStorage.setItem('apexRole', 'member');
-      if (user?.id) localStorage.setItem('apexUserId', user.id);
+      verifiedUser = result?.user;
     } else {
       // Phone OTP
       const result = await ApexCourts.verifyOTP(contact, entered);
-      const user = result?.user;
-      const fullName = `${firstName} ${lastName}`.trim();
-      localStorage.setItem('apexUser', fullName);
-      localStorage.setItem('apexRole', 'member');
-      if (user?.id) localStorage.setItem('apexUserId', user.id);
+      verifiedUser = result?.user;
+    }
+    const fullName = `${firstName} ${lastName}`.trim();
+    localStorage.setItem('apexUser', fullName);
+    localStorage.setItem('apexRole', 'member');
+    if (verifiedUser?.id) {
+      localStorage.setItem('apexUserId', verifiedUser.id);
+      // Save skill level to profiles table
+      const skillLevel = getSkillLevel();
+      try {
+        await window.apexDB.from('profiles')
+          .upsert({ id: verifiedUser.id, skill_level: skillLevel, nick_change_count: 0 }, { onConflict: 'id' });
+      } catch (_) { /* non-critical — profile saves later */ }
     }
 
     otpSent = false;

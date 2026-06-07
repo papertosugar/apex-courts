@@ -59,6 +59,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS profiles_nickname_unique
   ON profiles (nickname)
   WHERE nickname IS NOT NULL AND nickname != '';
 
+-- 6. Nickname change limit (1 per user)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nick_change_count INT NOT NULL DEFAULT 0;
+
+-- 7. Skill level: beginner / intermediate / advanced
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS skill_level TEXT CHECK (skill_level IN ('beginner','intermediate','advanced'));
+
 -- 4. Public read for availability check (no auth required)
 DO $$
 BEGIN
