@@ -295,7 +295,8 @@
         </div>
         <div>
           <div class="policy-item-label">Reg. Closes</div>
-          <div class="policy-item-value">2 days before</div>
+          <div class="policy-item-value">2 days before at 12:00 AM</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">e.g. event on 10th → closes 8th midnight</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -332,6 +333,7 @@
         <div>
           <div class="policy-item-label">Players</div>
           <div class="policy-item-value">4 – 16 players max</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Max 2 queues/week · 2 hrs/session</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -340,7 +342,8 @@
         </div>
         <div>
           <div class="policy-item-label">Closes</div>
-          <div class="policy-item-value">48 hours before</div>
+          <div class="policy-item-value">48 hrs before at 12:00 AM</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">e.g. event on 10th → closes 8th midnight</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -349,7 +352,8 @@
         </div>
         <div>
           <div class="policy-item-label">Pricing</div>
-          <div class="policy-item-value">By agreement with host</div>
+          <div class="policy-item-value">₱200/person</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">₱300 peak (after 2 PM)</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -611,7 +615,15 @@
       <span style="font-size:13px;color:var(--cream-muted)">Fee per person</span>
       <span style="font-size:20px;font-weight:800;color:var(--gold)" id="regPriceAmt">₱200</span>
     </div>
-    <p style="font-size:12px;color:var(--cream-muted);margin-bottom:16px;line-height:1.6">Payment is collected on arrival. Full refund if session is cancelled due to insufficient players.</p>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--cream-muted);margin-bottom:8px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase">Payment Method</div>
+      <div style="display:flex;gap:8px">
+        <button id="regPayGcash" onclick="selectRegPayMethod('gcash')" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid rgba(139,92,246,0.35);background:rgba(139,92,246,0.08);color:#a78bfa;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">GCash</button>
+        <button id="regPayCash" onclick="selectRegPayMethod('cash')" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface-3);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">Cash on Arrival</button>
+      </div>
+      <div id="regPayNote" style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5">Select a payment method above. Full refund if session is cancelled.</div>
+    </div>
+    <input type="hidden" id="regPayMethod" value="" />
     <div class="modal-actions">
       <button class="modal-btn ghost" onclick="closeRegisterModal()">Cancel</button>
       <button class="modal-btn primary" onclick="submitRegistration()">Confirm Registration</button>
@@ -628,6 +640,46 @@
     <div class="modal-title">You're Registered!</div>
     <p class="modal-sub" id="successModalBody">See you on the court.</p>
     <button class="modal-btn primary" onclick="document.getElementById('successModal').classList.remove('open')">Done</button>
+  </div>
+</div>
+
+<!-- ─── QUEUE JOIN MODAL ─── -->
+<div class="modal-overlay" id="queueJoinModal">
+  <div class="modal-card">
+    <div class="modal-title" id="qjModalTitle">Join Queue</div>
+    <div class="modal-sub" id="qjModalSub">Reserve your spot in the queue.</div>
+    <input type="hidden" id="qjQueueId" />
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label-sm">First Name</label>
+        <input type="text" class="form-input-sm" id="qjFirst" placeholder="Juan" />
+      </div>
+      <div class="form-group">
+        <label class="form-label-sm">Last Name</label>
+        <input type="text" class="form-input-sm" id="qjLast" placeholder="Dela Cruz" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label-sm">Phone / Email</label>
+      <input type="text" class="form-input-sm" id="qjContact" placeholder="For confirmation & updates" />
+    </div>
+    <div id="qjPriceDisplay" style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px">
+      <span style="font-size:13px;color:var(--cream-muted)">Fee per person · 2 hr session</span>
+      <span style="font-size:20px;font-weight:800;color:#a78bfa" id="qjPriceAmt">₱200</span>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--cream-muted);margin-bottom:8px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase">Payment Method</div>
+      <div style="display:flex;gap:8px">
+        <button id="qjPayGcash" onclick="selectQjPayMethod('gcash')" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid rgba(139,92,246,0.35);background:rgba(139,92,246,0.08);color:#a78bfa;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">GCash</button>
+        <button id="qjPayCash" onclick="selectQjPayMethod('cash')" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface-3);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">Cash on Arrival</button>
+      </div>
+      <div id="qjPayNote" style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5">Select a payment method above. Full refund if queue is cancelled.</div>
+    </div>
+    <input type="hidden" id="qjPayMethod" value="" />
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeQueueJoinModal()">Cancel</button>
+      <button class="modal-btn primary" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" onclick="submitQueueJoin()">Join Queue</button>
+    </div>
   </div>
 </div>
 
@@ -918,7 +970,7 @@ function makeQueueCard(q) {
       </div>
       <div style="display:flex;align-items:center">
         ${!isFull
-          ? `<a href="book.html#queue" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#a78bfa;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s">Join Queue →</a>`
+          ? `<button onclick="openQueueJoinModal('${q ? q.id : ''}')" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#a78bfa;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:inherit">Join Queue →</button>`
           : `<button style="padding:9px 18px;border-radius:9px;background:transparent;border:1px solid var(--stone-line);color:var(--cream-muted);font-size:13px;font-family:inherit;cursor:default" disabled>Queue Full</button>`
         }
       </div>
@@ -1232,13 +1284,39 @@ function openRegisterModal(id) {
   document.getElementById('regContact').value = '';
   document.getElementById('registerModal').classList.add('open');
 }
-function closeRegisterModal() { document.getElementById('registerModal').classList.remove('open'); }
+function closeRegisterModal() { document.getElementById('registerModal').classList.remove('open'); document.getElementById('regPayMethod').value = ''; resetRegPayBtns(); }
+
+function selectRegPayMethod(method) {
+  document.getElementById('regPayMethod').value = method;
+  const gcashBtn = document.getElementById('regPayGcash');
+  const cashBtn  = document.getElementById('regPayCash');
+  const note     = document.getElementById('regPayNote');
+  if (method === 'gcash') {
+    gcashBtn.style.borderColor = 'rgba(139,92,246,0.7)'; gcashBtn.style.background = 'rgba(139,92,246,0.18)'; gcashBtn.style.color = '#c4b5fd';
+    cashBtn.style.borderColor  = 'var(--border)';        cashBtn.style.background  = 'var(--surface-3)';       cashBtn.style.color = 'var(--text-muted)';
+    note.textContent = 'You will receive a GCash payment link after confirming. Full refund if session is cancelled.';
+  } else {
+    cashBtn.style.borderColor  = 'rgba(139,92,246,0.7)'; cashBtn.style.background  = 'rgba(139,92,246,0.18)'; cashBtn.style.color = '#c4b5fd';
+    gcashBtn.style.borderColor = 'var(--border)';        gcashBtn.style.background = 'var(--surface-3)';      gcashBtn.style.color = 'var(--text-muted)';
+    note.textContent = 'Pay at the front desk on arrival. Full refund if session is cancelled.';
+  }
+}
+function resetRegPayBtns() {
+  const g = document.getElementById('regPayGcash'); const c = document.getElementById('regPayCash');
+  if (g) { g.style.borderColor='rgba(139,92,246,0.35)'; g.style.background='rgba(139,92,246,0.08)'; g.style.color='#a78bfa'; }
+  if (c) { c.style.borderColor='var(--border)'; c.style.background='var(--surface-3)'; c.style.color='var(--text-muted)'; }
+  const n = document.getElementById('regPayNote');
+  if (n) n.textContent = 'Select a payment method above. Full refund if session is cancelled.';
+}
+
 function submitRegistration() {
   const id = document.getElementById('regSessionId').value;
   const first = document.getElementById('regFirst').value.trim();
   const last = document.getElementById('regLast').value.trim();
   const contact = document.getElementById('regContact').value.trim();
+  const payMethod = document.getElementById('regPayMethod').value;
   if (!first) { showToast('Please enter your first name.', true); return; }
+  if (!payMethod) { showToast('Please select a payment method.', true); return; }
 
   const sessions = getSessions();
   const s = sessions.find(x => x.id === id);
@@ -1246,14 +1324,14 @@ function submitRegistration() {
   if (s.registrations.some(r => r.name === (first + ' ' + last))) {
     showToast('You\'re already registered for this session.', true); return;
   }
-  s.registrations.push({ name: first + ' ' + last, contact, registeredAt: new Date().toISOString() });
+  s.registrations.push({ name: first + ' ' + last, contact, payMethod, registeredAt: new Date().toISOString() });
   saveSessions(sessions);
   closeRegisterModal();
 
   const price = getPrice(s);
+  const payNote = payMethod === 'gcash' ? 'A GCash payment link will be sent to you.' : `Pay <strong>₱${price}</strong> at the front desk on arrival.`;
   document.getElementById('successModalBody').innerHTML = `
-    You're registered for <strong>${sportLabel(s.sport)} Open Play</strong>.<br>
-    Pay <strong>₱${price}</strong> on arrival. See you on the court!`;
+    You're registered for <strong>${sportLabel(s.sport)} Open Play</strong>.<br>${payNote} See you on the court!`;
   document.getElementById('successModal').classList.add('open');
   render();
 }
@@ -1267,6 +1345,93 @@ function cancelRegistration(id) {
   saveSessions(sessions);
   render();
   showToast('Registration cancelled. A full credit will be issued.');
+}
+
+/* ── QUEUE JOIN MODAL ── */
+function openQueueJoinModal(queueId) {
+  if (!currentUser) { window.location.href = 'login.html?redirect=openplay.html'; return; }
+  let queues = [];
+  try { queues = JSON.parse(localStorage.getItem('apexQueues') || '[]'); } catch(e) {}
+  const q = queues.find(x => x.id === queueId);
+
+  document.getElementById('qjQueueId').value = queueId || '';
+  if (q) {
+    const sportName = q.sport === 'pickleball' ? 'Pickleball' : q.sport === 'badminton' ? 'Badminton' : 'Mixed';
+    document.getElementById('qjModalTitle').textContent = `Join Queue — ${sportName}`;
+    document.getElementById('qjModalSub').textContent = `${q.date || ''} · ${q.time || ''} · 2 hr session`;
+    // Determine peak (after 2PM)
+    const parseHour = t => {
+      if (!t) return 0;
+      if (t.includes('AM') || t.includes('PM')) {
+        const [tm, mer] = t.split(' '); let [h] = tm.split(':').map(Number);
+        if (mer === 'PM' && h !== 12) h += 12; if (mer === 'AM' && h === 12) h = 0; return h;
+      }
+      return parseInt(t.split(':')[0]) || 0;
+    };
+    const isPeak = parseHour(q.time) >= 14;
+    document.getElementById('qjPriceAmt').textContent = isPeak ? '₱300' : '₱200';
+  }
+  // Pre-fill name
+  const parts = currentUser.split(' ');
+  document.getElementById('qjFirst').value = parts[0] || '';
+  document.getElementById('qjLast').value  = parts.slice(1).join(' ') || '';
+  document.getElementById('qjContact').value = '';
+  document.getElementById('qjPayMethod').value = '';
+  resetQjPayBtns();
+  document.getElementById('queueJoinModal').classList.add('open');
+}
+function closeQueueJoinModal() { document.getElementById('queueJoinModal').classList.remove('open'); document.getElementById('qjPayMethod').value=''; resetQjPayBtns(); }
+
+function selectQjPayMethod(method) {
+  document.getElementById('qjPayMethod').value = method;
+  const g = document.getElementById('qjPayGcash'); const c = document.getElementById('qjPayCash');
+  const note = document.getElementById('qjPayNote');
+  if (method === 'gcash') {
+    g.style.borderColor='rgba(139,92,246,0.7)'; g.style.background='rgba(139,92,246,0.18)'; g.style.color='#c4b5fd';
+    c.style.borderColor='var(--border)'; c.style.background='var(--surface-3)'; c.style.color='var(--text-muted)';
+    note.textContent = 'You will receive a GCash payment link after confirming. Full refund if queue is cancelled.';
+  } else {
+    c.style.borderColor='rgba(139,92,246,0.7)'; c.style.background='rgba(139,92,246,0.18)'; c.style.color='#c4b5fd';
+    g.style.borderColor='var(--border)'; g.style.background='var(--surface-3)'; g.style.color='var(--text-muted)';
+    note.textContent = 'Pay at the front desk on arrival. Full refund if queue is cancelled.';
+  }
+}
+function resetQjPayBtns() {
+  const g = document.getElementById('qjPayGcash'); const c = document.getElementById('qjPayCash');
+  if (g) { g.style.borderColor='rgba(139,92,246,0.35)'; g.style.background='rgba(139,92,246,0.08)'; g.style.color='#a78bfa'; }
+  if (c) { c.style.borderColor='var(--border)'; c.style.background='var(--surface-3)'; c.style.color='var(--text-muted)'; }
+  const n = document.getElementById('qjPayNote');
+  if (n) n.textContent = 'Select a payment method above. Full refund if queue is cancelled.';
+}
+function submitQueueJoin() {
+  const queueId   = document.getElementById('qjQueueId').value;
+  const first     = document.getElementById('qjFirst').value.trim();
+  const last      = document.getElementById('qjLast').value.trim();
+  const contact   = document.getElementById('qjContact').value.trim();
+  const payMethod = document.getElementById('qjPayMethod').value;
+  if (!first)     { showToast('Please enter your first name.', true); return; }
+  if (!payMethod) { showToast('Please select a payment method.', true); return; }
+
+  let queues = [];
+  try { queues = JSON.parse(localStorage.getItem('apexQueues') || '[]'); } catch(e) {}
+  const q = queues.find(x => x.id === queueId);
+  if (!q) { showToast('Queue not found.', true); return; }
+
+  if (!q.participants) q.participants = [];
+  if (q.participants.some(p => p.name === (first + ' ' + last))) {
+    showToast('You\'ve already joined this queue.', true); return;
+  }
+  q.participants.push({ name: first + ' ' + last, contact, payMethod, joinedAt: new Date().toISOString() });
+  localStorage.setItem('apexQueues', JSON.stringify(queues));
+  closeQueueJoinModal();
+
+  const priceAmt = document.getElementById('qjPriceAmt') ? document.getElementById('qjPriceAmt').textContent : '₱200';
+  const payNote = payMethod === 'gcash' ? 'A GCash payment link will be sent to you.' : `Pay ${priceAmt} at the front desk on arrival.`;
+  const sportName = q.sport === 'pickleball' ? 'Pickleball' : q.sport === 'badminton' ? 'Badminton' : 'Mixed';
+  document.getElementById('successModalBody').innerHTML = `
+    You joined the <strong>${sportName} Queue</strong>!<br>${payNote} See you on the court!`;
+  document.getElementById('successModal').classList.add('open');
+  render();
 }
 
 /* ── ADMIN ACTIONS ── */
@@ -1376,7 +1541,7 @@ function renderQueuePanel() {
       <div class="q-right">
         <div class="q-slots-num ${isFull ? 'red' : slotsColor}">${isFull ? 'FULL' : remaining}</div>
         <div class="q-slots-label">${isFull ? 'No spots' : 'spot' + (remaining !== 1 ? 's' : '') + ' left'}</div>
-        ${!isFull ? `<a href="book.html#queue" class="q-join-btn">Join Queue →</a>` : ''}
+        ${!isFull ? `<button onclick="openQueueJoinModal('${q.id}')" class="q-join-btn" style="cursor:pointer;font-family:inherit;border:none">Join Queue →</button>` : ''}
       </div>
     </div>`;
   }
