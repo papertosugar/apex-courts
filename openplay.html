@@ -332,8 +332,8 @@
         </div>
         <div>
           <div class="policy-item-label">Players</div>
-          <div class="policy-item-value">4 – 16 players max</div>
-          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Max 2 queues/week · 2 hrs/session</div>
+          <div class="policy-item-value">6 – 16 players max</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Min 6 to open · Max 2 queues/week · 2 hrs/session</div>
         </div>
       </div>
       <div class="policy-item" role="listitem">
@@ -525,7 +525,7 @@
           </li>
           <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
-            Full refund if minimum not reached
+            Cancelled &amp; refunded if under 6 players
           </li>
         </ul>
       </div>
@@ -914,7 +914,7 @@ function makeQueueCard(q) {
   const dow = d.toLocaleDateString('en-US', {timeZone:'Asia/Manila', weekday:'short'});
   const isToday = q.date === today;
   const joined = (q.participants || []).length;
-  const needed = q.needed || 4;
+  const needed = q.needed || 6;
   const remaining = needed - joined;
   const isFull = remaining <= 0;
   const nick = q.creatorNick || q.creatorName || 'Anonymous';
@@ -1514,7 +1514,7 @@ function renderQueuePanel() {
     const day = parseInt(q.date.split('-')[2]);
     const isToday = q.date === today;
     const joined = (q.participants || []).length;
-    const needed = q.needed || 4;
+    const needed = q.needed || 6;
     const remaining = needed - joined;
     const col = sportColor(q.sport);
     const nick = q.creatorNick || q.creatorName || 'Anonymous';
@@ -1552,7 +1552,7 @@ function renderQueuePanel() {
     if (q.date < today) return false;
     if (q.date === today && parseH(q.time) <= nowH) return false;
     const joined = (q.participants || []).length;
-    return joined < (q.needed || 4);
+    return joined < (q.needed || 6);
   });
 
   const fullQ = all.filter(q => {
@@ -1560,7 +1560,7 @@ function renderQueuePanel() {
     if (q.date === today && parseH(q.time) <= nowH) return true; // today expired
     if (q.status !== 'open') return true;
     const joined = (q.participants || []).length;
-    return joined >= (q.needed || 4); // full
+    return joined >= (q.needed || 6); // full
   }).slice(0, 6);
 
   // Update badge count
