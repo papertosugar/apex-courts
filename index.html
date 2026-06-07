@@ -50,8 +50,7 @@
     "openingHours": ["Mo-Su 07:00-24:00"]
   }
   </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="/js/supabase-client.js"></script>
+<!-- utils.js는 인라인 스크립트보다 먼저 필요 → 블로킹 유지, 단 경량 파일이라 OK -->
 <script src="/js/utils.js"></script>
 </head>
 <body>
@@ -620,7 +619,7 @@
     </div>
 
     <!-- Right: live session cards + queue tabs -->
-    <div class="reveal from-below" style="transition-delay:120ms">
+    <div class="reveal from-below" style="">
       <!-- Tabs -->
       <div style="display:flex;gap:6px;margin-bottom:16px" role="tablist" aria-label="Community board">
         <button id="homeTabSessions" role="tab" aria-selected="true"
@@ -871,7 +870,7 @@
       </div>
     </article>
 
-    <article class="sport-card reveal from-below" style="transition-delay:120ms" role="listitem">
+    <article class="sport-card reveal from-below" style="" role="listitem">
       <div class="sport-card-accent" aria-hidden="true"></div>
       <div class="sport-icon-wrap" aria-hidden="true">
         <!-- Badminton racket SVG -->
@@ -895,7 +894,7 @@
       </div>
     </article>
 
-    <article class="sport-card reveal from-below" style="transition-delay:240ms" role="listitem">
+    <article class="sport-card reveal from-below" style="" role="listitem">
       <div class="sport-card-accent" aria-hidden="true"></div>
       <div class="sport-icon-wrap" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -922,7 +921,7 @@
       </div>
     </article>
 
-    <article class="sport-card dimmed reveal from-below" style="transition-delay:360ms" role="listitem" aria-label="Tennis courts — coming soon">
+    <article class="sport-card dimmed reveal from-below" style="" role="listitem" aria-label="Tennis courts — coming soon">
       <div class="soon-badge" aria-label="Coming soon">Coming Soon</div>
       <div class="sport-icon-wrap" aria-hidden="true">
         <!-- Tennis racket SVG -->
@@ -1048,11 +1047,11 @@
       <h3 class="step-title">Choose Sport &amp; Time</h3>
       <p class="step-body">Select pickleball or badminton, pick your date, and see real-time availability — updated live as courts are booked.</p>
     </div>
-    <div class="step-item reveal from-below" style="transition-delay:120ms" role="listitem">
+    <div class="step-item reveal from-below" style="" role="listitem">
       <h3 class="step-title">Pick Court &amp; Add Extras</h3>
       <p class="step-body">Choose your court, add equipment rental — rackets, shoes, or a fresh ball pack — and see your total update instantly.</p>
     </div>
-    <div class="step-item reveal from-below" style="transition-delay:240ms" role="listitem">
+    <div class="step-item reveal from-below" style="" role="listitem">
       <h3 class="step-title">Pay &amp; Play</h3>
       <p class="step-body">Confirm with card online or pay on arrival. Instant confirmation with your booking code arrives in seconds.</p>
     </div>
@@ -1412,8 +1411,11 @@
   </div>
 </footer>
 
+<!-- Supabase + client: body 끝에서 로드 → 렌더링 블록 없음 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/supabase-client.js"></script>
 <script src="js/main.js"></script>
-<script src="js/auto-logout.js"></script>
+<script src="js/auto-logout.js" defer></script>
 <script>
 /* ── NAV AUTH STATE ── */
 (function() {
