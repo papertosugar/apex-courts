@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Open Play &amp; Queue — Smash Studio</title>
+  <title>Open Play / Queue — Smash Studio</title>
   <meta name="description" content="Join an Smash Studio Open Play session. Play with new people, meet the community, and enjoy affordable drop-in games." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -160,6 +160,21 @@
 
     /* Closed card - dimmed */
     .session-card.closed-card { opacity: 0.65; }
+    /* ── Queue card (purple theme) ── */
+    .session-card.queue-card { border-left: 3px solid rgba(167,139,250,0.6); }
+    .session-card.queue-card .session-date-block { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.2); }
+    .session-card.queue-card .session-date-mon   { color: #a78bfa; }
+    .q-type-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      margin-top: 5px;
+    }
+    .q-type-label.op  { color: #60a5fa; }
+    .q-type-label.qr  { color: #a78bfa; }
+    .session-card.op-card { border-left: 3px solid rgba(96,165,250,0.5); }
+    .session-card.op-card .session-date-block { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); }
+    .session-card.op-card .session-date-mon   { color: #60a5fa; }
+
 
     /* Empty state */
     .empty-state {
@@ -243,7 +258,7 @@
         <span class="op-eyebrow-text">Open Play &amp; Queue</span>
       </div>
       <h1 class="op-title">OPEN PLAY<br><span style="color:var(--gold);font-size:0.75em">& QUEUE</span></h1>
-      <p class="op-sub">Drop in for Open Play sessions, or browse Queue boards to find playing partners. No partner needed — just register and show up.</p>
+      <p class="op-sub">Drop in for Open Play sessions (blue) or join a Queue to find playing partners (purple). All sessions sorted by date — register and show up.</p>
     </div>
     <div class="op-hero-right">
       <button class="admin-create-btn" id="adminCreateBtn" onclick="openCreateModal()" style="display:none">
@@ -310,11 +325,7 @@
       Closed
       <span class="op-tab-count" id="closedCount">0</span>
     </button>
-    <button class="op-tab" role="tab" aria-selected="false" onclick="switchTab('queue',this)" style="border-bottom-color:transparent" id="queueTabBtn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      Queue
-      <span class="op-tab-count" id="queueCount" style="background:rgba(212,175,55,0.15);color:var(--gold)">0</span>
-    </button>
+
   </div>
 
   <!-- Content + Sidebar -->
@@ -718,23 +729,239 @@ function switchTab(name, el) {
 }
 
 /* ── RENDER ── */
-function render() {
-  const sessions = getSessions();
-  const upcoming = sessions.filter(s => s.status === 'upcoming' || s.status === 'confirmed');
-  const closed = sessions.filter(s => s.status === 'closed' || s.status === 'cancelled');
+function getQueues() {
+  try { return JSON.parse(localStorage.getItem('apexQueues') || '[]'); } catch(e) { return []; }
+}
 
-  document.getElementById('upcomingCount').textContent = upcoming.length;
+function parseTimeToMinutes(t) {
+  if (!t) return 0;
+  if (t.includes('AM') || t.includes('PM')) {
+    const [time, mer] = t.trim().split(' ');
+    let [h, m] = time.split(':').map(Number);
+    if (isNaN(m)) m = 0;
+    if (mer === 'PM' && h !== 12) h += 12;
+    if (mer === 'AM' && h === 12) h = 0;
+    return h * 60 + m;
+  }
+  const [h, m] = t.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function render() {
+  const today = typeof getTodayPH === 'function' ? getTodayPH() : new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Manila'});
+  const sessions = getSessions();
+  const opUpcoming = sessions.filter(s => s.status === 'upcoming' || s.status === 'confirmed');
+  const closed     = sessions.filter(s => s.status === 'closed' || s.status === 'cancelled');
+
+  // Merge queues into upcoming list
+  const allQueues = getQueues();
+  const qUpcoming = allQueues.filter(q => {
+    if (q.status !== 'open') return false;
+    if (q.date < today) return false;
+    return true;
+  });
+
+  // Combined upcoming: tag each item with its type
+  const combined = [
+    ...opUpcoming.map(s => ({ ...s, _type: 'openplay' })),
+    ...qUpcoming.map(q => ({ ...q, _type: 'queue', date: q.date, time: q.time || '00:00' })),
+  ].sort((a, b) => {
+    const dateCmp = (a.date || '').localeCompare(b.date || '');
+    if (dateCmp !== 0) return dateCmp;
+    return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+  });
+
+  document.getElementById('upcomingCount').textContent = combined.length;
   document.getElementById('closedCount').textContent = closed.length;
 
-  // Stats
-  const totalRegistered = upcoming.reduce((s, x) => s + x.registrations.length, 0);
-  const totalSpots = upcoming.reduce((s, x) => s + Math.max(0, x.maxPlayers - x.registrations.length), 0);
-  document.getElementById('statActive').textContent = upcoming.length;
+  // Stats (Open Play only)
+  const totalRegistered = opUpcoming.reduce((s, x) => s + (x.registrations||[]).length, 0);
+  const totalSpots = opUpcoming.reduce((s, x) => s + Math.max(0, x.maxPlayers - (x.registrations||[]).length), 0);
+  document.getElementById('statActive').textContent = opUpcoming.length;
   document.getElementById('statTotal').textContent = totalRegistered;
   document.getElementById('statSpots').textContent = totalSpots;
 
-  renderSessionList('upcomingList', 'upcomingEmpty', upcoming, false);
+  renderCombinedList('upcomingList', 'upcomingEmpty', combined, false);
   renderSessionList('closedList', 'closedEmpty', closed, true);
+}
+
+function renderCombinedList(listId, emptyId, items, isClosed) {
+  const list  = document.getElementById(listId);
+  const empty = document.getElementById(emptyId);
+  list.innerHTML = '';
+  if (!items.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  items.forEach(item => {
+    if (item._type === 'queue') {
+      list.appendChild(makeQueueCard(item));
+    } else {
+      // Reuse existing session card renderer
+      const fakeList = document.createElement('div');
+      const before = list.childElementCount;
+      renderSessionList_single(list, item, false);
+    }
+  });
+}
+
+function makeQueueCard(q) {
+  const today = typeof getTodayPH === 'function' ? getTodayPH() : new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Manila'});
+  const d = new Date(q.date + 'T12:00:00');
+  const mon = d.toLocaleDateString('en-US', {timeZone:'Asia/Manila', month:'short'}).toUpperCase();
+  const day = parseInt(q.date.split('-')[2]);
+  const dow = d.toLocaleDateString('en-US', {timeZone:'Asia/Manila', weekday:'short'});
+  const isToday = q.date === today;
+  const joined = (q.participants || []).length;
+  const needed = q.needed || 4;
+  const remaining = needed - joined;
+  const isFull = remaining <= 0;
+  const nick = q.creatorNick || q.creatorName || 'Anonymous';
+  const sportLbl = q.sport === 'pickleball' ? 'Pickleball' : q.sport === 'badminton' ? 'Badminton' : 'Mixed';
+
+  const tStr = (() => {
+    if (!q.time) return '';
+    if (q.time.includes('AM') || q.time.includes('PM')) return q.time;
+    const [h, m] = q.time.split(':').map(Number);
+    const suf = h >= 12 ? 'PM' : 'AM';
+    const hr = h % 12 || 12;
+    return hr + ':' + String(m || 0).padStart(2,'0') + ' ' + suf;
+  })();
+
+  const card = document.createElement('div');
+  card.className = 'session-card queue-card';
+  card.innerHTML = `
+    <div class="session-header">
+      <div class="session-date-block">
+        <div class="session-date-mon">${isToday ? 'TODAY' : mon}</div>
+        <div class="session-date-day">${day}</div>
+        <div class="session-date-dow">${dow}</div>
+      </div>
+      <div class="session-info">
+        <div class="session-title" style="color:#a78bfa">
+          ${sportLbl} Queue
+          <span class="session-badge" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.25)">${isFull ? 'Full' : 'Recruiting'}</span>
+        </div>
+        <div class="q-type-label qr">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Player Queue · Host: ${nick}
+        </div>
+        <div class="session-meta" style="margin-top:4px">
+          <strong>${tStr}</strong>
+          ${q.note ? `<br>${q.note.substring(0,60)}${q.note.length>60?'…':''}` : ''}
+        </div>
+      </div>
+      <div class="session-status-area">
+        <div class="session-slots ${isFull ? 'full' : remaining <= 2 ? 'urgent' : ''}">${isFull ? 'Full' : remaining}</div>
+        <div class="session-slots-label">${isFull ? 'No spots' : 'spots left'}</div>
+        <div style="font-size:12px;color:var(--cream-muted);margin-top:6px">${joined}/${needed} joined</div>
+      </div>
+    </div>
+    <div class="session-participants">
+      <div class="participants-bar">
+        <div class="participants-label">
+          <span>Players joined</span>
+          <span>${joined} / ${needed}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill ${isFull ? 'full' : remaining <= 2 ? 'urgent' : ''}" style="width:${Math.round(joined/needed*100)}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center">
+        ${!isFull
+          ? `<a href="book.html#queue" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#a78bfa;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s">Join Queue →</a>`
+          : `<button style="padding:9px 18px;border-radius:9px;background:transparent;border:1px solid var(--stone-line);color:var(--cream-muted);font-size:13px;font-family:inherit;cursor:default" disabled>Queue Full</button>`
+        }
+      </div>
+    </div>`;
+  return card;
+}
+
+function renderSessionList_single(list, s, isClosed) {
+  // Reuse card building from renderSessionList — wrap in temp array
+  const tempDiv = document.createElement('div');
+  // We'll inject the card the same way renderSessionList does
+  const tmp = { innerHTML: '' };
+  // Replicate the card logic inline
+  const date = new Date(s.date + 'T12:00:00');
+  const mon = date.toLocaleDateString('en-US', {timeZone:'Asia/Manila', month:'short'}).toUpperCase();
+  const day = date.getDate();
+  const dow = date.toLocaleDateString('en-US', {timeZone:'Asia/Manila', weekday:'short'});
+  const [h, m] = s.time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  const timeLabel = h12 + ':' + String(m).padStart(2,'0') + ' ' + period;
+  const duration = s.type === 'extended' ? '2 hours' : '1 hour';
+  const price = getPrice(s);
+  const regCount = (s.registrations || []).length;
+  const minPlayers = s.type === 'extended' ? 8 : 4;
+  const spotsLeft = Math.max(0, s.maxPlayers - regCount);
+  const fillPct = Math.round((regCount / s.maxPlayers) * 100);
+  const isFull = spotsLeft === 0;
+  const isUrgent = spotsLeft <= 2 && spotsLeft > 0;
+  const regClosed = isRegistrationClosed(s);
+  const userReg = isUserRegistered(s);
+  const slotsClass = isFull ? 'full' : isUrgent ? 'urgent' : '';
+  const sportLbl = sportLabel(s.sport);
+
+  let statusBadge = '';
+  if (s.status === 'confirmed') statusBadge = '<span class="session-badge badge-confirmed">Confirmed</span>';
+  else if (s.status === 'cancelled') statusBadge = '<span class="session-badge badge-cancelled">Cancelled</span>';
+  else if (s.status === 'closed') statusBadge = '<span class="session-badge badge-closed">Closed</span>';
+  else if (isFull) statusBadge = '<span class="session-badge badge-cancelled">Full</span>';
+  else statusBadge = '<span class="session-badge badge-open">Open</span>';
+
+  let registerArea = '';
+  if (!isClosed && s.status !== 'cancelled') {
+    if (isFull && !userReg) registerArea = '<button class="register-btn" disabled>Full</button>';
+    else if (regClosed) registerArea = '<button class="register-btn" disabled>Reg. Closed</button>';
+    else if (userReg) registerArea = '<button class="register-btn registered" disabled>✓ Registered</button><button class="cancel-reg-btn" onclick="cancelRegistration(\'' + s.id + '\')">Cancel</button>';
+    else registerArea = '<button class="register-btn" onclick="openRegisterModal(\'' + s.id + '\')">Register</button>';
+  }
+
+  const card = document.createElement('div');
+  card.className = 'session-card op-card' + (s.type === 'extended' ? ' extended' : '') + (isClosed ? ' closed-card' : '');
+  card.innerHTML = `
+    <div class="session-header">
+      <div class="session-date-block" aria-label="${dow} ${mon} ${day}">
+        <div class="session-date-mon">${mon}</div>
+        <div class="session-date-day">${day}</div>
+        <div class="session-date-dow">${dow}</div>
+      </div>
+      <div class="session-info">
+        <div class="session-title" style="color:#60a5fa">
+          ${sportLbl} Open Play
+          ${s.type === 'extended' ? '<span class="session-badge badge-extended">Extended</span>' : ''}
+          ${statusBadge}
+        </div>
+        <div class="q-type-label op">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Open Play · Drop-in welcome
+        </div>
+        <div class="session-meta" style="margin-top:4px">
+          <strong>${timeLabel}</strong> · ${duration}
+          ${s.notes ? '<br>' + s.notes : ''}
+        </div>
+      </div>
+      <div class="session-status-area">
+        <div class="session-slots ${slotsClass}">${isFull ? 'Full' : spotsLeft}</div>
+        <div class="session-slots-label">${isFull ? 'No spots left' : 'spots left'}</div>
+        <div class="session-price">₱${price}/person</div>
+      </div>
+    </div>
+    <div class="session-participants">
+      <div class="participants-bar">
+        <div class="participants-label">
+          <span>Players registered</span>
+          <span>${regCount} / ${s.maxPlayers} · min ${minPlayers}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill ${isFull?'full':isUrgent?'urgent':''}" style="width:${fillPct}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center">
+        ${registerArea}
+      </div>
+    </div>`;
+  list.appendChild(card);
 }
 
 function renderSessionList(listId, emptyId, sessions, isClosed) {
@@ -745,7 +972,7 @@ function renderSessionList(listId, emptyId, sessions, isClosed) {
 
   sessions.forEach(s => {
     const card = document.createElement('div');
-    card.className = 'session-card' + (s.type === 'extended' ? ' extended' : '') + (isClosed ? ' closed-card' : '');
+    card.className = 'session-card op-card' + (s.type === 'extended' ? ' extended' : '') + (isClosed ? ' closed-card' : '');
 
     const date = new Date(s.date);
     const mon = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
@@ -804,12 +1031,16 @@ function renderSessionList(listId, emptyId, sessions, isClosed) {
           <div class="session-date-dow">${dow}</div>
         </div>
         <div class="session-info">
-          <div class="session-title">
+          <div class="session-title" style="color:#60a5fa">
             ${sportLabel(s.sport)} Open Play
             ${s.type === 'extended' ? '<span class="session-badge badge-extended">Extended</span>' : ''}
             ${statusBadge}
           </div>
-          <div class="session-meta">
+          <div class="q-type-label op">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Open Play · Drop-in welcome
+          </div>
+          <div class="session-meta" style="margin-top:4px">
             <strong>${timeLabel}</strong> · ${duration}
             ${s.notes ? `<br>${s.notes}` : ''}
           </div>
@@ -1147,15 +1378,7 @@ function renderQueuePanel() {
   }
 }
 
-// Init queue count badge on page load
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(renderQueuePanel, 100);
-  // Check URL hash — if #queue, switch to queue tab
-  if (location.hash === '#queue') {
-    const btn = document.getElementById('queueTabBtn');
-    if (btn) switchTab('queue', btn);
-  }
-});
+// Queue auto-render: handled by render() which merges queues into Upcoming
 </script>
 
 
