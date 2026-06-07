@@ -634,6 +634,22 @@
       .book-panel-body { padding: 12px 10px; }
       .dc-day { font-size: 15px; }
     }
+    /* ── Queue time chips (purple, multi-select) ── */
+    .q-time-chip {
+      padding: 8px 16px; border-radius: 8px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surface-3);
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      transition: all 0.15s; user-select: none; white-space: nowrap;
+    }
+    .q-time-chip:hover { border-color: rgba(139,92,246,0.4); color: var(--cream); }
+    .q-time-chip.selected {
+      border-color: rgba(139,92,246,0.8);
+      background: rgba(139,92,246,0.18);
+      color: #c4b5fd;
+    }
+    .q-time-chip.past { opacity: 0.3; pointer-events: none; }
+    /* TODAY chip - same structure as regular chip, no special teal border */
+    .date-chip.today { border-color: var(--border); background: var(--surface-3); }
   </style>
 <script src="/js/utils.js"></script>
 </head>
@@ -880,6 +896,12 @@
           <!-- Date strip -->
           <div class="date-nav">
             <span style="font-size:13px;font-weight:600" id="qDateRangeLabel"></span>
+            <div style="position:relative;margin-left:auto">
+              <button class="date-nav-btn" id="qCalPickerBtn" onclick="qToggleCalPopup()" aria-label="Pick a date from calendar" style="padding:7px 10px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </button>
+              <div id="qCalPopup" style="display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:200"></div>
+            </div>
           </div>
           <div class="date-strip" id="qDateStrip"></div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:5px">
@@ -887,14 +909,12 @@
             Queues open 7 days in advance
           </div>
 
-          <!-- Time slot grid -->
+          <!-- Time slot chips (multi-select, purple) -->
           <div style="margin-top:20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
-            <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Click a slot to select</div>
+            <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Multiple slots OK</div>
           </div>
-          <div class="q-ag-wrap">
-            <div class="q-ag" id="qTimeGrid" style="display:none"></div>
-          </div>
+          <div id="qTimeChips" style="display:none;flex-wrap:wrap;gap:8px"></div>
           <div id="qTimeEmpty" style="margin-top:4px;color:var(--text-dim);font-size:13px">Select a date first</div>
 
         </div>
@@ -1158,21 +1178,21 @@ function switchPageTab(tab) {
 const qState = {
   sport: 'pickleball',
   date: getTodayPH(),
-  time: null,
+  times: [],
   needed: 1
 };
 
 const Q_TIMES = [
-  '7AM','8AM','9AM','10AM','11AM','12PM',
-  '1PM','2PM','3PM','4PM','5PM','6PM',
-  '7PM','8PM','9PM','10PM'
+  '7 AM','8 AM','9 AM','10 AM','11 AM','12 PM',
+  '1 PM','2 PM','3 PM','4 PM','5 PM','6 PM',
+  '7 PM','8 PM','9 PM','10 PM','11 PM'
 ];
 
 // ── Step progress ─────────────────────────────────────────────
 function qUpdateSteps() {
   const steps = [
     { id: 'qsp1', done: !!qState.sport },
-    { id: 'qsp2', done: !!(qState.date && qState.time) },
+    { id: 'qsp2', done: !!(qState.date && qState.times.length > 0) },
     { id: 'qsp3', done: qState.needed >= 1 },
     { id: 'qsp4', done: false }
   ];
@@ -1191,17 +1211,18 @@ function qUpdateSteps() {
 
 // ── Init ──────────────────────────────────────────────────────
 function qInit() {
-  qState.date = getTodayPH(); // reset to today on tab open
-  qState.time = null;
+  qState.date = getTodayPH();
+  qState.times = [];
   qRenderDates();
-  qRenderTimeGrid();
+  qRenderTimePills();
   qUpdateSummary();
   qUpdateSteps();
-  // Show creator nick
   const nick = localStorage.getItem('apexNick') || localStorage.getItem('apexUser');
   if (nick) {
-    document.getElementById('qCreatorNick').textContent = nick;
-    document.getElementById('qCreatorBox').style.display = '';
+    const nickEl = document.getElementById('qCreatorNick');
+    const boxEl  = document.getElementById('qCreatorBox');
+    if (nickEl) nickEl.textContent = nick;
+    if (boxEl)  boxEl.style.display = '';
   }
 }
 
@@ -1210,13 +1231,13 @@ function qSelectSport(sport, el) {
   qState.sport = sport;
   document.querySelectorAll('#queueContent .sport-option').forEach(e => e.classList.remove('selected'));
   el.classList.add('selected');
-  qState.time = null;
-  qRenderTimeGrid();
+  qState.times = [];
+  qRenderTimePills();
   qUpdateSummary();
   qUpdateSteps();
 }
 
-// ── Date strip (7-day, same as booking) ───────────────────────
+// ── Date strip — identical structure to booking ───────────────
 function qRenderDates() {
   const today = getTodayPH();
   const strip = document.getElementById('qDateStrip');
@@ -1226,31 +1247,32 @@ function qRenderDates() {
   const days = [];
   for (let i = 0; i < 7; i++) {
     const ymd = addDaysPH(today, i);
-    const d = phDateObj(ymd);
-    days.push({ ymd, d });
+    days.push({ ymd, d: phDateObj(ymd) });
   }
 
-  const first = days[0].d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' });
-  const last  = days[days.length - 1].d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' });
-  if (label) label.textContent = `${first} – ${last}`;
+  const fmt = (d) => d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' });
+  if (label) label.textContent = `${fmt(days[0].d)} – ${fmt(days[6].d)}`;
 
   strip.innerHTML = '';
   days.forEach(({ ymd, d }) => {
     const isSelected = ymd === qState.date;
-    const dayNum = parseInt(ymd.split('-')[2]);
-    const dow = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short' }).toUpperCase();
+    const isToday    = ymd === today;
+    const dayNum     = parseInt(ymd.split('-')[2]);
+    const dow        = isToday ? 'TODAY' : d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short' }).toUpperCase();
+    const mon        = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short' });
+    const hasSel     = isSelected && qState.times.length > 0;
+    const dot        = hasSel
+      ? `<div style="width:6px;height:6px;border-radius:50%;background:#a78bfa;margin:2px auto 0;flex-shrink:0"></div>`
+      : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`;
+
     const chip = document.createElement('div');
-    const isToday = ymd === today;
-    chip.className = 'date-chip' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
-    chip.innerHTML = isToday
-      ? `<span class="dc-today-label">TODAY</span><span class="dc-day">${dayNum}</span>`
-      : `<span class="dc-dow">${dow}</span><span class="dc-day">${dayNum}</span>`;
+    chip.className = 'date-chip' + (isSelected ? ' selected' : '');
+    chip.innerHTML = `<div class="dc-dow">${dow}</div><div class="dc-day">${dayNum}</div><div class="dc-mon">${mon}</div>${dot}`;
     chip.onclick = () => {
       qState.date = ymd;
-      qState.time = null;
-      document.querySelectorAll('#qDateStrip .date-chip').forEach(c => c.classList.remove('selected'));
-      chip.classList.add('selected');
-      qRenderTimeGrid();
+      qState.times = [];
+      qRenderDates();
+      qRenderTimePills();
       qUpdateSummary();
       qUpdateSteps();
     };
@@ -1258,68 +1280,127 @@ function qRenderDates() {
   });
 }
 
-// ── Time grid — exact Book tab ag-grid style ──────────────────
-function qRenderTimeGrid() {
-  const grid    = document.getElementById('qTimeGrid');
+// ── Calendar popup for Queue ──────────────────────────────────
+let qCalPopupMonth = null;
+
+function qToggleCalPopup() {
+  const popup = document.getElementById('qCalPopup');
+  if (!popup) return;
+  if (popup.style.display === 'none' || !popup.style.display) {
+    const d = qState.date ? phDateObj(qState.date) : new Date();
+    qCalPopupMonth = { year: d.getFullYear(), month: d.getMonth() };
+    qCalRenderPopup();
+    popup.style.display = 'block';
+    setTimeout(() => {
+      document.addEventListener('click', qCloseCalPopupOutside, { once: true, capture: true });
+    }, 10);
+  } else {
+    popup.style.display = 'none';
+  }
+}
+
+function qCloseCalPopupOutside(e) {
+  const popup = document.getElementById('qCalPopup');
+  const btn   = document.getElementById('qCalPickerBtn');
+  if (popup && !popup.contains(e.target) && btn && !btn.contains(e.target)) {
+    popup.style.display = 'none';
+  } else if (popup && popup.style.display !== 'none') {
+    setTimeout(() => document.addEventListener('click', qCloseCalPopupOutside, { once: true, capture: true }), 10);
+  }
+}
+
+function qCalNavMonth(dir) {
+  qCalPopupMonth.month += dir;
+  if (qCalPopupMonth.month > 11) { qCalPopupMonth.month = 0; qCalPopupMonth.year++; }
+  if (qCalPopupMonth.month < 0)  { qCalPopupMonth.month = 11; qCalPopupMonth.year--; }
+  qCalRenderPopup();
+}
+
+function qCalPickDate(isoStr) {
+  if (!isoStr) return;
+  const todayStr = getTodayPH();
+  const maxStr   = addDaysPH(todayStr, 6);
+  if (isoStr < todayStr || isoStr > maxStr) return;
+  qState.date  = isoStr;
+  qState.times = [];
+  const popup = document.getElementById('qCalPopup');
+  if (popup) popup.style.display = 'none';
+  qRenderDates();
+  qRenderTimePills();
+  qUpdateSummary();
+  qUpdateSteps();
+}
+
+function qCalRenderPopup() {
+  const popup = document.getElementById('qCalPopup');
+  if (!popup || !qCalPopupMonth) return;
+  const { year, month } = qCalPopupMonth;
+  const todayStr   = getTodayPH();
+  const maxStr     = addDaysPH(todayStr, 6);
+  const MONTHS     = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DOWS_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const firstDay   = new Date(year, month, 1).getDay();
+  const daysInMon  = new Date(year, month + 1, 0).getDate();
+
+  let cells = DOWS_SHORT.map(dw => `<div class="cal-dow">${dw}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) cells += `<div></div>`;
+  for (let day = 1; day <= daysInMon; day++) {
+    const iso  = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const past = iso < todayStr, future = iso > maxStr;
+    const cls  = ['cal-day', iso === todayStr ? 'cal-today' : '', iso === qState.date ? 'cal-selected' : '', (past||future) ? 'cal-disabled' : ''].filter(Boolean).join(' ');
+    const clk  = (!past && !future) ? `onclick="qCalPickDate('${iso}')"` : '';
+    cells += `<div class="${cls}" ${clk}>${day}</div>`;
+  }
+
+  popup.innerHTML = `<div class="cal-popup">
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="qCalNavMonth(-1)">&#8249;</button>
+      <span class="cal-month-label">${MONTHS[month]} ${year}</span>
+      <button class="cal-nav-btn" onclick="qCalNavMonth(1)">&#8250;</button>
+    </div>
+    <div class="cal-grid">${cells}</div>
+  </div>`;
+}
+
+// ── Time chips — multi-select, purple ─────────────────────────
+function qRenderTimePills() {
+  const wrap    = document.getElementById('qTimeChips');
   const emptyEl = document.getElementById('qTimeEmpty');
-  if (!grid) return;
+  if (!wrap) return;
 
-  const today   = getTodayPH();
-  const nowH    = getNowHPH();
-  const isToday = qState.date === today;
+  const today  = getTodayPH();
+  const nowH   = getNowHPH();
+  const isTdy  = qState.date === today;
 
-  const slots = Q_TIMES.map(t => ({
-    label: t,
-    past: isToday && parseHourStr(t) <= nowH
-  }));
-
+  const slots = Q_TIMES.map(t => ({ label: t, past: isTdy && parseHourStr(t) <= nowH }));
   const hasFuture = slots.some(s => !s.past);
+
   if (!hasFuture) {
-    grid.style.display = 'none';
-    if (emptyEl) emptyEl.style.display = '';
-    emptyEl.textContent = 'No available times for today. Select a future date.';
+    wrap.style.display = 'none';
+    if (emptyEl) { emptyEl.style.display = ''; emptyEl.textContent = 'No available times today. Select a future date.'; }
     return;
   }
 
   if (emptyEl) emptyEl.style.display = 'none';
-  grid.style.display = 'block';
-  grid.innerHTML = '';
+  wrap.style.display = 'flex';
+  wrap.innerHTML = '';
 
-  // Header row
-  const header = document.createElement('div');
-  header.className = 'q-ag-header';
-  header.innerHTML = '<div class="q-ag-htime">TIME</div><div class="q-ag-hslot">SELECT</div>';
-  grid.appendChild(header);
-
-  // Data rows — one per time slot
   slots.forEach(({ label, past }) => {
-    const row = document.createElement('div');
-    row.className = 'q-ag-row' + (past ? ' past' : '');
-
-    const timeCol = document.createElement('div');
-    timeCol.className = 'q-ag-time';
-    timeCol.textContent = label;
-
-    const cellCol = document.createElement('div');
-    cellCol.className = 'q-ag-cell' + (label === qState.time ? ' selected' : '');
-
-    const inner = document.createElement('div');
-    inner.className = 'q-ag-cell-inner';
-    cellCol.appendChild(inner);
-
+    const chip = document.createElement('div');
+    chip.className = 'q-time-chip' + (past ? ' past' : '') + (qState.times.includes(label) ? ' selected' : '');
+    chip.textContent = label;
     if (!past) {
-      cellCol.onclick = () => {
-        qState.time = label;
-        document.querySelectorAll('#qTimeGrid .q-ag-cell').forEach(c => c.classList.remove('selected'));
-        cellCol.classList.add('selected');
+      chip.onclick = () => {
+        const idx = qState.times.indexOf(label);
+        if (idx === -1) qState.times.push(label);
+        else            qState.times.splice(idx, 1);
+        chip.classList.toggle('selected', qState.times.includes(label));
+        qRenderDates(); // refresh dot indicators
         qUpdateSummary();
         qUpdateSteps();
       };
     }
-
-    row.appendChild(timeCol);
-    row.appendChild(cellCol);
-    grid.appendChild(row);
+    wrap.appendChild(chip);
   });
 }
 
@@ -1346,14 +1427,15 @@ function qUpdateSummary() {
   const sel = document.getElementById('qNeedSelect');
   if (sel) qState.needed = parseInt(sel.value) || 1;
 
-  const { sport, date, time, needed } = qState;
-  if (!time) {
+  const { sport, date, times, needed } = qState;
+  if (!times || times.length === 0) {
     body.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px 0">Select a date and time to preview your queue</p>';
     return;
   }
 
   const d = phDateObj(date);
-  const dateLabel = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
+  const dateLabel  = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
+  const timeLabel  = times.join(' · ');
   const sportLabel = sport === 'pickleball' ? 'Pickleball' : 'Badminton';
   const sportIcon  = sport === 'pickleball'
     ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><circle cx="12" cy="8" r="6"/><line x1="12" y1="14" x2="12" y2="22"/><line x1="9" y1="19" x2="15" y2="19"/></svg>'
@@ -1373,7 +1455,7 @@ function qUpdateSummary() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <div>
           <div style="font-size:11px;color:var(--cream-muted);text-transform:uppercase;letter-spacing:0.06em">Date &amp; Time</div>
-          <div style="font-size:14px;font-weight:700;color:var(--cream)">${dateLabel} · ${time}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--cream)">${dateLabel} · ${timeLabel}</div>
         </div>
       </div>
       <div style="height:1px;background:var(--stone-line)"></div>
@@ -1398,7 +1480,7 @@ function openQueue() {
     window.location.href = 'signin.html';
     return;
   }
-  if (!qState.time) {
+  if (!qState.times || qState.times.length === 0) {
     alert('Please select a date and time for your queue.');
     return;
   }
@@ -1408,7 +1490,8 @@ function openQueue() {
     id,
     sport: qState.sport,
     date: qState.date,
-    time: qState.time,
+    time: qState.times[0],
+    times: qState.times,
     creatorId:   userId,
     creatorName: user,
     creatorNick: nick,
@@ -1427,7 +1510,8 @@ function openQueue() {
   const nowH  = getNowHPH();
   queues = queues.filter(q => {
     if (q.date < today) return false;
-    if (q.date === today && parseHourStr(q.time) <= nowH) return false;
+    const firstTime = (q.times && q.times[0]) || q.time;
+    if (q.date === today && parseHourStr(firstTime) <= nowH) return false;
     return true;
   });
   queues.unshift(queue);
@@ -1458,7 +1542,7 @@ function showQueueSuccess(queue) {
       <div class="booking-code" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.35);color:#93c5fd">${queue.id}</div>
       <div style="background:var(--stone);border-radius:12px;padding:16px;margin:16px 0;text-align:left;font-size:13px;display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-muted)">Sport</span><span style="font-weight:600;color:var(--cream)">${sportLabel}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-muted)">Date &amp; Time</span><span style="font-weight:600;color:var(--cream)">${dateLabel} · ${queue.time}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-muted)">Date &amp; Time</span><span style="font-weight:600;color:var(--cream)">${dateLabel} · ${(queue.times||[queue.time]).join(' · ')}</span></div>
         <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-muted)">Players Needed</span><span style="font-weight:600;color:var(--cream)">${queue.needed} more</span></div>
       </div>
       <div class="modal-actions">
@@ -1470,11 +1554,14 @@ function showQueueSuccess(queue) {
 }
 
 // ── Expose to window so onclick attributes work after Vite bundles ──
-window.switchPageTab = switchPageTab;
-window.qSelectSport  = qSelectSport;
-window.qSetNeed      = qSetNeed;
-window.qNoteUpdate   = qNoteUpdate;
-window.openQueue     = openQueue;
+window.switchPageTab   = switchPageTab;
+window.qSelectSport    = qSelectSport;
+window.qSetNeed        = qSetNeed;
+window.qNoteUpdate     = qNoteUpdate;
+window.openQueue       = openQueue;
+window.qToggleCalPopup = qToggleCalPopup;
+window.qCalNavMonth    = qCalNavMonth;
+window.qCalPickDate    = qCalPickDate;
 
 // Show logged-in user in nav
 (function() {

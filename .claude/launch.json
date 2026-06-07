@@ -4,7 +4,7 @@
     {
       "name": "apex-courts",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8099"],
+      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "/Users/kangwuhyun/Desktop/apex-courts"],
       "port": 8099
     }
   ]

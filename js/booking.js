@@ -93,7 +93,7 @@ const COURT_COUNT = { pickleball: 4, badminton: 4, drill: 1 };
 const HOURS_1HR = [
   '7 AM','8 AM','9 AM','10 AM','11 AM','12 PM',
   '1 PM','2 PM','3 PM','4 PM','5 PM','6 PM',
-  '7 PM','8 PM','9 PM','10 PM'
+  '7 PM','8 PM','9 PM','10 PM','11 PM'
 ];
 const HOURS_30MIN = [
   '8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM',
@@ -189,7 +189,7 @@ function renderDates() {
       ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin:2px auto 0;flex-shrink:0"></div>`
       : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`;
     chip.innerHTML = isChipToday
-      ? `<div class="dc-today-label">TODAY</div><div class="dc-day">${dayNum}</div>${dotEl}`
+      ? `<div class="dc-dow">TODAY</div><div class="dc-day">${dayNum}</div><div class="dc-mon">${formatDate(d).split(' ')[0]}</div>${dotEl}`
       : `<div class="dc-dow">${formatDow(d)}</div><div class="dc-day">${dayNum}</div><div class="dc-mon">${formatDate(d).split(' ')[0]}</div>${dotEl}`;
 
     chip.addEventListener('click', () => {
