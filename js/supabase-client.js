@@ -182,12 +182,28 @@ async function createBooking({ courtId, date, startTime, endTime, durationMins, 
 
   const { data, error } = await db.from('bookings').insert(payload).select().single();
   if (error) {
-    // court_id NOT NULL 에러면 court_id=1 (기본값)로 재시도
-    if (error.message?.includes('court_id') || error.code === '23502') {
-      payload.court_id = courtNum || 1;
-      const { data: data2, error: error2 } = await db.from('bookings').insert(payload).select().single();
-      if (error2) throw error2;
-      return data2;
+    // court_id NOT NULL 에러: sport + court_number로 올바른 court_id를 조회해서 재시도
+    // ⚠️  courtNum(1~4 per-sport 번호)을 court_id로 쓰면 PB/BD 코트가 충돌하므로 금지
+    if ((error.message?.includes('court_id') || error.code === '23502') && sport) {
+      try {
+        const { data: courtRows } = await db
+          .from('courts')
+          .select('id')
+          .eq('court_type', sport)
+          .eq('court_number', courtNum)
+          .single();
+        if (courtRows?.id) {
+          payload.court_id = courtRows.id;
+          const { data: data2, error: error2 } = await db.from('bookings').insert(payload).select().single();
+          if (error2) throw error2;
+          return data2;
+        }
+      } catch (_) {}
+      // 코트 조회도 실패하면 court_id 없이 재시도 (nullable인 경우)
+      delete payload.court_id;
+      const { data: data3, error: error3 } = await db.from('bookings').insert(payload).select().single();
+      if (error3) throw error3;
+      return data3;
     }
     throw error;
   }

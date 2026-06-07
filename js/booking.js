@@ -326,9 +326,11 @@ async function checkConflictsBeforeBook() {
     const slotH   = parseSlotHours(s.label);
     const slotEnd = slotH + step;
 
+    const cSport2 = (state.sport || '').toLowerCase();
     const conflict = localBookings.some(b => {
       if (b.status === 'cancelled') return false;
-      if (b.sport !== state.sport) return false;
+      const bSport2 = (b.sport || '').toLowerCase();
+      if (!bSport2 || bSport2 !== cSport2) return false;
       return (b.slots || []).some(ls => {
         if (ls.date !== dateStr || Number(ls.court) !== s.court) return false;
         const bH = parseSlotHours(ls.time);
@@ -384,11 +386,16 @@ function getSlotStatus(slotIdx, courtNum) {
 
   // Read confirmed bookings from localStorage
   const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+  const cSport = (state.sport || '').toLowerCase();
   const taken = bookings.some(b => {
     if (b.status === 'cancelled') return false;
-    if (b.sport !== state.sport) return false;
+    // sport가 없는(undefined/null) 레거시 항목은 다른 스포츠로 취급해 무시
+    const bSport = (b.sport || '').toLowerCase();
+    if (!bSport || bSport !== cSport) return false;
     return (b.slots || []).some(s => {
       if (s.date !== dateStr) return false;
+      // 슬롯에 sport 필드가 있으면 이중 검증 (없으면 부킹 레벨 검증으로 충분)
+      if (s.sport && s.sport.toLowerCase() !== cSport) return false;
       if (Number(s.court) !== courtNum) return false;
       // Parse the booked slot time
       const bH = parseSlotHours(s.time);
@@ -820,6 +827,7 @@ async function finalizePayment() {
     userId: localStorage.getItem('apexUserId') || null,
     slots: state.selectedSlots.map(s => ({
       date: getPhDate(s.date), court: s.court, time: s.label,
+      sport: state.sport,  // 슬롯별 sport 이중 저장 — PB/BD 혼동 방지
     })),
     duration: totalDuration(),
     extras: Array.from(state.extras),
@@ -940,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
             date:  b.booking_date,                    // 'YYYY-MM-DD'
             court: Number(b.court_number),
             time:  b.start_time,                      // '08:00:00' — parseSlotHours handles 24h
+            sport: b.sport === 'drillzone' ? 'drill' : (b.sport || ''), // 슬롯별 sport 이중 저장
           }],
         }));
 
