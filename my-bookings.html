@@ -402,54 +402,51 @@ function onNickInput() {
   const val = document.getElementById('nickInput').value.trim();
   const fb  = document.getElementById('nickFeedback');
   const btn = document.getElementById('nickSaveBtn');
-  btn.disabled = true;
 
+  // ── Format validation first ─────────────────────────────────
   if (val.length < 2) {
     fb.textContent = val.length ? 'Minimum 2 characters required' : '';
-    fb.style.color = '#f87171'; return;
+    fb.style.color = '#f87171';
+    btn.disabled = true; return;
   }
   if (val.length > 16) {
     fb.textContent = 'Maximum 16 characters allowed';
-    fb.style.color = '#f87171'; return;
+    fb.style.color = '#f87171';
+    btn.disabled = true; return;
   }
   if (!/^[a-zA-Z0-9가-힣_\-]+$/.test(val)) {
     fb.textContent = 'Only letters, numbers, _, and - are allowed';
-    fb.style.color = '#f87171'; return;
+    fb.style.color = '#f87171';
+    btn.disabled = true; return;
   }
-  fb.textContent = 'Checking…'; fb.style.color = 'var(--cream-muted)';
+
+  // Format OK — enable Save immediately, then async duplicate check
+  btn.disabled = false;
+  fb.textContent = 'Checking availability…'; fb.style.color = 'var(--cream-muted)';
 
   _nickCheckTimer = setTimeout(async () => {
-    // Skip DB check if unchanged
+    if (val !== document.getElementById('nickInput').value.trim()) return; // stale
     if (val === localStorage.getItem('apexNick')) {
       fb.textContent = 'This is your current nickname';
       fb.style.color = 'var(--cream-muted)'; return;
     }
     try {
       const sb = window.apexDB;
-      if (!sb) throw new Error('no db');
+      if (!sb) { fb.textContent = ''; return; }
       const { data, error } = await sb.from('profiles').select('id').eq('nickname', val).maybeSingle();
       if (error) throw error;
       if (data) {
         fb.textContent = 'Nickname already taken ❌';
         fb.style.color = '#f87171';
+        btn.disabled = true;
       } else {
         fb.textContent = 'Nickname available ✓';
         fb.style.color = '#4ade80';
-        btn.disabled = false;
       }
-    } catch(err) {
-      // Column may not exist yet — tell user to run SQL setup
-      const isColMissing = err?.message?.includes('column') || err?.message?.includes('does not exist');
-      if (isColMissing) {
-        fb.textContent = '⚠ Nickname column missing — please run the SQL setup first.';
-        fb.style.color = '#f87171';
-      } else {
-        fb.textContent = 'Check failed — you can still try saving';
-        fb.style.color = 'var(--gold)';
-        btn.disabled = false;
-      }
+    } catch(_) {
+      fb.textContent = ''; // silent — save will catch duplicates via unique index
     }
-  }, 500);
+  }, 600);
 }
 
 async function saveNickname() {
