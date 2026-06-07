@@ -40,6 +40,17 @@ BEGIN
 END
 $$;
 
+-- ★ 테스트 데이터 정리 (개발 중 쌓인 더미 예약 삭제)
+-- Supabase Dashboard > SQL Editor 에서 실행하세요
+-- 주의: 실제 회원 예약도 지워지므로 개발 환경에서만 사용
+-- DELETE FROM bookings;   ← 전체 삭제 (주의)
+
+-- 특정 날짜 이전 예약만 삭제하려면:
+-- DELETE FROM bookings WHERE booking_date < '2026-06-07';
+
+-- 또는 court_number가 없는 잘못된 예약만 삭제:
+-- DELETE FROM bookings WHERE court_number IS NULL;
+
 -- 4. Public read for availability check (no auth required)
 DO $$
 BEGIN
