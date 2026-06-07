@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Open Play — Smash Studio</title>
+  <title>Open Play &amp; Queue — Smash Studio</title>
   <meta name="description" content="Join an Smash Studio Open Play session. Play with new people, meet the community, and enjoy affordable drop-in games." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -69,6 +69,7 @@
     }
     .op-tab:hover { color: var(--cream); }
     .op-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .op-tab.active.queue-tab { color: var(--gold); border-bottom-color: var(--gold); }
     .op-tab-count {
       padding: 2px 7px; border-radius: 100px;
       background: rgba(0,194,168,0.12); color: var(--gold);
@@ -239,10 +240,10 @@
     <div>
       <div class="op-eyebrow">
         <div class="op-eyebrow-line"></div>
-        <span class="op-eyebrow-text">Community Sessions</span>
+        <span class="op-eyebrow-text">Open Play &amp; Queue</span>
       </div>
-      <h1 class="op-title">OPEN PLAY</h1>
-      <p class="op-sub">Show up, meet players, and get on the court. No partner needed — just register for a session and we'll handle the rest.</p>
+      <h1 class="op-title">OPEN PLAY<br><span style="color:var(--gold);font-size:0.75em">& QUEUE</span></h1>
+      <p class="op-sub">Drop in for Open Play sessions, or browse Queue boards to find playing partners. No partner needed — just register and show up.</p>
     </div>
     <div class="op-hero-right">
       <button class="admin-create-btn" id="adminCreateBtn" onclick="openCreateModal()" style="display:none">
@@ -309,6 +310,11 @@
       Closed
       <span class="op-tab-count" id="closedCount">0</span>
     </button>
+    <button class="op-tab" role="tab" aria-selected="false" onclick="switchTab('queue',this)" style="border-bottom-color:transparent" id="queueTabBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Queue
+      <span class="op-tab-count" id="queueCount" style="background:rgba(212,175,55,0.15);color:var(--gold)">0</span>
+    </button>
   </div>
 
   <!-- Content + Sidebar -->
@@ -332,6 +338,72 @@
           <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
           <h3>No closed sessions yet</h3>
           <p>Closed and past sessions will appear here for up to 30 days.</p>
+        </div>
+      </div>
+
+      <!-- Queue tab -->
+      <div class="tab-panel" id="panel-queue">
+        <style>
+          .q-card {
+            background: var(--stone); border: 1px solid var(--stone-line);
+            border-radius: 16px; padding: 20px 22px;
+            display: flex; gap: 18px; align-items: center;
+            transition: border-color 0.2s, background 0.2s;
+          }
+          .q-card:hover { border-color: rgba(212,175,55,0.25); background: rgba(212,175,55,0.02); }
+          .q-card.recruiting { border-left: 3px solid rgba(212,175,55,0.55); }
+          .q-card.full-card { border-left: 3px solid rgba(248,113,113,0.45); opacity:0.75; }
+          .q-date {
+            width: 52px; flex-shrink: 0; text-align: center;
+            background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2);
+            border-radius: 10px; padding: 7px 4px;
+          }
+          .q-date-mon { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+          .q-date-day { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; color: var(--cream); }
+          .q-info { flex: 1; min-width: 0; }
+          .q-title { font-size: 15px; font-weight: 800; color: var(--cream); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+          .q-badge { padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; }
+          .q-badge.open  { background: rgba(212,175,55,0.12); color: var(--gold); border: 1px solid rgba(212,175,55,0.25); }
+          .q-badge.full  { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+          .q-meta { font-size: 13px; color: var(--cream-muted); line-height: 1.7; }
+          .q-meta strong { color: var(--cream); }
+          .q-right { text-align: right; flex-shrink: 0; }
+          .q-slots-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+          .q-slots-num.green { color: #4ade80; }
+          .q-slots-num.amber { color: #fb923c; }
+          .q-slots-num.red   { color: #f87171; }
+          .q-slots-label { font-size: 11px; color: var(--cream-muted); margin-top: 2px; }
+          .q-join-btn {
+            margin-top: 8px; display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+            background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3);
+            color: var(--gold); text-decoration: none; cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+          }
+          .q-join-btn:hover { background: rgba(212,175,55,0.18); border-color: rgba(212,175,55,0.5); }
+          .q-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cream-muted); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--stone-line); }
+        </style>
+
+        <!-- Recruiting queues -->
+        <div id="qOpenSection">
+          <p class="q-section-label">Recruiting Players</p>
+          <div class="sessions-list" id="qOpenList"></div>
+          <div id="qOpenEmpty" class="empty-state" style="display:none">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.4"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
+            <h3>No open queues</h3>
+            <p>No one is recruiting yet. Book a court and open a queue to get players!</p>
+            <a href="book.html" class="btn btn-primary" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px">
+              Book &amp; Open a Queue
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Full / closed queues -->
+        <div id="qClosedSection" style="margin-top:32px">
+          <p class="q-section-label">Full / Closed Queues</p>
+          <div class="sessions-list" id="qClosedList"></div>
+          <div id="qClosedEmpty" style="font-size:13px;color:var(--cream-muted);opacity:0.6;padding:12px 0">No closed queues to show.</div>
         </div>
       </div>
     </div>
@@ -965,6 +1037,125 @@ function showToast(msg, isError) {
     });
   }
 })();
+
+/* ── Queue tab rendering ── */
+function renderQueuePanel() {
+  const today  = typeof getTodayPH === 'function' ? getTodayPH() : new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Manila'});
+  const nowH   = typeof getNowHPH  === 'function' ? getNowHPH()  : new Date().getHours();
+
+  let all = [];
+  try { all = JSON.parse(localStorage.getItem('apexQueues') || '[]'); } catch(e) {}
+
+  const sportLabel = s => s === 'pickleball' ? 'Pickleball' : s === 'badminton' ? 'Badminton' : 'Mixed';
+  const sportColor = s => s === 'pickleball' ? '#00C2A8' : s === 'badminton' ? '#60a5fa' : '#a78bfa';
+
+  function parseH(t) {
+    if (!t) return 0;
+    if (t.includes('AM') || t.includes('PM')) {
+      const [time, mer] = t.split(' ');
+      let [h] = time.split(':').map(Number);
+      if (mer === 'PM' && h !== 12) h += 12;
+      if (mer === 'AM' && h === 12) h = 0;
+      return h;
+    }
+    return parseInt(t.split(':')[0]) || 0;
+  }
+
+  function makeCard(q, isFull) {
+    const d = (typeof phDateObj === 'function') ? phDateObj(q.date) : new Date(q.date + 'T12:00:00');
+    const mon = d.toLocaleDateString('en-US', {timeZone:'Asia/Manila', month:'short'}).toUpperCase();
+    const day = parseInt(q.date.split('-')[2]);
+    const isToday = q.date === today;
+    const joined = (q.participants || []).length;
+    const needed = q.needed || 4;
+    const remaining = needed - joined;
+    const col = sportColor(q.sport);
+    const nick = q.creatorNick || q.creatorName || 'Anonymous';
+    const slotsColor = remaining === 0 ? 'red' : remaining <= 2 ? 'amber' : 'green';
+
+    return `
+    <div class="q-card ${isFull ? 'full-card' : 'recruiting'}">
+      <div class="q-date">
+        <div class="q-date-mon">${isToday ? 'TODAY' : mon}</div>
+        <div class="q-date-day">${day}</div>
+      </div>
+      <div class="q-info">
+        <div class="q-title">
+          ${sportLabel(q.sport)} Queue
+          <span class="q-badge ${isFull ? 'full' : 'open'}">${isFull ? 'FULL' : 'RECRUITING'}</span>
+        </div>
+        <div class="q-meta">
+          <span style="color:${col}">● ${q.time || ''}</span>
+          &nbsp;·&nbsp; Host: <strong>${nick}</strong>
+          &nbsp;·&nbsp; ${joined}/${needed} joined
+          ${q.note ? `<br><span style="opacity:0.6">${q.note.substring(0,50)}${q.note.length>50?'…':''}</span>` : ''}
+        </div>
+      </div>
+      <div class="q-right">
+        <div class="q-slots-num ${isFull ? 'red' : slotsColor}">${isFull ? 'FULL' : remaining}</div>
+        <div class="q-slots-label">${isFull ? 'No spots' : 'spot' + (remaining !== 1 ? 's' : '') + ' left'}</div>
+        ${!isFull ? `<a href="book.html#queue" class="q-join-btn">Join Queue →</a>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Split: open (not expired, not full) vs full/closed
+  const openQ = all.filter(q => {
+    if (q.status !== 'open') return false;
+    if (q.date < today) return false;
+    if (q.date === today && parseH(q.time) <= nowH) return false;
+    const joined = (q.participants || []).length;
+    return joined < (q.needed || 4);
+  });
+
+  const fullQ = all.filter(q => {
+    if (q.date < today) return true; // past
+    if (q.date === today && parseH(q.time) <= nowH) return true; // today expired
+    if (q.status !== 'open') return true;
+    const joined = (q.participants || []).length;
+    return joined >= (q.needed || 4); // full
+  }).slice(0, 6);
+
+  // Update badge count
+  const badge = document.getElementById('queueCount');
+  if (badge) badge.textContent = openQ.length;
+
+  // Render open
+  const openList  = document.getElementById('qOpenList');
+  const openEmpty = document.getElementById('qOpenEmpty');
+  if (openList) {
+    if (openQ.length) {
+      openList.innerHTML = openQ.map(q => makeCard(q, false)).join('');
+      if (openEmpty) openEmpty.style.display = 'none';
+    } else {
+      openList.innerHTML = '';
+      if (openEmpty) openEmpty.style.display = '';
+    }
+  }
+
+  // Render full/closed
+  const closedList  = document.getElementById('qClosedList');
+  const closedEmpty = document.getElementById('qClosedEmpty');
+  if (closedList) {
+    if (fullQ.length) {
+      closedList.innerHTML = fullQ.map(q => makeCard(q, true)).join('');
+      if (closedEmpty) closedEmpty.style.display = 'none';
+    } else {
+      closedList.innerHTML = '';
+      if (closedEmpty) closedEmpty.style.display = '';
+    }
+  }
+}
+
+// Init queue count badge on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderQueuePanel, 100);
+  // Check URL hash — if #queue, switch to queue tab
+  if (location.hash === '#queue') {
+    const btn = document.getElementById('queueTabBtn');
+    if (btn) switchTab('queue', btn);
+  }
+});
 </script>
 
 
