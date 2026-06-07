@@ -86,6 +86,18 @@ function pgTimeToLabel(pg) {
   return h + suffix;
 }
 
+// ── Convert any time string → TIMES/DZ_TIMES key ──────────────
+// Handles:  '08:00:00' / '13:00:00' (DB 24h)
+//           '8 AM' / '1 PM' / '8:30 AM' (booking.js labels with space)
+function slotTimeToKey(t) {
+  if (!t) return '';
+  // PostgreSQL 24h: '08:00:00', '13:30:00'
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return pgTimeToLabel(t);
+  // booking.js label with space: '8 AM', '1 PM', '8:30 AM'
+  // Strip the space so it matches TIMES keys: '8AM', '1PM', '8:30AM'
+  return t.replace(' ', '');
+}
+
 // ── Build slot map from localStorage bookings ─────────────────
 function buildSlotMapFromLocal(sport, timeArr) {
   const today     = new Date().toISOString().split('T')[0];
@@ -104,9 +116,7 @@ function buildSlotMapFromLocal(sport, timeArr) {
       if (s.date !== today) return;
       const c = Number(s.court);
       if (!map[c]) map[c] = {};
-      // s.time may be '8 AM' (booking.js label) or '08:00:00' (DB format)
-      // pgTimeToLabel handles both; label format is '8AM' (no space) matching TIMES/DZ_TIMES
-      const label = pgTimeToLabel(s.time) || s.time;
+      const label = slotTimeToKey(s.time);
       if (timeArr.includes(label)) {
         map[c][label] = (b.id && myUserId && b.userId === myUserId) ? 'mine' : 'booked';
       }
@@ -119,7 +129,7 @@ function buildSlotMapFromLocal(sport, timeArr) {
     if (s.sport !== sport) return;
     const c = Number(s.court || 1);
     if (!map[c]) map[c] = {};
-    const label = pgTimeToLabel(s.time) || s.time;
+    const label = slotTimeToKey(s.time);
     if (timeArr.includes(label)) {
       if (!map[c][label]) map[c][label] = 'open-session';
     }
@@ -134,7 +144,7 @@ function buildSlotMap(bookings, myUserId, timeArr) {
   bookings.forEach(b => {
     const cNum = b.court_number;
     if (!map[cNum]) map[cNum] = {};
-    const label = pgTimeToLabel(b.start_time);
+    const label = slotTimeToKey(b.start_time);
     if (timeArr.includes(label)) {
       map[cNum][label] = (b.user_id && b.user_id === myUserId) ? 'mine' : 'booked';
     }
@@ -159,25 +169,34 @@ async function renderAvailability(sport) {
   let myUserId = localStorage.getItem('apexUserId');
   let isLive = true;
 
-  // ── 2) Supabase에서 추가 데이터 머지 (가능하면) ────────────
-  if (window.ApexCourts) {
+  // ── 2) Supabase에서 추가 데이터 머지 (bookings 테이블 직접 쿼리) ──
+  if (window.apexDB) {
     try {
-      const today   = new Date().toISOString().split('T')[0];
-      // DB stores drillzone as 'drillzone'; homepage key is also 'drillzone'
-      const dbSport = sport;
-      const [dbBookings, user] = await Promise.all([
-        ApexCourts.getAvailability(dbSport, today),
-        ApexCourts.getCurrentUser().catch(() => null),
-      ]);
-      if (user?.id) myUserId = user.id;
-      const dbMap = buildSlotMap(dbBookings, myUserId, timeArr);
-      // Merge: Supabase로 덮어쓰되 local 데이터 유지
-      for (const c in dbMap) {
-        if (!slotMap[c]) slotMap[c] = {};
-        Object.assign(slotMap[c], dbMap[c]);
+      const today = new Date().toISOString().split('T')[0];
+      // Query bookings table directly — no v_court_availability view dependency
+      // drillzone: DB stores as 'drillzone'; pickleball/badminton as-is
+      const { data: dbRows, error } = await window.apexDB
+        .from('bookings')
+        .select('court_number,start_time,end_time,sport,status,user_id')
+        .eq('booking_date', today)
+        .eq('sport', sport)          // 'pickleball' | 'badminton' | 'drillzone'
+        .neq('status', 'cancelled');
+
+      if (!error && dbRows) {
+        // Also try to get current user ID for 'mine' highlighting
+        try {
+          const { data: { user } } = await window.apexDB.auth.getUser();
+          if (user?.id) myUserId = user.id;
+        } catch(_) {}
+
+        const dbMap = buildSlotMap(dbRows, myUserId, timeArr);
+        for (const c in dbMap) {
+          if (!slotMap[c]) slotMap[c] = {};
+          Object.assign(slotMap[c], dbMap[c]);
+        }
       }
     } catch (e) {
-      console.warn('[Availability] Supabase unavailable, using localStorage only');
+      console.warn('[Availability] Supabase query failed, using localStorage only');
     }
   }
 
@@ -291,35 +310,82 @@ renderAvailability('pickleball');
     return m ? m[1] : 'pickleball';
   }
 
-  // ── Court canvas: map Supabase bookings → animation active states ──
-  // courtNum: 1-4 for PB/BD, 1 for DZ  →  id: P1-P4, B1-B4, DZ
+  // ── Court canvas: map bookings → animation active states ──
+  // Queries bookings table directly (no dependency on v_court_availability view).
+  // Falls back to localStorage if Supabase is unavailable.
   async function syncCanvasActivity() {
     if (!window.updateCourtActivity) return;
     const nowStr = new Date().toTimeString().slice(0,5); // "HH:MM"
-    try {
-      const [pb, bd, dz] = await Promise.all([
-        ApexCourts.getAvailability('pickleball', today),
-        ApexCourts.getAvailability('badminton',  today),
-        ApexCourts.getAvailability('drillzone',  today),
-      ]);
 
-      // A court is "active" if it has a booking that covers right now
-      function isNowBooked(rows, courtNum) {
-        return rows.some(r =>
-          r.court_number === courtNum &&
-          r.booking_id &&
-          r.booking_status !== 'cancelled' &&
-          r.start_time <= nowStr &&
-          (r.end_time || '23:59') > nowStr
-        );
+    // Helper: is this court booked right now?
+    function isActiveNow(rows, courtNum, sport) {
+      return rows.some(r =>
+        Number(r.court_number) === courtNum &&
+        r.sport === sport &&
+        r.status !== 'cancelled' &&
+        r.start_time <= nowStr + ':00' &&
+        (r.end_time || '23:59:00') > nowStr
+      );
+    }
+
+    // ── Try Supabase first ──────────────────────────────────────
+    try {
+      const { data, error } = await window.apexDB
+        .from('bookings')
+        .select('court_number,sport,status,start_time,end_time')
+        .eq('booking_date', today)
+        .neq('status', 'cancelled');
+
+      if (!error && data) {
+        window.updateCourtActivity({
+          P1: isActiveNow(data,1,'pickleball'), P2: isActiveNow(data,2,'pickleball'),
+          P3: isActiveNow(data,3,'pickleball'), P4: isActiveNow(data,4,'pickleball'),
+          B1: isActiveNow(data,1,'badminton'),  B2: isActiveNow(data,2,'badminton'),
+          B3: isActiveNow(data,3,'badminton'),  B4: isActiveNow(data,4,'badminton'),
+          DZ: isActiveNow(data,1,'drillzone') || isActiveNow(data,1,'drill'),
+        });
+        return;
+      }
+    } catch(_) { /* fall through to localStorage */ }
+
+    // ── Fallback: derive from localStorage ─────────────────────
+    try {
+      const localBookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+      const nowH = parseFloat(nowStr.split(':')[0]) + parseFloat(nowStr.split(':')[1]) / 60;
+
+      function isLocallyActive(sport, courtNum) {
+        return localBookings.some(b => {
+          if (b.status === 'cancelled') return false;
+          const bSports = sport === 'drillzone' ? ['drillzone','drill'] : [sport];
+          if (!bSports.includes(b.sport)) return false;
+          return (b.slots || []).some(s => {
+            if (s.date !== today) return false;
+            if (Number(s.court) !== courtNum) return false;
+            const startH = parseSlotHoursSimple(s.time);
+            const step   = b.sport === 'drill' ? 0.5 : 1;
+            return nowH >= startH && nowH < startH + step;
+          });
+        });
+      }
+
+      // Simple hour parser for canvas (no booking.js dependency)
+      function parseSlotHoursSimple(t) {
+        if (!t) return 0;
+        const parts = t.replace(/[AP]M/g,'').trim().split(':');
+        let h = parseInt(parts[0]) || 0;
+        const m = parseInt(parts[1]) || 0;
+        if (/PM/i.test(t) && h !== 12) h += 12;
+        if (/AM/i.test(t) && h === 12) h = 0;
+        if (!/[AP]M/i.test(t) && h < 6) h += 12; // DB 24h: just use as-is
+        return h + m / 60;
       }
 
       window.updateCourtActivity({
-        P1: isNowBooked(pb, 1), P2: isNowBooked(pb, 2),
-        P3: isNowBooked(pb, 3), P4: isNowBooked(pb, 4),
-        B1: isNowBooked(bd, 1), B2: isNowBooked(bd, 2),
-        B3: isNowBooked(bd, 3), B4: isNowBooked(bd, 4),
-        DZ: isNowBooked(dz, 1),
+        P1: isLocallyActive('pickleball',1), P2: isLocallyActive('pickleball',2),
+        P3: isLocallyActive('pickleball',3), P4: isLocallyActive('pickleball',4),
+        B1: isLocallyActive('badminton',1),  B2: isLocallyActive('badminton',2),
+        B3: isLocallyActive('badminton',3),  B4: isLocallyActive('badminton',4),
+        DZ: isLocallyActive('drillzone',1),
       });
     } catch(e) {
       console.warn('[Canvas] Activity sync failed:', e.message);
