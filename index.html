@@ -562,14 +562,14 @@ window._setProgress = function(){};
       display: flex; flex-direction: column; gap: 18px;
     }
     .cp-panel-op { background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.18); }
-    .cp-panel-q  { background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.18); }
+    .cp-panel-q  { background:rgba(139,92,246,0.04);border:1px solid rgba(139,92,246,0.18); }
 
     .cp-panel-badge {
       display:inline-flex;align-items:center;gap:6px;
       padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;width:fit-content;
     }
     .cp-panel-badge-op { background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25); }
-    .cp-panel-badge-q  { background:rgba(212,175,55,0.1);color:var(--gold);border:1px solid rgba(212,175,55,0.25); }
+    .cp-panel-badge-q  { background:rgba(139,92,246,0.12);color:#a78bfa;border:1px solid rgba(139,92,246,0.25); }
 
     .cp-panel-title { font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,2.8vw,34px);line-height:1.05;letter-spacing:0.02em;margin-top:4px; }
     .cp-panel-sub { font-size:13px;color:var(--cream-muted);line-height:1.65; }
@@ -577,7 +577,7 @@ window._setProgress = function(){};
     .cp-feats { display:flex;flex-direction:column;gap:8px; }
     .cp-feat { display:flex;align-items:center;gap:10px;font-size:13px;color:var(--cream-muted); }
     .cp-feat-dot-op { width:5px;height:5px;border-radius:50%;background:#60a5fa;flex-shrink:0; }
-    .cp-feat-dot-q  { width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0; }
+    .cp-feat-dot-q  { width:5px;height:5px;border-radius:50%;background:#a78bfa;flex-shrink:0; }
 
     /* Session cards */
     .op-sessions-list { display:flex;flex-direction:column;gap:9px; }
@@ -605,7 +605,7 @@ window._setProgress = function(){};
 
     /* Skeletons */
     .op-skel { height:78px;border-radius:13px;background:linear-gradient(90deg,rgba(59,130,246,0.04) 25%,rgba(59,130,246,0.09) 50%,rgba(59,130,246,0.04) 75%);background-size:200% 100%;animation:opshim 1.5s infinite; }
-    .q-skel  { height:78px;border-radius:13px;background:linear-gradient(90deg,rgba(212,175,55,0.04) 25%,rgba(212,175,55,0.09) 50%,rgba(212,175,55,0.04) 75%);background-size:200% 100%;animation:opshim 1.5s infinite; }
+    .q-skel  { height:78px;border-radius:13px;background:linear-gradient(90deg,rgba(139,92,246,0.04) 25%,rgba(139,92,246,0.09) 50%,rgba(139,92,246,0.04) 75%);background-size:200% 100%;animation:opshim 1.5s infinite; }
     @keyframes opshim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
     .op-sport-icon-pk { color:#00C2A8; }
@@ -618,19 +618,19 @@ window._setProgress = function(){};
     }
     .cp-panel-cta-op { border:1.5px solid rgba(96,165,250,0.3);color:#60a5fa;background:rgba(59,130,246,0.06); }
     .cp-panel-cta-op:hover { border-color:rgba(96,165,250,0.55);background:rgba(59,130,246,0.12); }
-    .cp-panel-cta-q  { border:1.5px solid rgba(212,175,55,0.3);color:var(--gold);background:rgba(212,175,55,0.06); }
-    .cp-panel-cta-q:hover  { border-color:rgba(212,175,55,0.55);background:rgba(212,175,55,0.12); }
+    .cp-panel-cta-q  { border:1.5px solid rgba(139,92,246,0.3);color:#a78bfa;background:rgba(139,92,246,0.06); }
+    .cp-panel-cta-q:hover  { border-color:rgba(139,92,246,0.55);background:rgba(139,92,246,0.12); }
 
     /* Pricing strip */
     .cp-pricing { margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:20px; }
     @media(max-width:640px) { .cp-pricing { grid-template-columns:1fr; } }
     .cp-price-card { border-radius:18px;padding:24px 26px;display:flex;flex-direction:column;gap:14px; }
     .cp-price-card-op { background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.18); }
-    .cp-price-card-q  { background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.18); }
+    .cp-price-card-q  { background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.18); }
     .cp-price-head { display:flex;align-items:center;justify-content:space-between; }
     .cp-price-type { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em; }
     .cp-price-type-op { color:#60a5fa; }
-    .cp-price-type-q  { color:var(--gold); }
+    .cp-price-type-q  { color:#a78bfa; }
     .cp-price-rows { display:flex;flex-direction:column;gap:9px; }
     .cp-price-row { display:flex;align-items:baseline;justify-content:space-between;gap:12px; }
     .cp-price-label { font-size:13px;color:var(--cream-muted); }
@@ -684,7 +684,7 @@ window._setProgress = function(){};
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Queue
         </span>
-        <div class="cp-panel-title">FIND YOUR<br><span style="color:var(--gold)">PARTNER</span></div>
+        <div class="cp-panel-title">FIND YOUR<br><span style="color:#a78bfa">PARTNER</span></div>
         <p class="cp-panel-sub" style="margin-top:8px">Book a court and open a queue to gather players. Join an existing queue and get notified when your spot is confirmed.</p>
       </div>
       <div class="cp-feats">
@@ -712,24 +712,34 @@ window._setProgress = function(){};
       </div>
       <div class="cp-price-rows">
         <div class="cp-price-row">
-          <span class="cp-price-label">Join Fee (per player)</span>
+          <span class="cp-price-label">Off-Peak (before 2 PM)</span>
           <span class="cp-price-value" style="color:#60a5fa">₱200</span>
         </div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row">
+          <span class="cp-price-label">Peak (2 PM onwards)</span>
+          <span class="cp-price-value" style="color:#60a5fa">₱300</span>
+        </div>
       </div>
-      <p class="cp-price-note">Flat rate per session · all sports · no court rental fee · just show up and play</p>
+      <p class="cp-price-note">Per person · all sports · no court rental fee · just show up and play</p>
     </div>
     <div class="cp-price-card cp-price-card-q">
       <div class="cp-price-head">
         <span class="cp-price-type cp-price-type-q">Queue Pricing</span>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" opacity="0.45"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" opacity="0.45"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
       </div>
       <div class="cp-price-rows">
         <div class="cp-price-row">
-          <span class="cp-price-label">Cost split</span>
-          <span class="cp-price-value" style="color:var(--gold);font-size:16px;font-family:inherit;font-weight:700">By Agreement</span>
+          <span class="cp-price-label">Off-Peak (before 2 PM)</span>
+          <span class="cp-price-value" style="color:#a78bfa">₱200</span>
+        </div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row">
+          <span class="cp-price-label">Peak (2 PM onwards)</span>
+          <span class="cp-price-value" style="color:#a78bfa">₱300</span>
         </div>
       </div>
-      <p class="cp-price-note">Host opens the queue · players join free · cost is negotiated and split among participants</p>
+      <p class="cp-price-note">Per person · 2 hr session · cancelled &amp; refunded if under 6 players</p>
     </div>
   </div>
 
@@ -779,9 +789,9 @@ window._setProgress = function(){};
       const nick = q.creatorNick || q.creatorName || 'Anonymous';
 
       return `
-      <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:16px;padding:16px 20px;display:flex;gap:14px;align-items:center">
-        <div style="width:48px;flex-shrink:0;text-align:center;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);border-radius:10px;padding:6px 4px">
-          <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold)">${isToday ? 'TODAY' : mon}</div>
+      <div style="background:rgba(139,92,246,0.04);border:1px solid rgba(139,92,246,0.15);border-radius:16px;padding:16px 20px;display:flex;gap:14px;align-items:center">
+        <div style="width:48px;flex-shrink:0;text-align:center;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:6px 4px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a78bfa">${isToday ? 'TODAY' : mon}</div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--cream)">${day}</div>
         </div>
         <div style="flex:1;min-width:0">
@@ -796,7 +806,7 @@ window._setProgress = function(){};
         <div style="text-align:right;flex-shrink:0">
           ${filled
             ? `<span style="padding:3px 10px;border-radius:100px;background:rgba(248,113,113,0.12);color:#f87171;font-size:10px;font-weight:700">FULL</span>`
-            : `<span style="padding:3px 10px;border-radius:100px;background:rgba(212,175,55,0.1);color:var(--gold);font-size:10px;font-weight:700">+${q.needed - joined} needed</span>`
+            : `<span style="padding:3px 10px;border-radius:100px;background:rgba(139,92,246,0.12);color:#a78bfa;font-size:10px;font-weight:700">+${q.needed - joined} needed</span>`
           }
           <div style="font-size:10px;color:var(--cream-muted);margin-top:4px">${joined}/${q.needed} joined</div>
         </div>
@@ -826,24 +836,21 @@ window._setProgress = function(){};
       const container = document.getElementById('homeOpSessions');
       if (!container) return;
 
-      // Fallback cards if openplay.html hasn't seeded yet
-      const FALLBACK = [
-        { sport:'pickleball', date: getDaysFrom(3), time:'10:00', maxPlayers:12, registrations:[], price:200, status:'upcoming', notes:'All levels welcome!' },
-        { sport:'badminton',  date: getDaysFrom(5), time:'14:30', maxPlayers:16, registrations:[], price:300, status:'upcoming', notes:'Extended session' },
-        { sport:'mixed',      date: getDaysFrom(7), time:'09:00', maxPlayers:8,  registrations:[], price:200, status:'upcoming', notes:'Morning session' },
-      ];
-
-      function getDaysFrom(n) {
-        const base = new Date(getTodayPH() + 'T00:00:00');
-        base.setDate(base.getDate() + n);
-        return base.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-      }
-
       let sessions = getSessions().filter(s => s.status === 'upcoming' || s.status === 'confirmed');
       sessions.sort((a,b) => a.date.localeCompare(b.date));
       sessions = sessions.slice(0, 3);
 
-      const data = sessions.length ? sessions : FALLBACK;
+      if (!sessions.length) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:28px 16px">
+            <div style="font-size:14px;font-weight:600;color:var(--cream-muted);margin-bottom:6px">No open sessions yet</div>
+            <div style="font-size:12px;color:var(--cream-muted);opacity:0.6;margin-bottom:14px">Check back soon or host your own session!</div>
+            <a href="openplay.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:1px solid rgba(96,165,250,0.3);color:#60a5fa;font-size:12px;font-weight:700;text-decoration:none">View Open Play →</a>
+          </div>`;
+        return;
+      }
+
+      const data = sessions;
 
       const today = getTodayPH();
 
