@@ -159,12 +159,12 @@
     }
     .nick-btn-cancel:hover { border-color: rgba(255,255,255,0.25); background: var(--ink-mid); }
     .nick-btn-save {
-      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
-      background: var(--accent); border: none; color: #0d0d0d;
+      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 800;
+      background: #4ade80; border: none; color: #0a0a0a;
       cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 48px;
     }
-    .nick-btn-save:hover:not(:disabled) { filter: brightness(1.1); }
-    .nick-btn-save:disabled { opacity: 0.35; cursor: not-allowed; }
+    .nick-btn-save:hover:not(:disabled) { background: #6ee7a0; }
+    .nick-btn-save:disabled { background: #1a2e22; color: #2d5a3d; cursor: not-allowed; }
     .btn-keep {
       flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
       background: var(--stone); border: 1px solid var(--stone-line); color: var(--cream);
@@ -236,7 +236,7 @@
     <span class="nav-wordmark">SMASH <em>STUDIO</em></span>
   </a>
   <div style="display:flex;align-items:center;gap:14px">
-    <span id="mbNavUser" style="font-size:13px;font-weight:600;color:#0d0d0d;background:var(--accent);padding:4px 12px;border-radius:20px"></span>
+    <span id="mbNavUser" style="font-size:13px;font-weight:700;color:#4ade80"></span>
     <a href="book.html" style="padding:7px 16px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none">+ Book</a>
     <a href="/" style="padding:6px 14px;border-radius:7px;border:1px solid var(--stone-line);background:transparent;color:var(--cream-muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none">← Home</a>
   </div>
