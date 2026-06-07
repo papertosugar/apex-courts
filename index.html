@@ -95,10 +95,12 @@ window._setProgress = (function () {
     ov.style.opacity = '0';
     setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
   }
-  // Safety: force-dismiss after 6s no matter what (slow network / script error)
-  setTimeout(dismiss, 6000);
+  // Dismiss on DOMContentLoaded (fast — DOM ready, animations can start)
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(dismiss, 200); });
+  // Safety fallback: force-dismiss after 3s no matter what
+  setTimeout(dismiss, 3000);
   // Also dismiss on window load
-  window.addEventListener('load', function () { setTimeout(dismiss, 300); });
+  window.addEventListener('load', function () { setTimeout(dismiss, 150); });
 
   return function set(p) {
     if (p <= cur) return;
@@ -158,7 +160,7 @@ window._setProgress = (function () {
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="#sports">Sports</a></li>
     <li><a href="#availability">Schedule</a></li>
-    <li><a href="openplay.html">Open Play</a></li>
+    <li><a href="book.html#queue">Queue</a></li>
     <li><a href="community.html">Community</a></li>
     <li id="navAuthLinks">
       <a href="login.html">Sign In</a>
@@ -596,161 +598,199 @@ window._setProgress = (function () {
     <a href="book.html" class="btn btn-primary">View Full Schedule &amp; Book</a>
   </div>
 </section>
-<!-- ════════════ OPEN PLAY ════════════ -->
+<!-- ════════════ OPEN PLAY & QUEUE ════════════ -->
 <section id="openplay-home" class="section" aria-labelledby="op-home-heading">
   <style>
-    /* Open Play section */
-    .op-home-layout {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 48px; align-items: start;
-    }
-    @media(max-width:820px) { .op-home-layout { grid-template-columns: 1fr; gap: 32px; } }
+    .cp-section-label { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
+    .cp-section-label-line { width:28px;height:2px;background:linear-gradient(90deg,#60a5fa,#d4af37); }
+    .cp-section-label-text { font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--cream-muted); }
+    .cp-section-title { font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,3.2vw,40px);letter-spacing:0.02em;margin-bottom:36px;line-height:1.1; }
 
-    .op-home-left { }
-    .op-home-label { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .op-home-label-line { width: 28px; height: 2px; background: #60a5fa; }
-    .op-home-label-text { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #60a5fa; }
-    .op-home-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 5vw, 52px); line-height: 1; letter-spacing: 0.02em; margin-bottom: 14px; }
-    .op-home-sub { font-size: 15px; color: var(--cream-muted); line-height: 1.7; max-width: 400px; margin-bottom: 28px; }
-    .op-home-perks { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-    .op-perk { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--cream-muted); }
-    .op-perk-icon {
-      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-      background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
-      display: flex; align-items: center; justify-content: center; color: #60a5fa;
+    .cp-split {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 28px; align-items: start;
     }
+    @media(max-width:820px) { .cp-split { grid-template-columns: 1fr; gap: 20px; } }
+
+    .cp-panel {
+      border-radius: 20px; padding: 26px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .cp-panel-op { background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.18); }
+    .cp-panel-q  { background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.18); }
+
+    .cp-panel-badge {
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;width:fit-content;
+    }
+    .cp-panel-badge-op { background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25); }
+    .cp-panel-badge-q  { background:rgba(212,175,55,0.1);color:var(--gold);border:1px solid rgba(212,175,55,0.25); }
+
+    .cp-panel-title { font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,2.8vw,34px);line-height:1.05;letter-spacing:0.02em;margin-top:4px; }
+    .cp-panel-sub { font-size:13px;color:var(--cream-muted);line-height:1.65; }
+
+    .cp-feats { display:flex;flex-direction:column;gap:8px; }
+    .cp-feat { display:flex;align-items:center;gap:10px;font-size:13px;color:var(--cream-muted); }
+    .cp-feat-dot-op { width:5px;height:5px;border-radius:50%;background:#60a5fa;flex-shrink:0; }
+    .cp-feat-dot-q  { width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0; }
 
     /* Session cards */
-    .op-sessions-list { display: flex; flex-direction: column; gap: 12px; }
+    .op-sessions-list { display:flex;flex-direction:column;gap:9px; }
     .op-session-card {
-      background: rgba(59,130,246,0.04);
-      border: 1px solid rgba(59,130,246,0.15);
-      border-radius: 16px; padding: 20px;
-      display: flex; gap: 16px; align-items: center;
-      transition: border-color 0.2s, background 0.2s;
-      cursor: pointer; text-decoration: none; color: inherit;
+      background:rgba(59,130,246,0.04); border:1px solid rgba(59,130,246,0.15);
+      border-radius:14px; padding:14px; display:flex; gap:13px; align-items:center;
+      transition:border-color 0.2s,background 0.2s; cursor:pointer; text-decoration:none; color:inherit;
     }
-    .op-session-card:hover {
-      border-color: rgba(59,130,246,0.35);
-      background: rgba(59,130,246,0.07);
-    }
+    .op-session-card:hover { border-color:rgba(59,130,246,0.35); background:rgba(59,130,246,0.07); }
     .op-date-block {
-      width: 52px; flex-shrink: 0; text-align: center;
-      background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
-      border-radius: 10px; padding: 8px 4px;
+      width:46px; flex-shrink:0; text-align:center;
+      background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2);
+      border-radius:9px; padding:5px 4px;
     }
-    .op-date-mon { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #60a5fa; }
-    .op-date-day { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; color: var(--cream); }
-    .op-session-info { flex: 1; min-width: 0; }
-    .op-session-name { font-size: 15px; font-weight: 700; color: var(--cream); margin-bottom: 4px; }
-    .op-session-meta { font-size: 12px; color: var(--cream-muted); display: flex; flex-wrap: wrap; gap: 8px; }
-    .op-session-badge {
-      padding: 2px 8px; border-radius: 100px;
-      background: rgba(59,130,246,0.12); color: #60a5fa;
-      font-size: 10px; font-weight: 700;
-    }
-    .op-session-right { text-align: right; flex-shrink: 0; }
-    .op-session-price { font-size: 18px; font-weight: 800; color: var(--cream); font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
-    .op-session-slots { font-size: 11px; color: var(--cream-muted); margin-top: 3px; }
-    .op-session-slots.few { color: #f87171; }
+    .op-date-mon { font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#60a5fa; }
+    .op-date-day { font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;color:var(--cream); }
+    .op-session-info { flex:1;min-width:0; }
+    .op-session-name { font-size:14px;font-weight:700;color:var(--cream);margin-bottom:3px; }
+    .op-session-meta { font-size:11px;color:var(--cream-muted);display:flex;flex-wrap:wrap;gap:6px; }
+    .op-session-badge { padding:2px 7px;border-radius:100px;background:rgba(59,130,246,0.12);color:#60a5fa;font-size:10px;font-weight:700; }
+    .op-session-right { text-align:right;flex-shrink:0; }
+    .op-session-price { font-size:16px;font-weight:800;color:var(--cream);font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em; }
+    .op-session-slots { font-size:11px;color:var(--cream-muted);margin-top:2px; }
+    .op-session-slots.few { color:#f87171; }
 
-    /* Empty/loading state */
-    .op-skel {
-      height: 88px; border-radius: 16px;
-      background: linear-gradient(90deg, rgba(59,130,246,0.04) 25%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.04) 75%);
-      background-size: 200% 100%; animation: opshim 1.5s infinite;
-    }
+    /* Skeletons */
+    .op-skel { height:78px;border-radius:13px;background:linear-gradient(90deg,rgba(59,130,246,0.04) 25%,rgba(59,130,246,0.09) 50%,rgba(59,130,246,0.04) 75%);background-size:200% 100%;animation:opshim 1.5s infinite; }
+    .q-skel  { height:78px;border-radius:13px;background:linear-gradient(90deg,rgba(212,175,55,0.04) 25%,rgba(212,175,55,0.09) 50%,rgba(212,175,55,0.04) 75%);background-size:200% 100%;animation:opshim 1.5s infinite; }
     @keyframes opshim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    .op-sport-icon-pk { color: #00C2A8; }
-    .op-sport-icon-bd { color: #60a5fa; }
-    .op-sport-icon-mx { color: #a78bfa; }
+    .op-sport-icon-pk { color:#00C2A8; }
+    .op-sport-icon-bd { color:#60a5fa; }
+    .op-sport-icon-mx { color:#a78bfa; }
+
+    .cp-panel-cta {
+      display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;
+      font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s;align-self:flex-start;
+    }
+    .cp-panel-cta-op { border:1.5px solid rgba(96,165,250,0.3);color:#60a5fa;background:rgba(59,130,246,0.06); }
+    .cp-panel-cta-op:hover { border-color:rgba(96,165,250,0.55);background:rgba(59,130,246,0.12); }
+    .cp-panel-cta-q  { border:1.5px solid rgba(212,175,55,0.3);color:var(--gold);background:rgba(212,175,55,0.06); }
+    .cp-panel-cta-q:hover  { border-color:rgba(212,175,55,0.55);background:rgba(212,175,55,0.12); }
+
+    /* Pricing strip */
+    .cp-pricing { margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+    @media(max-width:640px) { .cp-pricing { grid-template-columns:1fr; } }
+    .cp-price-card { border-radius:18px;padding:24px 26px;display:flex;flex-direction:column;gap:14px; }
+    .cp-price-card-op { background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.18); }
+    .cp-price-card-q  { background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.18); }
+    .cp-price-head { display:flex;align-items:center;justify-content:space-between; }
+    .cp-price-type { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em; }
+    .cp-price-type-op { color:#60a5fa; }
+    .cp-price-type-q  { color:var(--gold); }
+    .cp-price-rows { display:flex;flex-direction:column;gap:9px; }
+    .cp-price-row { display:flex;align-items:baseline;justify-content:space-between;gap:12px; }
+    .cp-price-label { font-size:13px;color:var(--cream-muted); }
+    .cp-price-value { font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.04em;color:var(--cream); }
+    .cp-price-note { font-size:11px;color:var(--cream-muted);opacity:0.6;line-height:1.5; }
+    .cp-price-divider { height:1px;background:rgba(238,240,245,0.06); }
   </style>
 
-  <div class="op-home-layout">
-    <!-- Left: copy -->
-    <div class="op-home-left reveal from-below">
-      <div class="op-home-label">
-        <div class="op-home-label-line"></div>
-        <span class="op-home-label-text">Community Play</span>
-      </div>
-      <h2 id="op-home-heading" class="op-home-title">JOIN AN<br><span style="color:#60a5fa">OPEN PLAY</span></h2>
-      <p class="op-home-sub">Drop in, meet new players, and enjoy shared court time — no partner needed. Sessions for all levels, every week.</p>
-      <div class="op-home-perks">
-        <div class="op-perk">
-          <div class="op-perk-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          Play with the community — all levels welcome
-        </div>
-        <div class="op-perk">
-          <div class="op-perk-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          Affordable drop-in rate · no booking required
-        </div>
-        <div class="op-perk">
-          <div class="op-perk-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 6 6l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          </div>
-          Register online — show up and play
-        </div>
-      </div>
-      <a href="openplay.html" class="btn btn-ghost" style="display:inline-flex;align-items:center;gap:8px;border-color:rgba(96,165,250,0.3);color:#60a5fa">
-        View All Sessions
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-    </div>
+  <!-- Section label -->
+  <div class="cp-section-label">
+    <div class="cp-section-label-line"></div>
+    <span class="cp-section-label-text">Community Play</span>
+  </div>
+  <h2 id="op-home-heading" class="cp-section-title">
+    JOIN THE <span style="color:#60a5fa">OPEN PLAY</span> &amp; <span style="color:var(--gold)">QUEUE</span>
+  </h2>
 
-    <!-- Right: live session cards + queue tabs -->
-    <div class="reveal from-below" style="">
-      <!-- Tabs -->
-      <div style="display:flex;gap:6px;margin-bottom:16px" role="tablist" aria-label="Community board">
-        <button id="homeTabSessions" role="tab" aria-selected="true"
-          onclick="homeSetTab('sessions')"
-          style="padding:7px 16px;border-radius:8px;border:1.5px solid rgba(96,165,250,0.35);background:rgba(96,165,250,0.1);color:#60a5fa;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s">
+  <!-- Two panels side by side -->
+  <div class="cp-split">
+
+    <!-- LEFT: Open Play -->
+    <div class="cp-panel cp-panel-op reveal from-below">
+      <div>
+        <span class="cp-panel-badge cp-panel-badge-op">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Open Play
-        </button>
-        <button id="homeTabQueues" role="tab" aria-selected="false"
-          onclick="homeSetTab('queues')"
-          style="padding:7px 16px;border-radius:8px;border:1.5px solid rgba(212,175,55,0.2);background:transparent;color:var(--cream-muted);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s">
-          Queues
-        </button>
+        </span>
+        <div class="cp-panel-title">DROP IN &amp;<br><span style="color:#60a5fa">PLAY NOW</span></div>
+        <p class="cp-panel-sub" style="margin-top:8px">No partner needed. Join a shared court session, meet new players — all levels welcome every week.</p>
       </div>
-
+      <div class="cp-feats">
+        <div class="cp-feat"><div class="cp-feat-dot-op"></div>All levels welcome, no booking required</div>
+        <div class="cp-feat"><div class="cp-feat-dot-op"></div>Affordable drop-in rate per session</div>
+        <div class="cp-feat"><div class="cp-feat-dot-op"></div>Register online — show up and play</div>
+      </div>
       <div id="homeOpSessions" class="op-sessions-list">
         <div class="op-skel"></div>
         <div class="op-skel" style="animation-delay:0.15s"></div>
         <div class="op-skel" style="animation-delay:0.3s"></div>
       </div>
+      <a href="openplay.html" class="cp-panel-cta cp-panel-cta-op">
+        View All Sessions
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
 
-      <div id="homeQueues" style="display:none">
-        <div class="op-sessions-list" id="homeQueuesInner">
-          <div class="op-skel"></div>
-          <div class="op-skel" style="animation-delay:0.15s"></div>
-        </div>
+    <!-- RIGHT: Queue -->
+    <div class="cp-panel cp-panel-q reveal from-below" style="transition-delay:0.08s">
+      <div>
+        <span class="cp-panel-badge cp-panel-badge-q">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Queue
+        </span>
+        <div class="cp-panel-title">FIND YOUR<br><span style="color:var(--gold)">PARTNER</span></div>
+        <p class="cp-panel-sub" style="margin-top:8px">Book a court and open a queue to gather players. Join an existing queue and get notified when your spot is confirmed.</p>
       </div>
+      <div class="cp-feats">
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Open a queue when you need more players</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Up to 16 players per queue session</div>
+        <div class="cp-feat"><div class="cp-feat-dot-q"></div>Real-time availability — join instantly</div>
+      </div>
+      <div class="op-sessions-list" id="homeQueuesInner">
+        <div class="q-skel"></div>
+        <div class="q-skel" style="animation-delay:0.15s"></div>
+      </div>
+      <a href="book.html#queue" class="cp-panel-cta cp-panel-cta-q">
+        Browse Queues
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pricing strip -->
+  <div class="cp-pricing reveal from-below">
+    <div class="cp-price-card cp-price-card-op">
+      <div class="cp-price-head">
+        <span class="cp-price-type cp-price-type-op">Open Play Pricing</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" opacity="0.45"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div class="cp-price-rows">
+        <div class="cp-price-row"><span class="cp-price-label">Pickleball Session</span><span class="cp-price-value">₱200</span></div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row"><span class="cp-price-label">Badminton Session</span><span class="cp-price-value">₱300</span></div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row"><span class="cp-price-label">Mixed / Extended</span><span class="cp-price-value">₱200</span></div>
+      </div>
+      <p class="cp-price-note">Drop-in rate per player · no court rental fee · equipment available on request</p>
+    </div>
+    <div class="cp-price-card cp-price-card-q">
+      <div class="cp-price-head">
+        <span class="cp-price-type cp-price-type-q">Queue Pricing</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" opacity="0.45"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
+      </div>
+      <div class="cp-price-rows">
+        <div class="cp-price-row"><span class="cp-price-label">Court Booking (host)</span><span class="cp-price-value">₱600<span style="font-size:13px;font-family:inherit;font-weight:400;color:var(--cream-muted)">/hr</span></span></div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row"><span class="cp-price-label">Queue Join Fee</span><span class="cp-price-value" style="color:var(--gold)">FREE</span></div>
+        <div class="cp-price-divider"></div>
+        <div class="cp-price-row"><span class="cp-price-label">Max Players</span><span class="cp-price-value">16</span></div>
+      </div>
+      <p class="cp-price-note">Host pays court fee · guests join for free · split costs among your group</p>
     </div>
   </div>
 
   <script>
-  function homeSetTab(tab) {
-    const isQ = tab === 'queues';
-    const tS = document.getElementById('homeTabSessions');
-    const tQ = document.getElementById('homeTabQueues');
-    tS.setAttribute('aria-selected', String(!isQ));
-    tQ.setAttribute('aria-selected', String(isQ));
-    tS.style.background = isQ ? 'transparent' : 'rgba(96,165,250,0.1)';
-    tS.style.borderColor = isQ ? 'rgba(96,165,250,0.15)' : 'rgba(96,165,250,0.35)';
-    tS.style.color       = isQ ? 'var(--cream-muted)' : '#60a5fa';
-    tQ.style.background  = isQ ? 'rgba(212,175,55,0.08)' : 'transparent';
-    tQ.style.borderColor = isQ ? 'rgba(212,175,55,0.35)' : 'rgba(212,175,55,0.2)';
-    tQ.style.color       = isQ ? 'var(--gold)' : 'var(--cream-muted)';
-    document.getElementById('homeOpSessions').style.display = isQ ? 'none' : '';
-    document.getElementById('homeQueues').style.display = isQ ? '' : 'none';
-    if (isQ) renderQueues();
-  }
-
   function renderQueues() {
     const container = document.getElementById('homeQueuesInner');
     if (!container) return;
@@ -1446,7 +1486,7 @@ window._setProgress = (function () {
       <ul class="footer-links" role="list">
         <li><a href="#sports">Sports &amp; Courts</a></li>
         <li><a href="book.html">Book a Court</a></li>
-        <li><a href="openplay.html">Open Play</a></li>
+        <li><a href="book.html#queue">Queue</a></li>
         <li><a href="community.html">Community</a></li>
         <li><a href="#testimonials">Reviews</a></li>
       </ul>
