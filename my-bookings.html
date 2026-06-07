@@ -242,12 +242,12 @@
   <div class="nick-card" id="nickCard">
     <div class="nick-avatar" id="nickAvatar">?</div>
     <div class="nick-info">
-      <div class="nick-display" id="nickDisplay">설정된 닉네임 없음</div>
+      <div class="nick-display" id="nickDisplay">No nickname set</div>
       <div class="nick-real" id="nickReal"></div>
     </div>
     <button class="nick-edit-btn" onclick="openNickModal()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      닉네임 변경
+      Edit Nickname
     </button>
   </div>
 
@@ -282,13 +282,13 @@
     <div class="cancel-modal-icon" style="background:rgba(74,222,128,0.12);color:#4ade80">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     </div>
-    <div class="cancel-modal-title">닉네임 설정</div>
-    <div class="cancel-modal-sub">다른 회원과 구분되는 나만의 닉네임을 설정하세요.<br>중복 불가, 2–16자</div>
+    <div class="cancel-modal-title">Set Nickname</div>
+    <div class="cancel-modal-sub">Choose a unique nickname to represent you.<br>Must be 2–16 characters, no duplicates.</div>
 
     <div style="margin:20px 0 8px;text-align:left">
-      <label style="font-size:12px;color:var(--cream-muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">닉네임</label>
+      <label style="font-size:12px;color:var(--cream-muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">Nickname</label>
       <div style="position:relative;margin-top:6px">
-        <input id="nickInput" type="text" maxlength="16" placeholder="예: CourtKing88"
+        <input id="nickInput" type="text" maxlength="16" placeholder="e.g. CourtKing88"
           style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--stone-line);
                  background:var(--ink-mid);color:var(--cream);font-size:15px;font-family:inherit;
                  box-sizing:border-box;outline:none;transition:border .2s"
@@ -300,10 +300,10 @@
     </div>
 
     <div class="cancel-actions" style="margin-top:4px">
-      <button class="cancel-btn-no" onclick="closeNickModal()">취소</button>
+      <button class="cancel-btn-no" onclick="closeNickModal()">Cancel</button>
       <button class="cancel-btn-yes" id="nickSaveBtn" onclick="saveNickname()"
         style="background:var(--accent);color:#0d0d0d;border:none;opacity:.5;cursor:not-allowed"
-        disabled>저장</button>
+        disabled>Save</button>
     </div>
   </div>
 </div>
@@ -359,10 +359,10 @@ if (!_user) { window.location.href = 'login.html?redirect=my-bookings.html'; }
   if (nick) {
     dispEl.textContent = nick;
     dispEl.classList.add('is-nickname');
-    realEl.textContent = '실명: ' + _user;
+    realEl.textContent = 'Real name: ' + _user;
   } else {
     dispEl.textContent = firstName;
-    realEl.textContent = '닉네임을 설정하면 이름 대신 표시됩니다';
+    realEl.textContent = 'Set a nickname to display instead of your name';
   }
   document.getElementById('mbNavUser').innerHTML =
     '👤 ' + (nick || firstName);
@@ -392,23 +392,23 @@ function onNickInput() {
   btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
 
   if (val.length < 2) {
-    fb.textContent = val.length ? '최소 2자 이상 입력하세요' : '';
+    fb.textContent = val.length ? 'Minimum 2 characters required' : '';
     fb.style.color = '#f87171'; return;
   }
   if (val.length > 16) {
-    fb.textContent = '최대 16자까지 가능합니다';
+    fb.textContent = 'Maximum 16 characters allowed';
     fb.style.color = '#f87171'; return;
   }
   if (!/^[a-zA-Z0-9가-힣_\-]+$/.test(val)) {
-    fb.textContent = '영문, 숫자, 한글, _, - 만 사용 가능합니다';
+    fb.textContent = 'Only letters, numbers, _, and - are allowed';
     fb.style.color = '#f87171'; return;
   }
-  fb.textContent = '확인 중…'; fb.style.color = 'var(--cream-muted)';
+  fb.textContent = 'Checking…'; fb.style.color = 'var(--cream-muted)';
 
   _nickCheckTimer = setTimeout(async () => {
     // Skip DB check if unchanged
     if (val === localStorage.getItem('apexNick')) {
-      fb.textContent = '현재 닉네임입니다';
+      fb.textContent = 'This is your current nickname';
       fb.style.color = 'var(--cream-muted)'; return;
     }
     try {
@@ -417,10 +417,10 @@ function onNickInput() {
       const { data, error } = await sb.from('profiles').select('id').eq('nickname', val).maybeSingle();
       if (error) throw error;
       if (data) {
-        fb.textContent = '이미 사용 중인 닉네임입니다 ❌';
+        fb.textContent = 'Nickname already taken ❌';
         fb.style.color = '#f87171';
       } else {
-        fb.textContent = '사용 가능한 닉네임입니다 ✓';
+        fb.textContent = 'Nickname available ✓';
         fb.style.color = '#4ade80';
         btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
       }
@@ -428,10 +428,10 @@ function onNickInput() {
       // Column may not exist yet — tell user to run SQL setup
       const isColMissing = err?.message?.includes('column') || err?.message?.includes('does not exist');
       if (isColMissing) {
-        fb.textContent = '⚠ Supabase에 nickname 컬럼이 없습니다. SQL 설정을 먼저 실행해주세요.';
+        fb.textContent = '⚠ Nickname column missing — please run the SQL setup first.';
         fb.style.color = '#f87171';
       } else {
-        fb.textContent = '확인 중 오류 발생 — 저장을 눌러 시도하세요';
+        fb.textContent = 'Check failed — you can still try saving';
         fb.style.color = 'var(--gold)';
         btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
       }
@@ -443,25 +443,25 @@ async function saveNickname() {
   const val = document.getElementById('nickInput').value.trim();
   const btn = document.getElementById('nickSaveBtn');
   const fb  = document.getElementById('nickFeedback');
-  btn.disabled = true; btn.textContent = '저장 중…';
+  btn.disabled = true; btn.textContent = 'Saving…';
   try {
     const sb = window.apexDB;
     const { error } = await sb.from('profiles')
       .upsert({ id: _uid, nickname: val }, { onConflict: 'id' });
     if (error) throw error;
     localStorage.setItem('apexNick', val);
-    fb.textContent = '저장됐습니다!'; fb.style.color = '#4ade80';
+    fb.textContent = 'Saved!'; fb.style.color = '#4ade80';
     // Refresh card
     const dispEl = document.getElementById('nickDisplay');
     document.getElementById('nickAvatar').textContent = val[0].toUpperCase();
     dispEl.textContent = val; dispEl.classList.add('is-nickname');
-    document.getElementById('nickReal').textContent = '실명: ' + _user;
+    document.getElementById('nickReal').textContent = 'Real name: ' + _user;
     document.getElementById('mbNavUser').innerHTML = '👤 ' + val;
     setTimeout(closeNickModal, 800);
   } catch(e) {
-    fb.textContent = '저장 실패: ' + (e.message || '다시 시도해주세요');
+    fb.textContent = 'Save failed: ' + (e.message || 'Please try again');
     fb.style.color = '#f87171';
-    btn.disabled = false; btn.textContent = '저장';
+    btn.disabled = false; btn.textContent = 'Save';
   }
 }
 
