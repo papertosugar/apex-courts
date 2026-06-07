@@ -1469,6 +1469,13 @@ function showQueueSuccess(queue) {
   document.body.appendChild(modal);
 }
 
+// ── Expose to window so onclick attributes work after Vite bundles ──
+window.switchPageTab = switchPageTab;
+window.qSelectSport  = qSelectSport;
+window.qSetNeed      = qSetNeed;
+window.qNoteUpdate   = qNoteUpdate;
+window.openQueue     = openQueue;
+
 // Show logged-in user in nav
 (function() {
   const user = localStorage.getItem('apexUser');
