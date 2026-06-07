@@ -22,17 +22,34 @@ const state = {
 };
 
 const PRICING = {
-  court: 600,
-  drillZone: { base: 400, perBlock: 300 },
+  court: 600,              // ₱600 / hr (peak)
+  courtOffPeak: 480,       // ₱480 / hr (20% off, 7 AM–2 PM)
+  drillZone: { base: 400, perBlock: 300 },          // peak
+  drillZoneOffPeak: { base: 320, perBlock: 240 },   // 20% off, 7 AM–2 PM
   extras: {
     racket: { name: 'Racket Rental', desc: 'Premium Wilson racket', price: 50 },
     shoes:  { name: 'Court Shoes',   desc: 'Clean court-approved footwear', price: 50 },
   }
 };
 
-function drillZonePrice(durationHrs) {
-  const blocks = Math.round(durationHrs * 2);
-  return PRICING.drillZone.base + Math.max(0, blocks - 1) * PRICING.drillZone.perBlock;
+// 7:00 AM – 2:00 PM (14:00) is the off-peak morning window
+const OFF_PEAK_START = 7;
+const OFF_PEAK_END   = 14;
+
+/** True if the decimal hour falls in the off-peak morning window. */
+function isOffPeak(h) {
+  return h >= OFF_PEAK_START && h < OFF_PEAK_END;
+}
+
+/** Court rate for a given slot label (e.g. '9 AM', '3 PM'). */
+function courtRate(label) {
+  return isOffPeak(parseHourStr(label)) ? PRICING.courtOffPeak : PRICING.court;
+}
+
+/** Drill zone tiered pricing for one continuous session block. */
+function drillZonePrice(blocks, offPeak) {
+  const rates = offPeak ? PRICING.drillZoneOffPeak : PRICING.drillZone;
+  return rates.base + Math.max(0, blocks - 1) * rates.perBlock;
 }
 
 // Cost across all selected slots
@@ -40,14 +57,31 @@ function totalCourtCost() {
   if (!state.selectedSlots.length) return 0;
   const step = getSlotStep();
   if (state.sport !== 'drill') {
-    return PRICING.court * state.selectedSlots.length * step;
+    // Price each court slot individually by its time
+    return state.selectedSlots.reduce((sum, s) => sum + courtRate(s.label) * step, 0);
   }
-  // Drill: group by date → price per date session
-  const byDate = {};
-  state.selectedSlots.forEach(s => {
-    byDate[s.dateKey] = (byDate[s.dateKey] || 0) + 1;
-  });
-  return Object.values(byDate).reduce((sum, cnt) => sum + drillZonePrice(cnt * 0.5), 0);
+  // Drill: group by date, then price each 30-min block by its own time
+  return state.selectedSlots.reduce((sum, s) => {
+    const h    = parseHourStr(s.label);
+    const rates = isOffPeak(h) ? PRICING.drillZoneOffPeak : PRICING.drillZone;
+    return sum + rates.base; // each block priced individually (no tiering complexity)
+  }, 0);
+}
+
+/** Returns { full, discount, final } for summary display. */
+function courtCostBreakdown() {
+  if (!state.selectedSlots.length) return { full: 0, discount: 0, final: 0 };
+  const step = getSlotStep();
+  if (state.sport !== 'drill') {
+    const full  = state.selectedSlots.reduce((s, sl) => s + PRICING.court * step, 0);
+    const final = state.selectedSlots.reduce((s, sl) => s + courtRate(sl.label) * step, 0);
+    return { full, discount: full - final, final };
+  }
+  const full  = state.selectedSlots.reduce((s, sl) => s + PRICING.drillZone.base, 0);
+  const final = state.selectedSlots.reduce((s, sl) => {
+    return s + (isOffPeak(parseHourStr(sl.label)) ? PRICING.drillZoneOffPeak.base : PRICING.drillZone.base);
+  }, 0);
+  return { full, discount: full - final, final };
 }
 
 function totalDuration() {
@@ -537,7 +571,8 @@ function updateSummary() {
 
   let extrasCost = 0;
   state.extras.forEach(k => extrasCost += PRICING.extras[k].price);
-  const courtCost = totalCourtCost();
+  const breakdown = courtCostBreakdown();
+  const courtCost = breakdown.final;
   const total = courtCost + extrasCost;
 
   if (!state.selectedSlots.length) {
@@ -586,7 +621,19 @@ function updateSummary() {
     });
   });
 
-  rows += `<div class="summary-row"><span class="label">Court fee</span><span class="value">₱${courtCost.toLocaleString()}</span></div>`;
+  // Court fee row — show original + discount if applicable
+  if (breakdown.discount > 0) {
+    rows += `<div class="summary-row">
+      <span class="label">Court fee <span style="font-size:10px;color:var(--gold);font-weight:700;margin-left:4px">MORNING RATE</span></span>
+      <span class="value"><span style="text-decoration:line-through;opacity:0.4;font-size:12px;margin-right:4px">₱${breakdown.full.toLocaleString()}</span>₱${courtCost.toLocaleString()}</span>
+    </div>
+    <div class="summary-row" style="color:#4ade80;font-size:12px">
+      <span class="label">Morning discount (20% off)</span>
+      <span class="value">−₱${breakdown.discount.toLocaleString()}</span>
+    </div>`;
+  } else {
+    rows += `<div class="summary-row"><span class="label">Court fee</span><span class="value">₱${courtCost.toLocaleString()}</span></div>`;
+  }
   state.extras.forEach(k => {
     rows += `<div class="summary-row"><span class="label">${PRICING.extras[k].name}</span><span class="value">₱${PRICING.extras[k].price}</span></div>`;
   });
@@ -651,7 +698,7 @@ async function confirmBooking() {
     if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Pay'; }
   }
 
-  const total   = totalCourtCost() + Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
+  const total   = courtCostBreakdown().final + Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
   const payTotal = document.getElementById('payModalTotal');
   if (payTotal) payTotal.textContent = '₱' + total.toLocaleString();
   document.getElementById('paymentModal').classList.add('open');
@@ -685,7 +732,7 @@ function selectPayMethod(method, el) {
 async function finalizePayment() {
   const method     = document.getElementById('payConfirmBtn').dataset.method || 'gcash';
   const code       = 'APX-' + Math.floor(1000 + Math.random() * 9000);
-  const courtCost  = totalCourtCost();
+  const courtCost  = courtCostBreakdown().final;
   const extrasCost = Array.from(state.extras).reduce((s,k) => s + PRICING.extras[k].price, 0);
   const step       = getSlotStep();
 

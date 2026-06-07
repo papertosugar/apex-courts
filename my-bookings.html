@@ -383,7 +383,8 @@ let _nickLocked = false; // true once we confirm nick_change_count >= 1 from DB
     realEl.textContent = 'Set a nickname to display instead of your name';
   }
   document.getElementById('mbNavUser').innerHTML =
-    '👤 ' + (nick || firstName);
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:5px;opacity:0.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+    (nick || firstName);
 
   // Check DB for nick_change_count
   if (_uid && window.apexDB) {
@@ -493,7 +494,7 @@ async function saveNickname() {
     document.getElementById('nickAvatar').textContent = val[0].toUpperCase();
     dispEl.textContent = val; dispEl.classList.add('is-nickname');
     document.getElementById('nickReal').textContent = 'Real name: ' + _user;
-    document.getElementById('mbNavUser').innerHTML = '👤 ' + val;
+    document.getElementById('mbNavUser').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:5px;opacity:0.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + val;
     // Disable edit button
     const editBtn = document.querySelector('.nick-edit-btn');
     if (editBtn) {

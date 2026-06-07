@@ -1,10 +1,10 @@
-/* ─── SMASH STUDIO — Auto-Logout (Idle Timer) ─── *
- * Usage: add <script src="js/auto-logout.js"></script> to any
- *        authenticated page AFTER supabase-client.js.
+/* ─── SMASH STUDIO — Auto-Logout (Idle Timer) ───────────────────
+ * Add <script src="js/auto-logout.js"></script> to any authenticated
+ * page AFTER supabase-client.js and utils.js.
  *
  * Config:
- *   IDLE_TIMEOUT_MS  — logout after this many ms of inactivity (default 30 min)
- *   WARN_BEFORE_MS   — show warning this many ms before logout (default 60 s)
+ *   IDLE_TIMEOUT_MS  — sign out after this many ms of inactivity (30 min)
+ *   WARN_BEFORE_MS   — show warning this many ms before sign-out (60 s)
  */
 
 (function () {
@@ -12,10 +12,10 @@
   const WARN_BEFORE_MS  =      60 * 1000;  // warn 60 s before
   const WARN_TIMEOUT_MS = IDLE_TIMEOUT_MS - WARN_BEFORE_MS;
 
-  let idleTimer    = null;
-  let warnTimer    = null;
-  let warnToast    = null;
-  let isWarning    = false;
+  let idleTimer = null;
+  let warnTimer = null;
+  let warnToast = null;
+  let isWarning = false;
 
   // ── Create warning toast ──────────────────────────────────────────
   function createToast() {
@@ -29,37 +29,44 @@
       'bottom:24px',
       'left:50%',
       'transform:translateX(-50%)',
-      'background:rgba(18,18,24,0.97)',
-      'border:1px solid rgba(255,195,0,0.3)',
-      'color:#fff',
+      'background:rgba(12,12,18,0.97)',
+      'border:1px solid rgba(212,175,55,0.35)',
+      'color:#f2ede4',
       'padding:14px 20px',
       'border-radius:12px',
       'font-size:14px',
+      'font-family:inherit',
       'z-index:99999',
       'display:flex',
       'align-items:center',
       'gap:14px',
-      'box-shadow:0 8px 32px rgba(0,0,0,0.5)',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.6)',
       'max-width:calc(100vw - 48px)',
+      'backdrop-filter:blur(12px)',
     ].join(';');
 
     const msg = document.createElement('span');
     msg.id = 'idle-warn-msg';
-    msg.textContent = '비활동으로 인해 곧 로그아웃됩니다.';
+    msg.textContent = 'You will be signed out soon due to inactivity.';
 
     const btn = document.createElement('button');
-    btn.textContent = '계속 사용';
+    btn.textContent = 'Stay Signed In';
     btn.style.cssText = [
-      'background:rgba(255,195,0,0.15)',
-      'border:1px solid rgba(255,195,0,0.4)',
-      'color:#FFC300',
+      'background:rgba(212,175,55,0.15)',
+      'border:1px solid rgba(212,175,55,0.45)',
+      'color:#D4AF37',
       'padding:6px 14px',
       'border-radius:8px',
       'font-size:13px',
+      'font-weight:700',
+      'font-family:inherit',
       'cursor:pointer',
       'white-space:nowrap',
       'flex-shrink:0',
+      'transition:background 0.2s',
     ].join(';');
+    btn.onmouseover = () => { btn.style.background = 'rgba(212,175,55,0.28)'; };
+    btn.onmouseout  = () => { btn.style.background = 'rgba(212,175,55,0.15)'; };
     btn.onclick = resetIdleTimer;
 
     warnToast.appendChild(msg);
@@ -71,7 +78,7 @@
     createToast();
     isWarning = true;
     const msg = document.getElementById('idle-warn-msg');
-    if (msg) msg.textContent = `비활동으로 인해 ${secondsLeft}초 후 로그아웃됩니다.`;
+    if (msg) msg.textContent = `Signing out in ${secondsLeft}s due to inactivity.`;
     warnToast.style.display = 'flex';
 
     // Countdown every second
@@ -80,7 +87,7 @@
       sec--;
       if (!isWarning) { clearInterval(countdown); return; }
       const m = document.getElementById('idle-warn-msg');
-      if (m) m.textContent = `비활동으로 인해 ${sec}초 후 로그아웃됩니다.`;
+      if (m) m.textContent = `Signing out in ${sec}s due to inactivity.`;
     }, 1000);
   }
 
@@ -89,39 +96,45 @@
     if (warnToast) warnToast.style.display = 'none';
   }
 
-  // ── Logout ────────────────────────────────────────────────────────
+  // ── Sign out ──────────────────────────────────────────────────────
   async function doLogout() {
     hideWarning();
-    // Clear Supabase session
-    if (typeof supabase !== 'undefined') {
-      try { await supabase.auth.signOut(); } catch(e) {}
+    // Sign out from Supabase
+    if (window.apexDB) {
+      try { await window.apexDB.auth.signOut(); } catch (_) {}
     }
-    // Clear localStorage
-    ['apexUser','apexRole','apexUserId'].forEach(k => localStorage.removeItem(k));
-
-    // Redirect to login with session-expired flag
+    // Clear local state
+    ['apexUser', 'apexRole', 'apexUserId', 'apexNick'].forEach(k => localStorage.removeItem(k));
+    // Redirect to login with reason flag
     window.location.href = 'login.html?reason=idle';
   }
 
-  // ── Reset timers ──────────────────────────────────────────────────
+  // ── Reset timers on any activity ─────────────────────────────────
   function resetIdleTimer() {
     hideWarning();
     clearTimeout(idleTimer);
     clearTimeout(warnTimer);
-
-    warnTimer  = setTimeout(() => showWarning(Math.round(WARN_BEFORE_MS / 1000)), WARN_TIMEOUT_MS);
-    idleTimer  = setTimeout(doLogout, IDLE_TIMEOUT_MS);
+    warnTimer = setTimeout(() => showWarning(Math.round(WARN_BEFORE_MS / 1000)), WARN_TIMEOUT_MS);
+    idleTimer = setTimeout(doLogout, IDLE_TIMEOUT_MS);
   }
 
   // ── Activity listeners ────────────────────────────────────────────
   const EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
   EVENTS.forEach(ev => document.addEventListener(ev, resetIdleTimer, { passive: true }));
 
-  // ── Only run when a user is logged in ────────────────────────────
+  // ── Only activate when a user is logged in ────────────────────────
+  // Also watch for login/logout events across tabs
   if (localStorage.getItem('apexUser')) {
     resetIdleTimer();
   }
-
-  // ── Show "session expired" toast on login page ────────────────────
-  // (handled by login.html checking ?reason=idle)
+  window.addEventListener('storage', e => {
+    if (e.key !== 'apexUser') return;
+    if (e.newValue) {
+      resetIdleTimer(); // logged in from another tab
+    } else {
+      clearTimeout(idleTimer);
+      clearTimeout(warnTimer);
+      hideWarning();
+    }
+  });
 })();
