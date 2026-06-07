@@ -725,8 +725,9 @@
       ];
 
       function getDaysFrom(n) {
-        const d = new Date(); d.setDate(d.getDate() + n);
-        return d.toISOString().split('T')[0];
+        const base = new Date(getTodayPH() + 'T00:00:00');
+        base.setDate(base.getDate() + n);
+        return base.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
       }
 
       let sessions = getSessions().filter(s => s.status === 'upcoming' || s.status === 'confirmed');
@@ -735,12 +736,12 @@
 
       const data = sessions.length ? sessions : FALLBACK;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayPH();
 
       container.innerHTML = data.map(s => {
         const d = new Date(s.date + 'T12:00:00');
-        const mon = d.toLocaleDateString('en-PH', { month:'short' }).toUpperCase();
-        const day = d.getDate();
+        const mon = d.toLocaleDateString('en-US', { timeZone:'Asia/Manila', month:'short' }).toUpperCase();
+        const day = parseInt(s.date.split('-')[2]); // YYYY-MM-DD → day, no timezone ambiguity
         const spots = s.maxPlayers - (s.registrations || []).length;
         const fewLeft = spots <= 3;
         const isToday = s.date === today;
