@@ -514,51 +514,20 @@
     .page-tab.active { background: var(--gold); color: var(--ink); }
     .page-tab:not(.active):hover { background: rgba(255,255,255,0.04); color: var(--cream); }
 
-    /* ── Queue sport selector (2 options only) ───────── */
-    .q-sport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* ── Players needed chips ────────────────────────── */
-    .q-need-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-    .q-need-chip {
-      width: 52px; height: 52px; border-radius: 12px;
-      border: 1.5px solid var(--stone-line); background: transparent;
-      font-size: 18px; font-weight: 800; color: var(--cream-muted);
-      cursor: pointer; font-family: inherit; transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .q-need-chip:hover { border-color: rgba(212,175,55,0.4); color: var(--cream); }
-    .q-need-chip.active { border-color: var(--gold); background: rgba(212,175,55,0.12); color: var(--gold); }
-
-    /* ── Queue time slot grid ────────────────────────── */
+    /* ── Queue time slot chips ───────────────────────── */
     .q-time-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .q-time-chip {
-      padding: 9px 14px; border-radius: 10px;
-      border: 1.5px solid var(--stone-line); background: transparent;
-      font-size: 13px; font-weight: 600; color: var(--cream-muted);
+      padding: 10px 18px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--surface-3);
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
       cursor: pointer; font-family: inherit; transition: all 0.18s;
+      min-height: 44px; touch-action: manipulation;
     }
-    .q-time-chip:hover { border-color: rgba(212,175,55,0.4); color: var(--cream); }
-    .q-time-chip.selected { border-color: var(--gold); background: rgba(212,175,55,0.12); color: var(--gold); }
-    .q-time-chip.past { opacity: 0.28; cursor: not-allowed; text-decoration: line-through; }
+    .q-time-chip:hover { border-color: rgba(212,175,55,0.3); color: var(--cream); background: rgba(212,175,55,0.04); }
+    .q-time-chip.selected { border-color: var(--gold); background: rgba(212,175,55,0.1); color: var(--gold); font-weight: 700; }
 
-    /* ── Queue summary card ──────────────────────────── */
-    .q-summary-card {
-      background: var(--stone); border: 1px solid var(--stone-line);
-      border-radius: var(--r-lg); padding: 24px; margin-bottom: 16px;
-    }
-    .q-summary-title { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cream-muted); margin-bottom: 16px; }
-    .q-summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
-    .q-summary-row .label { color: var(--cream-muted); }
-    .q-summary-row .value { font-weight: 600; color: var(--cream); }
-    .q-open-btn {
-      width: 100%; padding: 15px; border-radius: 12px;
-      background: #3b82f6; border: none; color: #fff;
-      font-size: 15px; font-weight: 800; font-family: inherit;
-      cursor: pointer; transition: all 0.22s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .q-open-btn:hover { background: #2563eb; transform: scale(1.01); box-shadow: 0 8px 28px rgba(59,130,246,0.35); }
-    .q-open-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    /* ── select dropdown styling ─────────────────────── */
+    select.form-input option { background: #1a1a22; color: var(--cream); }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -756,96 +725,135 @@
     <!-- ══ OPEN QUEUE CONTENT ══ -->
     <div id="queueContent" style="display:none">
       <h1 style="font-size:32px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px">Open a Queue</h1>
-      <p style="color:var(--text-muted);margin-bottom:32px">Book your court · recruit your crew · play together</p>
+      <p style="color:var(--text-muted);margin-bottom:32px">Set your sport, time &amp; crew size — players join from the homepage</p>
 
-      <!-- Q-Step 1: Sport -->
+      <!-- Step progress -->
+      <div class="step-progress" id="qStepProgress">
+        <div class="sp-step active" id="qsp1"><div class="sp-circle">1</div><div class="sp-label">Sport</div></div>
+        <div class="sp-line"></div>
+        <div class="sp-step" id="qsp2"><div class="sp-circle">2</div><div class="sp-label">Date &amp; Time</div></div>
+        <div class="sp-line"></div>
+        <div class="sp-step" id="qsp3"><div class="sp-circle">3</div><div class="sp-label">Players</div></div>
+        <div class="sp-line"></div>
+        <div class="sp-step" id="qsp4"><div class="sp-circle">4</div><div class="sp-label">Message</div></div>
+      </div>
+
+      <!-- PANEL 1: Sport -->
       <div class="book-panel" style="margin-bottom:20px">
         <div class="book-panel-header">
-          <div class="book-panel-num" style="background:#3b82f6;color:#fff">1</div>
-          <div class="book-panel-title">Choose Sport</div>
+          <div class="book-panel-num">1</div>
+          <div class="book-panel-title">Choose Your Sport</div>
         </div>
         <div class="book-panel-body">
-          <div class="q-sport-grid">
+          <div class="sport-selector">
             <div class="sport-option selected" onclick="qSelectSport('pickleball',this)" id="qopt-pickleball">
               <div class="sport-option-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="6"/><line x1="12" y1="14" x2="12" y2="22"/><line x1="9" y1="19" x2="15" y2="19"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r="1" fill="currentColor" stroke="none"/></svg>
               </div>
               <div class="sport-option-name">Pickleball</div>
-              <div class="sport-option-count">4 courts available</div>
+              <div class="sport-option-count">4 courts · 2–4 players</div>
             </div>
             <div class="sport-option" onclick="qSelectSport('badminton',this)" id="qopt-badminton">
               <div class="sport-option-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="8" rx="5" ry="7"/><line x1="12" y1="15" x2="12" y2="22"/><line x1="7" y1="5" x2="17" y2="5"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="11" x2="17" y2="11"/><line x1="9" y1="2" x2="9" y2="14"/><line x1="12" y1="1" x2="12" y2="15"/><line x1="15" y1="2" x2="15" y2="14"/></svg>
               </div>
               <div class="sport-option-name">Badminton</div>
-              <div class="sport-option-count">4 courts available</div>
+              <div class="sport-option-count">4 courts · 2–4 players</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Q-Step 2: Date -->
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">Date &amp; Time</div><div class="section-divider-line"></div></div>
+
+      <!-- PANEL 2: Date & Time -->
       <div class="book-panel" style="margin-bottom:20px">
         <div class="book-panel-header">
-          <div class="book-panel-num" style="background:#3b82f6;color:#fff">2</div>
-          <div class="book-panel-title">Select Date</div>
+          <div class="book-panel-num">2</div>
+          <div class="book-panel-title">Select Date &amp; Time</div>
         </div>
         <div class="book-panel-body">
+
+          <!-- Date strip -->
           <div class="date-nav">
             <span style="font-size:13px;font-weight:600" id="qDateRangeLabel"></span>
           </div>
           <div class="date-strip" id="qDateStrip"></div>
-        </div>
-      </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Queues open 7 days in advance
+          </div>
 
-      <!-- Q-Step 3: Time -->
-      <div class="book-panel" style="margin-bottom:20px">
-        <div class="book-panel-header">
-          <div class="book-panel-num" style="background:#3b82f6;color:#fff">3</div>
-          <div class="book-panel-title">Select Start Time</div>
-        </div>
-        <div class="book-panel-body">
+          <!-- Time slot grid -->
+          <div style="margin-top:20px;margin-bottom:10px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
           <div class="q-time-grid" id="qTimeGrid">
             <p style="color:var(--text-dim);font-size:13px">Select a date first</p>
           </div>
+
         </div>
       </div>
 
-      <!-- Q-Step 4: Players needed -->
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">Crew Size</div><div class="section-divider-line"></div></div>
+
+      <!-- PANEL 3: Players needed -->
       <div class="book-panel" style="margin-bottom:20px">
         <div class="book-panel-header">
-          <div class="book-panel-num" style="background:#3b82f6;color:#fff">4</div>
+          <div class="book-panel-num">3</div>
           <div class="book-panel-title">Players Needed</div>
         </div>
         <div class="book-panel-body">
-          <p style="font-size:13px;color:var(--cream-muted);margin-bottom:14px">How many more players are you looking for?</p>
-          <div class="q-need-grid" id="qNeedGrid">
-            <button class="q-need-chip active" onclick="qSetNeed(1,this)">1</button>
-            <button class="q-need-chip" onclick="qSetNeed(2,this)">2</button>
-            <button class="q-need-chip" onclick="qSetNeed(3,this)">3</button>
+          <div class="form-group">
+            <label class="form-label" for="qNeedSelect">How many more players are you looking for?</label>
+            <div style="position:relative">
+              <select id="qNeedSelect" class="form-input" onchange="qSetNeed(parseInt(this.value))"
+                style="appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer">
+                <option value="1">1 player needed</option>
+                <option value="2">2 players needed</option>
+                <option value="3">3 players needed</option>
+                <option value="4">4 players needed</option>
+                <option value="5">5 players needed</option>
+                <option value="6">6 players needed</option>
+                <option value="7">7 players needed</option>
+                <option value="8">8 players needed</option>
+                <option value="9">9 players needed</option>
+                <option value="10">10 players needed</option>
+                <option value="11">11 players needed</option>
+                <option value="12">12 players needed</option>
+                <option value="13">13 players needed</option>
+                <option value="14">14 players needed</option>
+                <option value="15">15 players needed</option>
+                <option value="16">16 players needed</option>
+              </select>
+              <svg style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
-          <p style="margin-top:12px;font-size:12px;color:var(--cream-muted)">
-            Max 4 per court · Pickleball &amp; Badminton (2–4 players)
+          <p style="margin-top:4px;font-size:12px;color:var(--cream-muted)">
+            Maximum 16 players per queue · Open to all skill levels by default
           </p>
         </div>
       </div>
 
-      <!-- Q-Step 5: Note -->
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">Optional</div><div class="section-divider-line"></div></div>
+
+      <!-- PANEL 4: Message -->
       <div class="book-panel" style="margin-bottom:20px">
         <div class="book-panel-header">
-          <div class="book-panel-num" style="background:#3b82f6;color:#fff">5</div>
+          <div class="book-panel-num">4</div>
           <div class="book-panel-title">Message <span style="font-size:11px;color:var(--cream-muted);font-weight:400">(optional)</span></div>
         </div>
         <div class="book-panel-body">
-          <textarea id="qNote" maxlength="100" placeholder="e.g. All levels welcome · Looking for casual rally"
-            style="width:100%;background:var(--ink-mid);border:1.5px solid var(--stone-line);border-radius:10px;
-                   color:var(--cream);font-family:inherit;font-size:13px;padding:12px 14px;
-                   resize:none;height:72px;outline:none;transition:border-color 0.2s;box-sizing:border-box"
-            oninput="qUpdateSummary()"
-            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--stone-line)'"></textarea>
-          <div style="font-size:11px;color:var(--cream-muted);text-align:right;margin-top:4px"><span id="qNoteLen">0</span>/100</div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="qNote">Leave a note for potential players</label>
+            <textarea id="qNote" maxlength="150" placeholder="e.g. All levels welcome · Looking for a casual rally · Bring water!"
+              class="form-input"
+              style="resize:none;height:88px;padding-top:12px;padding-bottom:12px"
+              oninput="qNoteUpdate()"
+              onfocus="this.style.borderColor='var(--border-bright)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+            <div style="font-size:11px;color:var(--cream-muted);text-align:right;margin-top:4px"><span id="qNoteLen">0</span>/150</div>
+          </div>
         </div>
       </div>
+
     </div><!-- /queueContent -->
 
   </div><!-- /left column -->
@@ -1053,11 +1061,35 @@ const Q_TIMES = [
   '7PM','8PM','9PM','10PM'
 ];
 
+// ── Step progress ─────────────────────────────────────────────
+function qUpdateSteps() {
+  const steps = [
+    { id: 'qsp1', done: !!qState.sport },
+    { id: 'qsp2', done: !!(qState.date && qState.time) },
+    { id: 'qsp3', done: qState.needed >= 1 },
+    { id: 'qsp4', done: false }
+  ];
+  steps.forEach((s, i) => {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+    const allBefore = steps.slice(0, i).every(x => x.done);
+    el.classList.remove('active','done');
+    if (s.done) el.classList.add('done');
+    else if (allBefore) el.classList.add('active');
+    const circle = el.querySelector('.sp-circle');
+    if (circle && s.done) circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    else if (circle) circle.textContent = i + 1;
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────
 function qInit() {
+  qState.date = getTodayPH(); // reset to today on tab open
+  qState.time = null;
   qRenderDates();
   qRenderTimeGrid();
   qUpdateSummary();
+  qUpdateSteps();
   // Show creator nick
   const nick = localStorage.getItem('apexNick') || localStorage.getItem('apexUser');
   if (nick) {
@@ -1069,11 +1101,12 @@ function qInit() {
 // ── Sport ─────────────────────────────────────────────────────
 function qSelectSport(sport, el) {
   qState.sport = sport;
-  document.querySelectorAll('.q-sport-grid .sport-option').forEach(e => e.classList.remove('selected'));
+  document.querySelectorAll('#queueContent .sport-option').forEach(e => e.classList.remove('selected'));
   el.classList.add('selected');
   qState.time = null;
   qRenderTimeGrid();
   qUpdateSummary();
+  qUpdateSteps();
 }
 
 // ── Date strip (7-day, same as booking) ───────────────────────
@@ -1101,7 +1134,7 @@ function qRenderDates() {
     const dow = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short' }).toUpperCase();
     const chip = document.createElement('div');
     chip.className = 'date-chip' + (isSelected ? ' selected' : '') + (ymd === today ? ' today' : '');
-    chip.innerHTML = `<span class="date-dow">${dow}</span><span class="date-num">${dayNum}</span>`;
+    chip.innerHTML = `<span class="dc-dow">${dow}</span><span class="dc-day">${dayNum}</span>`;
     chip.onclick = () => {
       qState.date = ymd;
       qState.time = null;
@@ -1109,6 +1142,7 @@ function qRenderDates() {
       chip.classList.add('selected');
       qRenderTimeGrid();
       qUpdateSummary();
+      qUpdateSteps();
     };
     strip.appendChild(chip);
   });
@@ -1137,24 +1171,31 @@ function qRenderTimeGrid() {
   grid.innerHTML = '';
   available.forEach(t => {
     const chip = document.createElement('button');
-    chip.className = 'q-time-chip' + (t === qState.time ? ' active' : '');
+    chip.className = 'q-time-chip' + (t === qState.time ? ' selected' : '');
     chip.textContent = t;
     chip.onclick = () => {
       qState.time = t;
-      document.querySelectorAll('.q-time-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
+      document.querySelectorAll('#qTimeGrid .q-time-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
       qUpdateSummary();
+      qUpdateSteps();
     };
     grid.appendChild(chip);
   });
 }
 
 // ── Players needed ────────────────────────────────────────────
-function qSetNeed(n, el) {
+function qSetNeed(n) {
   qState.needed = n;
-  document.querySelectorAll('.q-need-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
   qUpdateSummary();
+  qUpdateSteps();
+}
+
+// ── Note char counter ─────────────────────────────────────────
+function qNoteUpdate() {
+  const el = document.getElementById('qNote');
+  const lenEl = document.getElementById('qNoteLen');
+  if (el && lenEl) lenEl.textContent = el.value.length;
 }
 
 // ── Summary ───────────────────────────────────────────────────
@@ -1162,10 +1203,9 @@ function qUpdateSummary() {
   const body = document.getElementById('qSummaryBody');
   if (!body) return;
 
-  // Update note char count
-  const noteEl = document.getElementById('qNote');
-  const noteLenEl = document.getElementById('qNoteLen');
-  if (noteEl && noteLenEl) noteLenEl.textContent = noteEl.value.length;
+  // sync needed from dropdown
+  const sel = document.getElementById('qNeedSelect');
+  if (sel) qState.needed = parseInt(sel.value) || 1;
 
   const { sport, date, time, needed } = qState;
   if (!time) {
@@ -1233,7 +1273,7 @@ function openQueue() {
     creatorId:   userId,
     creatorName: user,
     creatorNick: nick,
-    needed: qState.needed,
+    needed: parseInt((document.getElementById('qNeedSelect') || {}).value) || qState.needed,
     participants: [],
     note: (document.getElementById('qNote') || {}).value || '',
     status: 'open',
