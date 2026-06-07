@@ -1918,5 +1918,39 @@ function doNavLogout() {
   };
 })();
 </script>
+
+<script>
+/* ── Scroll-reveal observer ──────────────────────────────────────
+   Watches every .reveal element; adds .visible when ≥15% is in view.
+   Works for any element added before DOMContentLoaded completes.
+   ────────────────────────────────────────────────────────────── */
+(function () {
+  if (!('IntersectionObserver' in window)) {
+    // Fallback: just make everything visible immediately
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+    return;
+  }
+
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObs.unobserve(entry.target); // fire once
+      }
+    });
+  }, { threshold: 0.12 });
+
+  // Observe all .reveal elements (present now and added dynamically)
+  function observeAll() {
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObs.observe(el));
+  }
+
+  // Run now + after any late-rendered content
+  observeAll();
+  window.addEventListener('load', observeAll);
+  // MutationObserver catches dynamically injected .reveal elements
+  new MutationObserver(observeAll).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>
