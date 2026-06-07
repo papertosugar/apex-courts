@@ -1,17 +1,7 @@
-/* ─── SMASH STUDIO — Booking System JS ─── */
-
-// Philippines timezone (UTC+8)
-function getTodayPH() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-}
-function getPhDate(d) {
-  // Convert a Date object's date portion to Philippines local date string
-  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-}
-function getNowHPH() {
-  const ph = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-  return ph.getHours() + ph.getMinutes() / 60;
-}
+/* ─── SMASH STUDIO — Booking System JS ─────────────────────────
+   Depends on: utils.js (getTodayPH, getNowHPH, getPhDate,
+               isToday, parseHourStr, slotTimeToKey, fhToTime)
+   ─────────────────────────────────────────────────────────── */
 
 // ─── AUTH GUARD ───
 (function() {
@@ -86,19 +76,8 @@ function getSlotStep() {
   return state.sport === 'drill' ? 0.5 : 1;
 }
 
-function parseSlotHours(label) {
-  const parts = label.replace(' AM','').replace(' PM','').split(':');
-  let h = parseInt(parts[0]);
-  const m = parts[1] ? parseInt(parts[1]) : 0;
-  if (label.includes('PM') && h !== 12) h += 12;
-  if (label.includes('AM') && h === 12) h = 0;
-  return h + m / 60;
-}
-function fhToTime(fh) {
-  const h = Math.floor(fh);
-  const m = Math.round((fh - h) * 60);
-  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-}
+// parseHourStr and fhToTime are in utils.js
+const parseSlotHours = parseHourStr; // alias for legacy call sites
 
 // ─── SLOT HELPERS ───
 function isSlotSelected(date, court, idx) {
@@ -149,11 +128,7 @@ function formatDate(d) {
 function formatDow(d) {
   return d.toLocaleDateString('en-US', { weekday: 'short' });
 }
-function isToday(d) {
-  if (!d) return false;
-  // Compare YYYY-MM-DD strings in PH timezone
-  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) === getTodayPH();
-}
+// isToday(d) is in utils.js
 
 function renderDates() {
   const strip = document.getElementById('dateStrip');
