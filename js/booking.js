@@ -885,6 +885,17 @@ function applyUrlParams() {
 }
 
 // ─── INIT ───
+// ── Expose to window so onclick attributes work after Vite build ──
+window.selectSport        = selectSport;
+window.toggleCalPopup     = toggleCalPopup;
+window.calNavMonth        = calNavMonth;
+window.calPickDate        = calPickDate;
+window.confirmBooking     = confirmBooking;
+window.selectPayMethod    = selectPayMethod;
+window.finalizePayment    = finalizePayment;
+window.closePaymentModal  = closePaymentModal;
+window.closeModal         = closeModal;
+
 document.addEventListener('DOMContentLoaded', () => {
   applyUrlParams();
   renderDates();
