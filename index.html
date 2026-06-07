@@ -110,6 +110,39 @@
 
 <!-- ════════════ HERO SLIDESHOW STYLES ════════════ -->
 <style>
+  /* ── Court skeleton shimmer ──────────────────────────────── */
+  .cskel-block {
+    background: linear-gradient(
+      90deg,
+      rgba(212,175,55,0.06) 0%,
+      rgba(212,175,55,0.14) 40%,
+      rgba(212,175,55,0.06) 80%
+    );
+    background-size: 200% 100%;
+    animation: cskelShim 1.4s ease-in-out infinite;
+  }
+  @keyframes cskelShim {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes skPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.4); }
+  }
+
+  /* ── Hero-right entrance animation ──────────────────────── */
+  .hero-right {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: heroRightIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
+  }
+  @keyframes heroRightIn {
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes heroStatIn {
+    to { opacity: 1; transform: none; }
+  }
+
   #hero { position: relative; overflow: hidden; }
   .hero-slideshow {
     position: absolute; inset: 0; z-index: 0;
@@ -288,8 +321,40 @@
 
   <!-- Right column — court schematic + stats -->
   <div class="hero-right" aria-hidden="true">
-    <div class="court-schematic" style="padding:0;overflow:hidden;background:transparent">
-      <canvas id="courtCanvas" style="width:100%;height:auto;display:block" aria-label="Live isometric court occupancy — 4 pickleball courts left, 4 badminton courts right"></canvas>
+    <div class="court-schematic" style="padding:0;overflow:hidden;background:transparent;position:relative" id="courtSchematic">
+
+      <!-- Loading skeleton — shown until canvas is ready -->
+      <div id="courtSkeleton" style="
+        position:absolute;inset:0;z-index:10;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:16px;background:rgba(13,13,18,0.7);border-radius:inherit;
+        transition:opacity 0.6s ease, visibility 0.6s ease;
+      ">
+        <!-- Pulsing court grid skeleton -->
+        <div style="display:grid;grid-template-columns:1fr 0.6fr 1fr;gap:6px;width:85%;opacity:0.6">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div class="cskel-block" style="height:52px;border-radius:6px;animation-delay:0s"></div>
+            <div class="cskel-block" style="height:52px;border-radius:6px;animation-delay:0.1s"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;justify-content:center">
+            <div class="cskel-block" style="height:110px;border-radius:6px;animation-delay:0.15s"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div class="cskel-block" style="height:52px;border-radius:6px;animation-delay:0.05s"></div>
+            <div class="cskel-block" style="height:52px;border-radius:6px;animation-delay:0.2s"></div>
+          </div>
+        </div>
+        <!-- Loading label -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:skPulse 1s ease-in-out infinite"></div>
+          <span style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);opacity:0.7">Loading Live Courts</span>
+        </div>
+      </div>
+
+      <canvas id="courtCanvas"
+        style="width:100%;height:auto;display:block;opacity:0;transition:opacity 0.8s ease"
+        aria-label="Live isometric court occupancy — 4 pickleball courts left, 4 badminton courts right">
+      </canvas>
       <div class="court-schematic-label">8 Courts · Live Status</div>
       <div class="court-schematic-live">
         <div class="live-dot"></div>
@@ -297,15 +362,15 @@
       </div>
     </div>
     <div class="hero-stat-row" role="list" aria-label="Venue statistics">
-      <div class="hero-stat" role="listitem">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 0.85s forwards">
         <div class="hero-stat-num">9</div>
         <div class="hero-stat-label">Indoor Courts</div>
       </div>
-      <div class="hero-stat" role="listitem">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 1.0s forwards">
         <div class="hero-stat-num">98%</div>
         <div class="hero-stat-label">Satisfaction</div>
       </div>
-      <div class="hero-stat" role="listitem">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 1.15s forwards">
         <div class="hero-stat-num" aria-label="3 thousand plus">3K+</div>
         <div class="hero-stat-label">Members</div>
       </div>
@@ -1670,6 +1735,31 @@ function doNavLogout() {
   const canvas = document.getElementById('courtCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
+
+  // ── Reveal canvas after first draw frames ─────────────────
+  let _revealed = false;
+  function revealCanvas() {
+    if (_revealed) return;
+    _revealed = true;
+    // Fade in canvas
+    canvas.style.opacity = '1';
+    // Fade out + hide skeleton
+    const skel = document.getElementById('courtSkeleton');
+    if (skel) {
+      skel.style.opacity = '0';
+      skel.style.visibility = 'hidden';
+      setTimeout(() => { skel.style.display = 'none'; }, 650);
+    }
+  }
+  // Reveal after 3 frames (ensures animation loop has drawn something)
+  let _frameCount = 0;
+  const _origRAF = requestAnimationFrame;
+  function waitFrames() {
+    _frameCount++;
+    if (_frameCount >= 3) { revealCanvas(); return; }
+    _origRAF(waitFrames);
+  }
+  _origRAF(waitFrames);
 
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const LW = 440, LH = 280;
