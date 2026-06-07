@@ -1428,33 +1428,10 @@ function qRenderTimePills() {
     chip.textContent = label;
     if (!past) {
       chip.onclick = () => {
+        // Always select exactly 2 hours starting from clicked slot
         const slotIdx = Q_TIMES.indexOf(label);
-        const isSelected = qState.times.includes(label);
-
-        if (!isSelected) {
-          // Unselected slot: start a fresh 2-hr block
-          const next = slotIdx < Q_TIMES.length - 1 ? Q_TIMES[slotIdx + 1] : null;
-          qState.times = next ? [label, next] : [label];
-        } else {
-          // Already selected — find position within current block
-          const lastIdx = Math.max(...qState.times.map(t => Q_TIMES.indexOf(t)));
-          if (slotIdx === lastIdx) {
-            // Clicked the LAST selected slot → extend by one more hour
-            const next = slotIdx < Q_TIMES.length - 1 ? Q_TIMES[slotIdx + 1] : null;
-            if (next && !qState.times.includes(next)) {
-              qState.times = [...qState.times, next];
-            }
-            // If already at end of list, deselect this slot
-            else if (!next) {
-              qState.times = qState.times.filter(t => Q_TIMES.indexOf(t) < slotIdx);
-            }
-          } else {
-            // Clicked a non-last selected slot → trim from here onwards
-            qState.times = qState.times.filter(t => Q_TIMES.indexOf(t) < slotIdx);
-            // If nothing left, clear
-          }
-        }
-
+        const next = slotIdx < Q_TIMES.length - 1 ? Q_TIMES[slotIdx + 1] : null;
+        qState.times = next ? [label, next] : [label];
         qRenderTimePills();
         qRenderDates();
         qUpdateSummary();
