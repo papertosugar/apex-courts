@@ -236,7 +236,7 @@ async function renderAvailability(sport) {
       const slotLabel  = status === 'open-session' ? 'OPEN'
                        : status === 'mine'         ? 'MINE'
                        : status === 'booked'       ? 'BOOKED'
-                       : isWalkIn                  ? 'DOOR' : '';
+                       : isWalkIn                  ? 'WALK-IN' : '';
 
       const walkInTitle = isWalkIn ? ' title="Walk-in available · Visit front desk"' : '';
 

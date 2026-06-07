@@ -299,12 +299,12 @@
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     </div>
     <div class="cancel-modal-title">Set Nickname</div>
-    <div class="cancel-modal-sub">Choose a unique nickname to represent you.<br>Must be 2–16 characters, no duplicates.</div>
+    <div class="cancel-modal-sub">Choose a unique nickname to represent you.<br>3–20 characters · letters, numbers, and _ only.</div>
 
     <div style="margin:20px 0 8px;text-align:left">
       <label style="font-size:12px;color:var(--cream-muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase">Nickname</label>
       <div style="position:relative;margin-top:6px">
-        <input id="nickInput" type="text" maxlength="16" placeholder="e.g. CourtKing88"
+        <input id="nickInput" type="text" maxlength="20" placeholder="e.g. CourtMaster99"
           style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--stone-line);
                  background:var(--ink-mid);color:var(--cream);font-size:15px;font-family:inherit;
                  box-sizing:border-box;outline:none;transition:border .2s"
@@ -405,6 +405,66 @@ let _nickLocked = false; // true once we confirm nick_change_count >= 1 from DB
   }
 })();
 
+// ── Nickname validation policy ────────────────────────────────
+const NICK_BANNED = [
+  // Adult / sexual
+  'sex','sexy','porn','porno','pornstar','blowjob','nude','hentai','onlyfans','xxx','adult',
+  'nsfw','erotic','fetish','boobs','dick','cock','pussy','vagina','penis','orgasm','cumshot',
+  // Profanity / slurs
+  'fuck','shit','bitch','asshole','bastard','motherfucker','fucker','cunt','damn','ass',
+  'loser','idiot','moron','retard','faggot','nigger','nigga','chink','spic','kike',
+  // Gambling
+  'casino','bet','betting','gambling','poker','baccarat','blackjack','slot','sportsbook',
+  // Drugs
+  'drug','cocaine','meth','heroin','ecstasy','weed','dealer','druglord','crack','opium',
+  // Hate / extremism
+  'nazi','hitler','kkk','jihad','terrorist','isis','rape',
+  // Admin impersonation
+  'admin','administrator','staff','moderator','manager','owner','support',
+  'courtlabadmin','courtlabstaff','smashstudio',
+];
+
+const NICK_NORMALIZE_MAP = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t' };
+
+function normalizeNick(s) {
+  // Remove underscores (used to space out banned words)
+  let n = s.replace(/_/g, '');
+  // Substitute leet-speak digits
+  n = n.replace(/[01345 7]/g, c => NICK_NORMALIZE_MAP[c] || c);
+  return n.toLowerCase();
+}
+
+/**
+ * Validate a nickname against the Court Lab Nickname Validation Policy.
+ * Returns { ok: true } or { ok: false, message: '...' }.
+ */
+function validateNickname(val) {
+  // 1. Length
+  if (val.length < 3)  return { ok: false, message: 'Minimum 3 characters required.' };
+  if (val.length > 20) return { ok: false, message: 'Maximum 20 characters allowed.' };
+
+  // 2. Allowed characters only: letters, digits, underscore
+  if (!/^[a-zA-Z0-9_]+$/.test(val))
+    return { ok: false, message: 'Only letters (A–Z), numbers, and _ are allowed. No spaces or special characters.' };
+
+  // 3. Normalize and check banned words
+  const norm = normalizeNick(val);
+  for (const word of NICK_BANNED) {
+    if (norm.includes(word))
+      return { ok: false, message: 'This nickname contains a prohibited word. Please choose another.' };
+  }
+
+  // 4. No personal info — phone number pattern (7+ consecutive digits)
+  if (/\d{7,}/.test(val))
+    return { ok: false, message: 'Phone numbers are not allowed in nicknames.' };
+
+  // 5. No email-like pattern
+  if (val.includes('@'))
+    return { ok: false, message: 'Email addresses are not allowed in nicknames.' };
+
+  return { ok: true };
+}
+
 // ── Nickname modal logic ──────────────────────────────────────
 function openNickModal() {
   if (_nickLocked) return; // already used their one change
@@ -428,24 +488,18 @@ function onNickInput() {
   const fb  = document.getElementById('nickFeedback');
   const btn = document.getElementById('nickSaveBtn');
 
-  // ── Format validation first ─────────────────────────────────
-  if (val.length < 2) {
-    fb.textContent = val.length ? 'Minimum 2 characters required' : '';
-    fb.style.color = '#f87171';
-    btn.disabled = true; return;
+  // ── Policy validation (format + content) ───────────────────
+  if (!val.length) {
+    fb.textContent = ''; btn.disabled = true; return;
   }
-  if (val.length > 16) {
-    fb.textContent = 'Maximum 16 characters allowed';
-    fb.style.color = '#f87171';
-    btn.disabled = true; return;
-  }
-  if (!/^[a-zA-Z0-9가-힣_\-]+$/.test(val)) {
-    fb.textContent = 'Only letters, numbers, _, and - are allowed';
+  const check = validateNickname(val);
+  if (!check.ok) {
+    fb.textContent = check.message;
     fb.style.color = '#f87171';
     btn.disabled = true; return;
   }
 
-  // Format OK — enable Save immediately, then async duplicate check
+  // Policy passed — enable Save, then async duplicate check
   btn.disabled = false;
   fb.textContent = 'Checking availability…'; fb.style.color = 'var(--cream-muted)';
 
