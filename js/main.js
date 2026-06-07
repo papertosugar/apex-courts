@@ -95,13 +95,17 @@ function buildSlotMapFromLocal(sport, timeArr) {
   const map = {};
 
   // Regular bookings
+  // booking.js stores sport as 'drill'; main.js sport key is 'drillzone' → normalise both ways
+  const normSport = sport === 'drillzone' ? ['drillzone','drill'] : [sport];
   bookings.forEach(b => {
     if (b.status === 'cancelled') return;
-    if (b.sport !== sport) return;
+    if (!normSport.includes(b.sport)) return;
     (b.slots || []).forEach(s => {
       if (s.date !== today) return;
       const c = Number(s.court);
       if (!map[c]) map[c] = {};
+      // s.time may be '8 AM' (booking.js label) or '08:00:00' (DB format)
+      // pgTimeToLabel handles both; label format is '8AM' (no space) matching TIMES/DZ_TIMES
       const label = pgTimeToLabel(s.time) || s.time;
       if (timeArr.includes(label)) {
         map[c][label] = (b.id && myUserId && b.userId === myUserId) ? 'mine' : 'booked';
@@ -159,7 +163,8 @@ async function renderAvailability(sport) {
   if (window.ApexCourts) {
     try {
       const today   = new Date().toISOString().split('T')[0];
-      const dbSport = sport === 'drillzone' ? 'drillzone' : sport;
+      // DB stores drillzone as 'drillzone'; homepage key is also 'drillzone'
+      const dbSport = sport;
       const [dbBookings, user] = await Promise.all([
         ApexCourts.getAvailability(dbSport, today),
         ApexCourts.getCurrentUser().catch(() => null),

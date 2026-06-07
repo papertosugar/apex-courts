@@ -784,6 +784,7 @@ async function finalizePayment() {
   const user = localStorage.getItem('apexUser') || document.getElementById('firstName')?.value || 'Guest';
   bookings.push({
     id: code, userName: user, sport: state.sport,
+    userId: localStorage.getItem('apexUserId') || null,
     slots: state.selectedSlots.map(s => ({
       date: s.date.toISOString().split('T')[0], court: s.court, time: s.label,
     })),
@@ -792,6 +793,7 @@ async function finalizePayment() {
     totalAmount: courtCost + extrasCost,
     status: 'confirmed', paymentMethod: method,
     createdAt: new Date().toISOString(), createdBy: 'online',
+    source: 'local',
   });
   localStorage.setItem('apexBookings', JSON.stringify(bookings));
 
@@ -893,19 +895,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (error || !data) return;
 
-        // Merge into localStorage cache (don't overwrite own pending bookings)
+        // Merge into localStorage cache (don't overwrite locally-created bookings)
         const existing = JSON.parse(localStorage.getItem('apexBookings') || '[]');
-        const userId   = localStorage.getItem('apexUserId');
 
-        // Keep only local user's own bookings; replace everything else with DB data
-        const ownLocal = existing.filter(b => b.userId === userId || b.source === 'local');
-        const dbNorm   = data.map(b => ({
-          courtNumber:  b.court_number,
-          date:         b.booking_date,
-          time:         b.start_time,
-          sport:        b.sport,
-          status:       b.status,
-          source:       'db',
+        // Keep all local bookings (source:'local'); strip out previous db-sourced entries
+        const ownLocal = existing.filter(b => b.source !== 'db');
+
+        // Normalise DB rows into the same {slots:[]} structure used by getSlotStatus()
+        // DB sport: 'drillzone' → booking.js state key: 'drill'
+        const dbNorm = data.map(b => ({
+          id:     `db-${b.court_number}-${b.booking_date}-${b.start_time}`,
+          sport:  b.sport === 'drillzone' ? 'drill' : b.sport,
+          status: b.status,
+          source: 'db',
+          // slots[] format expected by getSlotStatus() and main.js buildSlotMapFromLocal()
+          slots: [{
+            date:  b.booking_date,                    // 'YYYY-MM-DD'
+            court: Number(b.court_number),
+            time:  b.start_time,                      // '08:00:00' — parseSlotHours handles 24h
+          }],
         }));
 
         localStorage.setItem('apexBookings', JSON.stringify([...ownLocal, ...dbNorm]));
