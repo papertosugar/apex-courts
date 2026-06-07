@@ -63,7 +63,14 @@ document.querySelectorAll('.btn-primary, .nav-cta').forEach(btn => {
 
 // ─── AVAILABILITY GRID ────────────────────────────────────────
 const TIMES  = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
-const DZ_TIMES = ['8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
+// Drill Zone uses 30-min slots — must match booking.js HOURS_30MIN keys exactly
+const DZ_TIMES = [
+  '8AM','8:30AM','9AM','9:30AM','10AM','10:30AM',
+  '11AM','11:30AM','12PM','12:30PM',
+  '1PM','1:30PM','2PM','2:30PM','3PM','3:30PM',
+  '4PM','4:30PM','5PM','5:30PM','6PM','6:30PM',
+  '7PM','7:30PM','8PM','8:30PM','9PM','9:30PM',
+];
 const COURTS = { pickleball: 4, badminton: 4, drillzone: 1 };
 
 /** Read localStorage bookings → slot map for the given sport/date. */
@@ -134,10 +141,7 @@ async function renderAvailability(sport) {
   // they cannot be booked online but are available at the front desk.
   const allTimes = isDZ ? DZ_TIMES : TIMES;
   const timeArr  = allTimes.filter(t => {
-    let h = parseInt(t);
-    if (t.includes('PM') && h !== 12) h += 12;
-    if (t.includes('AM') && h === 12) h = 0;
-    return h >= Math.floor(nowH); // show current floor-hour + future
+    return parseHourStr(t) >= Math.floor(nowH); // show current floor-hour + future
   });
 
   // Step 1 — localStorage (instant, always available)
@@ -188,11 +192,11 @@ async function renderAvailability(sport) {
     <div style="width:88px;flex-shrink:0"></div>
     <div style="display:flex;gap:4px;flex:1">`;
   timeArr.forEach(t => {
-    let h = parseInt(t);
-    if (t.includes('PM') && h !== 12) h += 12;
-    if (t.includes('AM') && h === 12) h = 0;
-    const isCurrent = h === Math.floor(nowH);
-    html += `<div style="flex:1;font-size:9px;text-align:center;letter-spacing:0.04em;
+    const h = parseHourStr(t);
+    const isCurrent = Math.floor(h) === Math.floor(nowH);
+    // DZ has 30-min slots (many columns) — shrink label font further
+    const labelSize = isDZ ? '7px' : '9px';
+    html += `<div style="flex:1;font-size:${labelSize};text-align:center;letter-spacing:0.03em;
       color:${isCurrent ? 'var(--accent)' : 'var(--cream-dim)'};
       font-weight:${isCurrent ? '700' : '400'}">${t}</div>`;
   });
@@ -222,9 +226,8 @@ async function renderAvailability(sport) {
       const tLabel = timeArr[i];
 
       // Determine if this slot has already started (past online booking window)
-      let slotH = parseInt(tLabel);
-      if (tLabel.includes('PM') && slotH !== 12) slotH += 12;
-      if (tLabel.includes('AM') && slotH === 12) slotH = 0;
+      // Use parseHourStr so '8:30AM' → 8.5 (not parseInt → 8)
+      const slotH = parseHourStr(tLabel);
       const hasStarted = slotH < nowH; // slot started, can't book online
 
       // Walk-in override: open slots that have started become walk-in

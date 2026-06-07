@@ -55,25 +55,48 @@ function parseHourStr(t) {
 }
 
 /**
- * Convert a PostgreSQL time '08:00:00' → TIMES-key '8AM'.
- * Only call this with verified 24h strings.
+ * Convert a PostgreSQL time string '08:00:00' or '08:30:00' → TIMES/DZ_TIMES key.
+ * Supports half-hours: '08:30:00' → '8:30AM', '13:30:00' → '1:30PM'.
  */
 function pgTimeToLabel(pg) {
-  let h = parseInt(pg.split(':')[0]);
+  const parts = pg.split(':');
+  let h = parseInt(parts[0]);
+  const m = parseInt(parts[1]) || 0;
   const suffix = h >= 12 ? 'PM' : 'AM';
   if (h > 12) h -= 12;
   if (h === 0) h = 12;
-  return h + suffix;
+  return m > 0 ? `${h}:${String(m).padStart(2,'0')}${suffix}` : `${h}${suffix}`;
 }
 
 /**
- * Convert any slot time string to a TIMES/DZ_TIMES key (e.g. '8AM', '1PM').
- * Handles DB 24h strings, booking.js labels with space, and already-clean keys.
+ * Convert any slot time string to a TIMES/DZ_TIMES key.
+ *
+ * Handles:
+ *   '08:00:00' | '08:30:00'         DB 24-hour (with or without seconds)
+ *   '8:00 AM'  | '8:30 AM'          booking.js HOURS_30MIN labels (space before AM/PM)
+ *   '8 AM'     | '1 PM'             booking.js HOURS_1HR labels
+ *   '8AM'      | '8:30AM' | '1PM'   already-clean TIMES/DZ_TIMES keys
+ *
+ * Returns keys like '8AM', '8:30AM', '1PM', '1:30PM'.
  */
 function slotTimeToKey(t) {
   if (!t) return '';
-  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return pgTimeToLabel(t);
-  return t.replace(' ', ''); // '8 AM' → '8AM', '1 PM' → '1PM'
+  const s = String(t).trim();
+
+  // ── DB 24h format: '08:00:00' or '8:30' ─────────────────────
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) return pgTimeToLabel(s);
+
+  // ── AM/PM format: parse hour + optional minutes ──────────────
+  const ampmMatch = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+  if (ampmMatch) {
+    let h   = parseInt(ampmMatch[1]);
+    const m = parseInt(ampmMatch[2]) || 0;
+    const suffix = ampmMatch[3].toUpperCase();
+    return m > 0 ? `${h}:${String(m).padStart(2,'0')}${suffix}` : `${h}${suffix}`;
+  }
+
+  // ── Already a clean key — strip any internal spaces ──────────
+  return s.replace(/\s+/g, '');
 }
 
 /** Convert decimal hour to 'HH:MM' 24h string (e.g. 13.5 → '13:30'). */
