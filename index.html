@@ -52,8 +52,82 @@
   </script>
 <!-- utils.js는 인라인 스크립트보다 먼저 필요 → 블로킹 유지, 단 경량 파일이라 OK -->
 <script src="/js/utils.js"></script>
+
+<script>
+/* ── Scroll-reveal: run at DOMContentLoaded, NOT at body end ──
+   This fires BEFORE Supabase/main.js download, so visible elements
+   animate immediately instead of waiting for heavy scripts.        */
+(function () {
+  function boot() {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+      return;
+    }
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });
+
+    function observeAll() {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => obs.observe(el));
+    }
+    observeAll();
+    new MutationObserver(observeAll).observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+
+/* ── Page loader progress controller ── */
+window._setProgress = (function () {
+  let cur = 0;
+  return function set(p) {
+    if (p <= cur) return;
+    cur = p;
+    requestAnimationFrame(function () {
+      var bar  = document.getElementById('_ldBar');
+      var pct  = document.getElementById('_ldPct');
+      if (bar) bar.style.width = p + '%';
+      if (pct) pct.textContent  = Math.round(p) + '%';
+      if (p >= 100) {
+        setTimeout(function () {
+          var ov = document.getElementById('_ldOverlay');
+          if (!ov) return;
+          ov.style.opacity = '0';
+          setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
+        }, 180);
+      }
+    });
+  };
+})();
+</script>
 </head>
 <body>
+
+<!-- ── Page loading overlay ── -->
+<div id="_ldOverlay" style="
+  position:fixed;inset:0;z-index:99999;
+  background:#09090b;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 0.45s cubic-bezier(0.22,1,0.36,1);
+  pointer-events:none;
+">
+  <!-- Logo mark -->
+  <div style="margin-bottom:28px;opacity:0.9">
+    <svg width="40" height="40" viewBox="0 0 20 20" fill="none">
+      <path d="M10 2L18 17H2L10 2Z" stroke="#D4AF37" stroke-width="1.8" fill="none"/>
+      <line x1="6" y1="12" x2="14" y2="12" stroke="#D4AF37" stroke-width="1.8"/>
+    </svg>
+  </div>
+  <!-- Bar track -->
+  <div style="width:180px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+    <div id="_ldBar" style="width:0%;height:100%;background:linear-gradient(90deg,#b8972a,#D4AF37);border-radius:2px;transition:width 0.25s ease"></div>
+  </div>
+  <!-- Percentage text -->
+  <div id="_ldPct" style="margin-top:14px;font-size:12px;font-family:system-ui,sans-serif;color:rgba(255,255,255,0.35);letter-spacing:0.04em">0%</div>
+</div>
+<script>_setProgress(12);</script>
 
 <!-- ① Skip link (keyboard navigation) -->
 <a href="#main" class="skip-link">Skip to main content</a>
@@ -1412,9 +1486,10 @@
 </footer>
 
 <!-- Supabase + client: body 끝에서 로드 → 렌더링 블록 없음 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="/js/supabase-client.js"></script>
-<script src="js/main.js"></script>
+<script>_setProgress(35);</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onload="_setProgress(72)"></script>
+<script src="/js/supabase-client.js" onload="_setProgress(86)"></script>
+<script src="js/main.js" onload="_setProgress(100)"></script>
 <script src="js/auto-logout.js" defer></script>
 <script>
 /* ── NAV AUTH STATE ── */
@@ -2004,38 +2079,6 @@ function doNavLogout() {
 })();
 </script>
 
-<script>
-/* ── Scroll-reveal observer ──────────────────────────────────────
-   Watches every .reveal element; adds .visible when ≥15% is in view.
-   Works for any element added before DOMContentLoaded completes.
-   ────────────────────────────────────────────────────────────── */
-(function () {
-  if (!('IntersectionObserver' in window)) {
-    // Fallback: just make everything visible immediately
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
-    return;
-  }
-
-  const revealObs = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        revealObs.unobserve(entry.target); // fire once
-      }
-    });
-  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
-
-  // Observe all .reveal elements (present now and added dynamically)
-  function observeAll() {
-    document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObs.observe(el));
-  }
-
-  // Run now + after any late-rendered content
-  observeAll();
-  window.addEventListener('load', observeAll);
-  // MutationObserver catches dynamically injected .reveal elements
-  new MutationObserver(observeAll).observe(document.body, { childList: true, subtree: true });
-})();
-</script>
+<!-- scroll-reveal observer moved to <head> for immediate execution -->
 </body>
 </html>
