@@ -207,7 +207,6 @@
     #opToast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
   </style>
 <script src="/js/utils.js"></script>
-<script src="/js/auto-logout.js"></script>
 </head>
 <body>
 
@@ -500,7 +499,6 @@
 
 <div id="opToast"></div>
 
-<script src="js/main.js"></script>
 <script>
 /* ── AUTH & ROLE ── */
 const currentUser = localStorage.getItem('apexUser');
@@ -969,7 +967,7 @@ function showToast(msg, isError) {
 })();
 </script>
 
-<script src="/js/vendor/supabase.min.js"></script>
-<script src="/js/supabase-client.js"></script>
+
+<script type="module" src="/src/pages/openplay.js"></script>
 </body>
 </html>

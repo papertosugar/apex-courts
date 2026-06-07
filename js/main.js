@@ -1,8 +1,8 @@
 /* ─── SMASH STUDIO — main.js ───────────────────────────────────
    Homepage logic: navbar, availability grid, canvas sync, UI.
-   Depends on: utils.js (getTodayPH, getNowHPH, isToday,
-               parseHourStr, slotTimeToKey, pgTimeToLabel)
    ─────────────────────────────────────────────────────────── */
+// ESM: utils/supabase are imported by the page entry (src/pages/index.js)
+// globals (getTodayPH etc.) are already exposed on window by src/utils.js
 
 // ─── NAVBAR SCROLL ───────────────────────────────────────────
 const navbar = document.getElementById('navbar');

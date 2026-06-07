@@ -223,7 +223,6 @@
     .nick-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
   </style>
 <script src="/js/utils.js"></script>
-  <script src="/js/auto-logout.js"></script>
 </head>
 <body>
 
@@ -829,7 +828,7 @@ function showToast(msg) {
 window.addEventListener('DOMContentLoaded', loadBookings);
 </script>
 
-<script src="/js/vendor/supabase.min.js"></script>
-<script src="/js/supabase-client.js"></script>
+
+<script type="module" src="/src/pages/my-bookings.js"></script>
 </body>
 </html>

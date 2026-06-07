@@ -1,6 +1,6 @@
 /* ─── SMASH STUDIO — Booking System JS ─────────────────────────
-   Depends on: utils.js (getTodayPH, getNowHPH, getPhDate,
-               isToday, parseHourStr, slotTimeToKey, fhToTime)
+   ESM: utils/supabase imported by src/pages/book.js entry.
+   globals (getTodayPH etc.) are exposed on window by src/utils.js
    ─────────────────────────────────────────────────────────── */
 
 // ─── AUTH GUARD ───

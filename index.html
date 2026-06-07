@@ -138,7 +138,6 @@ window._setProgress = (function () {
   <!-- Percentage text -->
   <div id="_ldPct" style="margin-top:14px;font-size:12px;font-family:system-ui,sans-serif;color:rgba(255,255,255,0.35);letter-spacing:0.04em">0%</div>
 </div>
-<script>_setProgress(12);</script>
 
 <!-- ① Skip link (keyboard navigation) -->
 <a href="#main" class="skip-link">Skip to main content</a>
@@ -1496,12 +1495,6 @@ window._setProgress = (function () {
   </div>
 </footer>
 
-<!-- Supabase + client: body 끝에서 로드 → 렌더링 블록 없음 -->
-<script>_setProgress(35);</script>
-<script src="/js/vendor/supabase.min.js" onload="_setProgress(72)"></script>
-<script src="/js/supabase-client.js" onload="_setProgress(86)"></script>
-<script src="js/main.js" onload="_setProgress(100)"></script>
-<script src="js/auto-logout.js" defer></script>
 <script>
 /* ── NAV AUTH STATE ── */
 (function() {
@@ -2090,6 +2083,7 @@ function doNavLogout() {
 })();
 </script>
 
-<!-- scroll-reveal observer moved to <head> for immediate execution -->
+
+<script type="module" src="/src/pages/index.js"></script>
 </body>
 </html>

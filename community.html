@@ -280,7 +280,6 @@
     .modal-btn:hover { transform: scale(1.02); }
   </style>
 <script src="/js/utils.js"></script>
-<script src="/js/auto-logout.js"></script>
 </head>
 <body>
 
@@ -486,7 +485,6 @@
 
 <div id="commToast"></div>
 
-<script src="js/main.js"></script>
 <script>
 /* ── STATE ── */
 const currentUser = localStorage.getItem('apexUser');
@@ -946,7 +944,7 @@ syncFromDB().then(() => {
 });
 </script>
 
-<script src="/js/vendor/supabase.min.js"></script>
-<script src="/js/supabase-client.js"></script>
+
+<script type="module" src="/src/pages/community.js"></script>
 </body>
 </html>
