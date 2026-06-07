@@ -524,7 +524,8 @@ async function compressImage(file, maxWidth = 1080, quality = 0.82) {
   const links = document.querySelector('.nav-links');
   if (currentUser) {
     badge.style.display = 'flex';
-    nameEl.textContent = 'Hi, ' + currentUser.split(' ')[0];
+    const nick = localStorage.getItem('apexNick');
+    nameEl.textContent = 'Hi, ' + (nick || currentUser.split(' ')[0]);
     // Hide sign-in link
     links.querySelectorAll('a[href="login.html"]').forEach(a => a.parentElement.style.display = 'none');
   }

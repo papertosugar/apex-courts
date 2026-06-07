@@ -356,6 +356,13 @@ async function doLogin() {
         localStorage.setItem('apexUser',   fullName);
         localStorage.setItem('apexRole',   roleLabel);
         localStorage.setItem('apexUserId', user.id);
+        // Load nickname from profiles (if set)
+        try {
+          const { data: prof } = await supabase
+            .from('profiles').select('nickname').eq('id', user.id).maybeSingle();
+          if (prof?.nickname) localStorage.setItem('apexNick', prof.nickname);
+          else localStorage.removeItem('apexNick');
+        } catch(_) {}
         successRole = roleLabel;
         showSuccessPopup(fullName, roleLabel);
         return;

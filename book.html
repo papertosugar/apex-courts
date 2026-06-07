@@ -777,7 +777,10 @@
   const role = localStorage.getItem('apexRole');
   const userEl = document.getElementById('bookNavUser');
   const roleEl = document.getElementById('bookNavRole');
-  if (userEl && user) userEl.textContent = 'Hi, ' + user.split(' ')[0];
+  if (userEl && user) {
+    const nick = localStorage.getItem('apexNick');
+    userEl.textContent = 'Hi, ' + (nick || user.split(' ')[0]);
+  }
   // POS/Admin 버튼은 Admin, POS Staff 에게만 표시
   if (roleEl && (role === 'Admin' || role === 'POS Staff')) {
     roleEl.style.display = 'inline-block';

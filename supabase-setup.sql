@@ -51,6 +51,14 @@ $$;
 -- 또는 court_number가 없는 잘못된 예약만 삭제:
 -- DELETE FROM bookings WHERE court_number IS NULL;
 
+-- 5. Nickname support
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS nickname TEXT;
+
+-- Nickname: unique & not empty when set
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_nickname_unique
+  ON profiles (nickname)
+  WHERE nickname IS NOT NULL AND nickname != '';
+
 -- 4. Public read for availability check (no auth required)
 DO $$
 BEGIN

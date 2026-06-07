@@ -1161,7 +1161,8 @@
     document.getElementById('navUserArea').style.display        = 'list-item';
     document.getElementById('navLogoutLink').style.display      = 'list-item';
     document.getElementById('navMyBookingsLink').style.display  = 'list-item';
-    document.getElementById('navUserName').innerHTML = '👤 ' + user.split(' ')[0];
+    const nick = localStorage.getItem('apexNick');
+    document.getElementById('navUserName').innerHTML = '👤 ' + (nick || user.split(' ')[0]);
     if (role === 'Admin' || role === 'POS Staff') {
       document.getElementById('navAdminLink').style.display = 'list-item';
     }
