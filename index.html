@@ -133,8 +133,8 @@
   /* ── Hero-right entrance animation ──────────────────────── */
   .hero-right {
     opacity: 0;
-    transform: translateY(18px);
-    animation: heroRightIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
+    transform: translateY(12px);
+    animation: heroRightIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.05s forwards;
   }
   @keyframes heroRightIn {
     to { opacity: 1; transform: none; }
@@ -328,7 +328,7 @@
         position:absolute;inset:0;z-index:10;
         display:flex;flex-direction:column;align-items:center;justify-content:center;
         gap:16px;background:rgba(13,13,18,0.7);border-radius:inherit;
-        transition:opacity 0.6s ease, visibility 0.6s ease;
+        transition:opacity 0.25s ease, visibility 0.25s ease;
       ">
         <!-- Pulsing court grid skeleton -->
         <div style="display:grid;grid-template-columns:1fr 0.6fr 1fr;gap:6px;width:85%;opacity:0.6">
@@ -352,7 +352,7 @@
       </div>
 
       <canvas id="courtCanvas"
-        style="width:100%;height:auto;display:block;opacity:0;transition:opacity 0.8s ease"
+        style="width:100%;height:auto;display:block;opacity:0;transition:opacity 0.3s ease"
         aria-label="Live isometric court occupancy — 4 pickleball courts left, 4 badminton courts right">
       </canvas>
       <div class="court-schematic-label">8 Courts · Live Status</div>
@@ -362,15 +362,15 @@
       </div>
     </div>
     <div class="hero-stat-row" role="list" aria-label="Venue statistics">
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 0.85s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.2s forwards">
         <div class="hero-stat-num">9</div>
         <div class="hero-stat-label">Indoor Courts</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 1.0s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.3s forwards">
         <div class="hero-stat-num">98%</div>
         <div class="hero-stat-label">Satisfaction</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(10px);animation:heroStatIn 0.6s cubic-bezier(0.22,1,0.36,1) 1.15s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.4s forwards">
         <div class="hero-stat-num" aria-label="3 thousand plus">3K+</div>
         <div class="hero-stat-label">Members</div>
       </div>
@@ -1748,18 +1748,11 @@ function doNavLogout() {
     if (skel) {
       skel.style.opacity = '0';
       skel.style.visibility = 'hidden';
-      setTimeout(() => { skel.style.display = 'none'; }, 650);
+      setTimeout(() => { skel.style.display = 'none'; }, 280);
     }
   }
-  // Reveal after 3 frames (ensures animation loop has drawn something)
-  let _frameCount = 0;
-  const _origRAF = requestAnimationFrame;
-  function waitFrames() {
-    _frameCount++;
-    if (_frameCount >= 3) { revealCanvas(); return; }
-    _origRAF(waitFrames);
-  }
-  _origRAF(waitFrames);
+  // Reveal after 1 frame (ensures at least one draw before showing)
+  requestAnimationFrame(() => requestAnimationFrame(revealCanvas));
 
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const LW = 440, LH = 280;
@@ -2028,7 +2021,7 @@ function doNavLogout() {
         revealObs.unobserve(entry.target); // fire once
       }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
 
   // Observe all .reveal elements (present now and added dynamically)
   function observeAll() {
