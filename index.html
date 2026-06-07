@@ -92,11 +92,12 @@ window._setProgress = (function () {
     var ov = document.getElementById('_ldOverlay');
     if (!ov || ov._gone) return;
     ov._gone = true;
+    ov.style.transition = 'opacity 0.18s ease';
     ov.style.opacity = '0';
-    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
+    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200);
   }
   // Dismiss on DOMContentLoaded (fast — DOM ready, animations can start)
-  document.addEventListener('DOMContentLoaded', function () { setTimeout(dismiss, 200); });
+  document.addEventListener('DOMContentLoaded', function () { dismiss(); });
   // Safety fallback: force-dismiss after 3s no matter what
   setTimeout(dismiss, 3000);
   // Also dismiss on window load
@@ -160,6 +161,7 @@ window._setProgress = (function () {
   <ul class="nav-links" id="navLinks" role="list">
     <li><a href="#sports">Sports</a></li>
     <li><a href="#availability">Schedule</a></li>
+    <li><a href="openplay.html">Open Play</a></li>
     <li><a href="book.html#queue">Queue</a></li>
     <li><a href="community.html">Community</a></li>
     <li id="navAuthLinks">
@@ -219,7 +221,7 @@ window._setProgress = (function () {
   .hero-right {
     opacity: 0;
     transform: translateY(12px);
-    animation: heroRightIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.05s forwards;
+    animation: heroRightIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.35s forwards;
   }
   @keyframes heroRightIn {
     to { opacity: 1; transform: none; }
@@ -447,15 +449,15 @@ window._setProgress = (function () {
       </div>
     </div>
     <div class="hero-stat-row" role="list" aria-label="Venue statistics">
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.2s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.6s forwards">
         <div class="hero-stat-num">9</div>
         <div class="hero-stat-label">Indoor Courts</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.3s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.5s forwards">
         <div class="hero-stat-num">98%</div>
         <div class="hero-stat-label">Satisfaction</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.4s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.6s forwards">
         <div class="hero-stat-num" aria-label="3 thousand plus">3K+</div>
         <div class="hero-stat-label">Members</div>
       </div>
@@ -766,13 +768,12 @@ window._setProgress = (function () {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" opacity="0.45"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       </div>
       <div class="cp-price-rows">
-        <div class="cp-price-row"><span class="cp-price-label">Pickleball Session</span><span class="cp-price-value">₱200</span></div>
-        <div class="cp-price-divider"></div>
-        <div class="cp-price-row"><span class="cp-price-label">Badminton Session</span><span class="cp-price-value">₱300</span></div>
-        <div class="cp-price-divider"></div>
-        <div class="cp-price-row"><span class="cp-price-label">Mixed / Extended</span><span class="cp-price-value">₱200</span></div>
+        <div class="cp-price-row">
+          <span class="cp-price-label">Join Fee (per player)</span>
+          <span class="cp-price-value" style="color:#60a5fa">₱200</span>
+        </div>
       </div>
-      <p class="cp-price-note">Drop-in rate per player · no court rental fee · equipment available on request</p>
+      <p class="cp-price-note">Flat rate per session · all sports · no court rental fee · just show up and play</p>
     </div>
     <div class="cp-price-card cp-price-card-q">
       <div class="cp-price-head">
@@ -780,13 +781,12 @@ window._setProgress = (function () {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" opacity="0.45"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
       </div>
       <div class="cp-price-rows">
-        <div class="cp-price-row"><span class="cp-price-label">Court Booking (host)</span><span class="cp-price-value">₱600<span style="font-size:13px;font-family:inherit;font-weight:400;color:var(--cream-muted)">/hr</span></span></div>
-        <div class="cp-price-divider"></div>
-        <div class="cp-price-row"><span class="cp-price-label">Queue Join Fee</span><span class="cp-price-value" style="color:var(--gold)">FREE</span></div>
-        <div class="cp-price-divider"></div>
-        <div class="cp-price-row"><span class="cp-price-label">Max Players</span><span class="cp-price-value">16</span></div>
+        <div class="cp-price-row">
+          <span class="cp-price-label">Cost split</span>
+          <span class="cp-price-value" style="color:var(--gold);font-size:16px;font-family:inherit;font-weight:700">By Agreement</span>
+        </div>
       </div>
-      <p class="cp-price-note">Host pays court fee · guests join for free · split costs among your group</p>
+      <p class="cp-price-note">Host opens the queue · players join free · cost is negotiated and split among participants</p>
     </div>
   </div>
 
@@ -953,9 +953,11 @@ window._setProgress = (function () {
 
     // Render immediately (uses fallback if no localStorage data)
     renderOpSessions();
+    renderQueues();
 
     // Re-render after a short delay in case openplay.html has seeded data
     setTimeout(renderOpSessions, 400);
+    setTimeout(renderQueues, 400);
   })();
   </script>
 </section>
@@ -1486,7 +1488,8 @@ window._setProgress = (function () {
       <ul class="footer-links" role="list">
         <li><a href="#sports">Sports &amp; Courts</a></li>
         <li><a href="book.html">Book a Court</a></li>
-        <li><a href="book.html#queue">Queue</a></li>
+        <li><a href="openplay.html">Open Play</a></li>
+    <li><a href="book.html#queue">Queue</a></li>
         <li><a href="community.html">Community</a></li>
         <li><a href="#testimonials">Reviews</a></li>
       </ul>
