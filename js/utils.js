@@ -82,3 +82,23 @@ function fhToTime(fh) {
   const m = Math.round((fh - h) * 60);
   return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
 }
+
+/**
+ * Create a Date object for a given 'YYYY-MM-DD' string that reliably
+ * represents that calendar day in PH time, regardless of browser timezone.
+ * Uses UTC noon (04:00 UTC = 12:00 PH) to stay clear of all DST/offset edges.
+ */
+function phDateObj(ymdStr) {
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 4, 0, 0)); // UTC 04:00 = PH 12:00
+}
+
+/**
+ * Add n days to a 'YYYY-MM-DD' string and return the new 'YYYY-MM-DD'.
+ * Safe across any browser timezone.
+ */
+function addDaysPH(ymdStr, n) {
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + n, 4, 0, 0));
+  return dt.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}

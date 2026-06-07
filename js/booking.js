@@ -81,12 +81,12 @@ const parseSlotHours = parseHourStr; // alias for legacy call sites
 
 // ─── SLOT HELPERS ───
 function isSlotSelected(date, court, idx) {
-  const dk = date.toDateString();
+  const dk = getPhDate(date); // YYYY-MM-DD in PH time — matches renderDates dk
   return state.selectedSlots.some(s => s.dateKey === dk && s.court === court && s.idx === idx);
 }
 
 function toggleSlot(date, court, idx, label) {
-  const dk = date.toDateString();
+  const dk = getPhDate(date); // YYYY-MM-DD in PH time
   const pos = state.selectedSlots.findIndex(s => s.dateKey === dk && s.court === court && s.idx === idx);
   if (pos >= 0) {
     state.selectedSlots.splice(pos, 1);
@@ -103,30 +103,27 @@ function clearAllSlots() {
 const BOOKING_WINDOW_DAYS = 7;
 
 function getBookingMaxDate() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + BOOKING_WINDOW_DAYS - 1);
-  return d;
+  // Returns a timezone-safe Date for the last bookable day in PH time
+  return phDateObj(addDaysPH(getTodayPH(), BOOKING_WINDOW_DAYS - 1));
 }
 
 function getDateRange() {
   const dates = [];
-  // Start from today in Philippines time (UTC+8)
+  // Start from today in Philippines time.
+  // Use phDateObj() (UTC 04:00 = PH noon) so Date objects are timezone-safe
+  // regardless of the browser's local timezone.
   const todayStr = getTodayPH(); // 'YYYY-MM-DD'
-  const base = new Date(todayStr + 'T00:00:00');
   for (let i = 0; i < BOOKING_WINDOW_DAYS; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
-    dates.push(d);
+    dates.push(phDateObj(addDaysPH(todayStr, i)));
   }
   return dates;
 }
 
 function formatDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' });
 }
 function formatDow(d) {
-  return d.toLocaleDateString('en-US', { weekday: 'short' });
+  return d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Manila' });
 }
 // isToday(d) is in utils.js
 
@@ -144,15 +141,18 @@ function renderDates() {
 
   strip.innerHTML = '';
   dates.forEach(d => {
-    const dk = d.toDateString();
+    const dPhStr = getPhDate(d); // 'YYYY-MM-DD' in PH time — timezone-safe key
+    const dk = dPhStr;
     const hasSelection = state.selectedSlots.some(s => s.dateKey === dk);
-    const isSelected = state.selectedDate && d.toDateString() === state.selectedDate.toDateString();
+    const selPhStr = state.selectedDate ? getPhDate(state.selectedDate) : null;
+    const isSelected = selPhStr === dPhStr;
 
     const chip = document.createElement('div');
-    chip.className = 'date-chip' + (isToday(d) ? ' today' : '') + (isSelected ? ' selected' : '');
+    chip.className = 'date-chip' + (dPhStr === getTodayPH() ? ' today' : '') + (isSelected ? ' selected' : '');
+    const dayNum = parseInt(dPhStr.split('-')[2]); // day number in PH time
     chip.innerHTML = `
       <div class="dc-dow">${formatDow(d)}</div>
-      <div class="dc-day">${d.getDate()}</div>
+      <div class="dc-day">${dayNum}</div>
       <div class="dc-mon">${formatDate(d).split(' ')[0]}</div>
       ${hasSelection ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin:2px auto 0;flex-shrink:0"></div>` : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`}`;
 
@@ -171,11 +171,10 @@ function renderDates() {
 
 function jumpToCalendarDate(isoStr) {
   if (!isoStr) return;
-  const picked = new Date(isoStr + 'T00:00:00');
-  const today  = new Date(getTodayPH() + 'T00:00:00');
-  const maxDate = getBookingMaxDate();
-  if (picked < today || picked > maxDate) return;
-  state.selectedDate = picked;
+  const todayStr = getTodayPH();
+  const maxStr   = getPhDate(getBookingMaxDate());
+  if (isoStr < todayStr || isoStr > maxStr) return;
+  state.selectedDate = phDateObj(isoStr); // timezone-safe Date object
   renderDates(); renderAvailGrid(); updateSummary();
 }
 
@@ -214,8 +213,10 @@ function renderCalPopup() {
   const popup = document.getElementById('calPopup');
   if (!popup || !calPopupMonth) return;
   const { year, month } = calPopupMonth;
-  const today = new Date(getTodayPH() + 'T00:00:00');
-  const maxDate = getBookingMaxDate();
+  // Use PH date strings for all comparisons — no Date object timezone issues
+  const todayStr  = getTodayPH();
+  const maxStr    = getPhDate(getBookingMaxDate());
+  const selPhStr  = state.selectedDate ? getPhDate(state.selectedDate) : null;
 
   const MONTH_NAMES = ['January','February','March','April','May','June',
                        'July','August','September','October','November','December'];
@@ -243,20 +244,19 @@ function renderCalPopup() {
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const isPast    = date < today;
-    const isFuture  = date > maxDate;
+    const isoStr    = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isPast    = isoStr < todayStr;
+    const isFuture  = isoStr > maxStr;
     const isBlocked = isPast || isFuture;
-    const isToday_  = date.getTime() === today.getTime();
-    const isSel     = state.selectedDate && date.toDateString() === state.selectedDate.toDateString();
+    const isToday_  = isoStr === todayStr;
+    const isSel     = selPhStr === isoStr;
     let cls = 'cal-day';
     if (isPast)    cls += ' cal-day-disabled';
     if (isFuture)  cls += ' cal-day-future';
     if (isToday_)  cls += ' cal-day-today';
     if (isSel)     cls += ' cal-day-selected';
-    const isoStr   = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const clickStr = isBlocked ? '' : `onclick="calPickDate('${isoStr}')"`;
-    const title    = isFuture ? `Opens ${new Date(date.getTime() - (BOOKING_WINDOW_DAYS-1)*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : '';
+    const title    = isFuture ? `Opens in ${BOOKING_WINDOW_DAYS} days` : '';
     html += `<div class="${cls}" role="gridcell" aria-label="${MONTH_NAMES[month]} ${d}, ${year}" ${clickStr} ${title ? `title="${title}"` : ''}>${d}</div>`;
   }
 
@@ -342,7 +342,7 @@ async function checkConflictsBeforeBook() {
 function getSlotStatus(slotIdx, courtNum) {
   if (!state.selectedDate) return 'open';
 
-  const dateStr  = state.selectedDate.toISOString().split('T')[0];
+  const dateStr  = getPhDate(state.selectedDate); // PH date, timezone-safe
   const slots    = getSlots();
   const label    = slots[slotIdx];   // e.g. "8 AM"
   const slotH    = parseSlotHours(label);
@@ -629,7 +629,7 @@ async function confirmBooking() {
         byDate[s.dateKey].slots.push(s);
       });
       for (const { date, slots } of Object.values(byDate)) {
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getPhDate(date); // PH date string, timezone-safe
         const avail   = await ApexCourts.getAvailability(state.sport, dateStr);
         const totalCourts = state.sport === 'drillzone' ? 1 : 4;
         for (const s of slots) {
@@ -822,7 +822,7 @@ function applyUrlParams() {
 
   // 홈에서 클릭하면 오늘 날짜 자동 선택
   if (p.get('sport') || p.get('time')) {
-    state.selectedDate = new Date(getTodayPH() + 'T00:00:00');
+    state.selectedDate = phDateObj(getTodayPH()); // timezone-safe
     state.dateOffset   = 0;
   }
 }
