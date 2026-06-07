@@ -123,12 +123,20 @@ async function renderAvailability(sport) {
   const grid = document.getElementById('availGrid');
   if (!grid) return;
 
-  const isDZ    = sport === 'drillzone';
-  const timeArr = isDZ ? DZ_TIMES : TIMES;
-  const n       = COURTS[sport];
-  const abbr    = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
-  const nowH    = Math.floor(getNowHPH());
-  const today   = getTodayPH();
+  const isDZ     = sport === 'drillzone';
+  const nowH     = getNowHPH();
+  const today    = getTodayPH();
+  const n        = COURTS[sport];
+  const abbr     = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
+
+  // Only show time slots from now onward — past slots hidden entirely
+  const allTimes = isDZ ? DZ_TIMES : TIMES;
+  const timeArr  = allTimes.filter(t => {
+    let h = parseInt(t);
+    if (t.includes('PM') && h !== 12) h += 12;
+    if (t.includes('AM') && h === 12) h = 0;
+    return h >= Math.floor(nowH); // show current hour and future
+  });
 
   // Step 1 — localStorage (instant, always available)
   let slotMap  = buildSlotMapFromLocal(sport, timeArr);
@@ -178,10 +186,12 @@ async function renderAvailability(sport) {
     <div style="width:88px;flex-shrink:0"></div>
     <div style="display:flex;gap:4px;flex:1">`;
   timeArr.forEach(t => {
-    const h = parseInt(t) + (t.includes('PM') && t !== '12PM' ? 12 : 0);
-    const isCurrent = h === nowH;
+    let h = parseInt(t);
+    if (t.includes('PM') && h !== 12) h += 12;
+    if (t.includes('AM') && h === 12) h = 0;
+    const isCurrent = h === Math.floor(nowH);
     html += `<div style="flex:1;font-size:9px;text-align:center;letter-spacing:0.04em;
-      color:${isCurrent ? 'var(--gold)' : 'var(--cream-dim)'};
+      color:${isCurrent ? 'var(--accent)' : 'var(--cream-dim)'};
       font-weight:${isCurrent ? '700' : '400'}">${t}</div>`;
   });
   html += '</div></div>';
@@ -208,9 +218,7 @@ async function renderAvailability(sport) {
 
     slots[c].forEach((s, i) => {
       const tLabel = timeArr[i];
-      const h = parseInt(tLabel) + (tLabel.includes('PM') && tLabel !== '12PM' ? 12 : 0);
-      const isPast     = h < nowH;   // always relative to today (grid shows today only)
-      const status     = isPast && s !== 'mine' ? 'booked' : s;
+      const status     = s;
       const isBookable = status === 'open';
       const slotLabel  = status === 'open-session' ? 'OPEN'
                        : status === 'mine'         ? 'MINE'

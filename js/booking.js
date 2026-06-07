@@ -406,16 +406,12 @@ function renderAvailGrid() {
 
   // ── rows ──
   slots.forEach((timeLabel, si) => {
-    const parts = timeLabel.replace(/ AM| PM/,'').split(':');
-    let slotH = parseInt(parts[0]);
-    const slotM = parts[1] ? parseInt(parts[1]) : 0;
-    if (timeLabel.includes('PM') && slotH !== 12) slotH += 12;
-    if (timeLabel.includes('AM') && slotH === 12) slotH = 0;
-    const slotTotalH = slotH + slotM / 60;
-    const isPast = isToday(state.selectedDate) && slotTotalH <= getNowHPH();
+    const slotTotalH = parseHourStr(timeLabel);
+    // Hide past slots entirely when viewing today
+    if (isToday(state.selectedDate) && slotTotalH <= getNowHPH()) return;
 
     const row = document.createElement('div');
-    row.className = 'ag-row' + (isPast ? ' past' : '');
+    row.className = 'ag-row';
     row.style.gridTemplateColumns = colW;
     row.setAttribute('role', 'row');
 
@@ -436,7 +432,7 @@ function renderAvailGrid() {
 
       const selected = state.selectedDate && isSlotSelected(state.selectedDate, c, si);
 
-      if (isPast || rawStatus === 'taken') {
+      if (rawStatus === 'taken') {
         cell.classList.add('booked');
         cell.setAttribute('aria-disabled', 'true');
 
