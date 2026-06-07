@@ -69,7 +69,6 @@
     }
     .op-tab:hover { color: var(--cream); }
     .op-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-    #tab-queue.active { color: #a78bfa !important; border-bottom-color: #a78bfa !important; }
     .op-tab-count {
       padding: 2px 7px; border-radius: 100px;
       background: rgba(0,194,168,0.12); color: var(--gold);
@@ -315,7 +314,7 @@
         </div>
         <div>
           <div class="policy-item-label">Refund</div>
-          <div class="policy-item-value">Full refund if min not reached</div>
+          <div class="policy-item-value">Full refund if session cancelled</div>
         </div>
       </div>
     </div>
@@ -362,7 +361,7 @@
         </div>
         <div>
           <div class="policy-item-label">Refund</div>
-          <div class="policy-item-value">Full refund if not opened</div>
+          <div class="policy-item-value">Full refund if under 6 players</div>
         </div>
       </div>
     </div>
@@ -380,12 +379,6 @@
       Closed
       <span class="op-tab-count" id="closedCount">0</span>
     </button>
-    <button class="op-tab" id="tab-queue" role="tab" aria-selected="false" onclick="switchTab('queue',this)" style="color:#a78bfa;border-color:rgba(139,92,246,0.25)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      Queue
-      <span class="op-tab-count" id="queueCount" style="background:rgba(139,92,246,0.15);color:#a78bfa">0</span>
-    </button>
-
   </div>
 
   <!-- Content + Sidebar -->
@@ -530,7 +523,7 @@
           </li>
           <li style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--cream-muted)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
-            Cancelled &amp; refunded if under 6 players
+            Full refund if session cancelled
           </li>
         </ul>
       </div>
@@ -1482,11 +1475,6 @@ function showToast(msg, isError) {
   updateStatuses();
   render();
 
-  // Auto-switch to Queue tab if URL hash is #queue
-  if (window.location.hash === '#queue') {
-    const qTabBtn = document.getElementById('tab-queue');
-    if (qTabBtn) switchTab('queue', qTabBtn);
-  }
 
   // Real-time: refresh when sessions/registrations change
   if (window.ApexCourts) {

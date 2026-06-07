@@ -279,6 +279,8 @@ function switchSport(sport, tabEl) {
   renderAvailability(sport);
 }
 
+window.switchSport = switchSport;
+
 function getActiveSport() {
   const tab = document.querySelector('.avail-tab.active');
   if (!tab) return 'pickleball';
