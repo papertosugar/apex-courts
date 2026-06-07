@@ -155,14 +155,25 @@
     }
     .date-chip:hover { border-color: rgba(212,175,55,0.3); }
     .date-chip.selected { border-color: var(--gold); background: rgba(212,175,55,0.1); }
+    /* Today chip: subtle teal dot indicator, NOT gold */
     .date-chip.today {
-      border-color: var(--gold);
-      background: rgba(212,175,55,0.1);
+      border-color: rgba(0,194,168,0.4);
+      background: rgba(0,194,168,0.05);
     }
-    .date-chip.today .dc-dow,
-    .date-chip.today .dc-day,
-    .date-chip.today .dc-mon { color: var(--gold); }
-    .date-chip.today .dc-day { font-weight: 900; }
+    .date-chip.today .dc-today-label {
+      display: block;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #00C2A8; margin-bottom: 2px;
+    }
+    /* Selected chip: gold — clearly distinct from today */
+    .date-chip.selected {
+      border-color: var(--gold) !important;
+      background: rgba(212,175,55,0.15) !important;
+    }
+    .date-chip.selected .dc-dow,
+    .date-chip.selected .dc-day,
+    .date-chip.selected .dc-mon { color: var(--gold); }
+    .date-chip.selected.today { border-color: var(--gold) !important; }
     .dc-dow { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
     .dc-day { font-size: 20px; font-weight: 800; }
     .dc-mon { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
@@ -518,42 +529,82 @@
     .page-tab.active { background: var(--gold); color: var(--ink); }
     .page-tab:not(.active):hover { background: rgba(255,255,255,0.04); color: var(--cream); }
 
-    /* ── Queue time slot grid (Book tab grid style, blue) ── */
-    .q-slot-grid {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+    /* ── Queue time grid — exact Book tab ag-grid style ── */
+    .q-ag-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .q-ag {
+      min-width: 320px; border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
     }
-    .q-slot-cell {
-      min-height: 52px;
+    /* header row */
+    .q-ag-header {
+      display: grid; grid-template-columns: 80px 1fr;
+      background: var(--surface-3); border-bottom: 1px solid var(--border);
+    }
+    .q-ag-htime {
+      padding: 10px 12px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+    }
+    .q-ag-hslot {
+      padding: 10px 12px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; color: var(--text-muted);
+      border-left: 1px solid var(--border); text-align: center;
+    }
+    /* data row */
+    .q-ag-row {
+      display: grid; grid-template-columns: 80px 1fr;
+      border-bottom: 1px solid var(--border); transition: background 0.15s;
+    }
+    .q-ag-row:last-child { border-bottom: none; }
+    .q-ag-row.past { opacity: 0.3; pointer-events: none; }
+    .q-ag-time {
+      padding: 0 12px; display: flex; align-items: center;
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      white-space: nowrap; min-height: 48px;
+    }
+    /* slot cell */
+    .q-ag-cell {
+      border-left: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 600; color: var(--text-muted);
-      cursor: pointer; font-family: inherit;
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-3);
-      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-      touch-action: manipulation; position: relative;
+      min-height: 48px; cursor: pointer; transition: all 0.15s;
+      background: rgba(255,255,255,0.03);
     }
-    .q-slot-cell:nth-child(4n)   { border-right: none; }
-    .q-slot-cell:hover:not(.past){ background: rgba(59,130,246,0.08); color: #93c5fd; }
-    .q-slot-cell.selected        { background: rgba(59,130,246,0.18); color: #60a5fa; font-weight: 700;
-                                   box-shadow: inset 0 0 0 2px rgba(96,165,250,0.7); }
-    .q-slot-cell.past            { opacity: 0.28; pointer-events: none; }
-    .q-slot-grid-empty { color: var(--text-dim); font-size: 13px; padding: 20px; text-align: center; }
+    .q-ag-cell-inner {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .q-ag-cell:hover .q-ag-cell-inner {
+      border-color: var(--gold); background: rgba(212,175,55,0.12);
+    }
+    .q-ag-cell:hover .q-ag-cell-inner::after {
+      content: '';
+      display: block; width: 100%; height: 100%;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2.5'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/14px no-repeat;
+      opacity: 0.7;
+    }
+    .q-ag-cell.selected {
+      background: rgba(212,175,55,0.1); cursor: pointer;
+    }
+    .q-ag-cell.selected .q-ag-cell-inner {
+      border: 2px solid var(--gold); background: rgba(212,175,55,0.18);
+    }
+    .q-ag-cell.selected .q-ag-cell-inner::after {
+      content: '';
+      display: block; width: 100%; height: 100%;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2.5'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/14px no-repeat;
+    }
 
     /* ── select dropdown styling ─────────────────────── */
     select.form-input option { background: #1a1a22; color: var(--cream); }
 
     /* ── Mobile overrides ─────────────────────────────── */
     @media (max-width: 640px) {
-      /* Queue time grid: 2-column on phone */
-      .q-slot-grid { grid-template-columns: repeat(2, 1fr); }
-      .q-slot-cell:nth-child(4n)   { border-right: 1px solid var(--border); }
-      .q-slot-cell:nth-child(2n)   { border-right: none; }
-      .q-slot-cell { min-height: 48px; font-size: 14px; }
+      /* Queue ag-grid on phone — time col narrower */
+      .q-ag-htime, .q-ag-time { padding: 0 8px; font-size: 10px; }
+      .q-ag-header { grid-template-columns: 64px 1fr; }
+      .q-ag-row    { grid-template-columns: 64px 1fr; }
 
       /* Page tab pills — equal width */
       .page-tabs { width: 100%; }
@@ -839,9 +890,11 @@
           <!-- Time slot grid -->
           <div style="margin-top:20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Start Time</div>
-            <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Select one slot</div>
+            <div id="qGridHint" style="font-size:11px;color:var(--text-muted);font-weight:500">Click a slot to select</div>
           </div>
-          <div class="q-slot-grid" id="qTimeGrid" style="display:none"></div>
+          <div class="q-ag-wrap">
+            <div class="q-ag" id="qTimeGrid" style="display:none"></div>
+          </div>
           <div id="qTimeEmpty" style="margin-top:4px;color:var(--text-dim);font-size:13px">Select a date first</div>
 
         </div>
@@ -1187,8 +1240,11 @@ function qRenderDates() {
     const dayNum = parseInt(ymd.split('-')[2]);
     const dow = d.toLocaleDateString('en-US', { timeZone: 'Asia/Manila', weekday: 'short' }).toUpperCase();
     const chip = document.createElement('div');
-    chip.className = 'date-chip' + (isSelected ? ' selected' : '') + (ymd === today ? ' today' : '');
-    chip.innerHTML = `<span class="dc-dow">${dow}</span><span class="dc-day">${dayNum}</span>`;
+    const isToday = ymd === today;
+    chip.className = 'date-chip' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
+    chip.innerHTML = isToday
+      ? `<span class="dc-today-label">TODAY</span><span class="dc-day">${dayNum}</span>`
+      : `<span class="dc-dow">${dow}</span><span class="dc-day">${dayNum}</span>`;
     chip.onclick = () => {
       qState.date = ymd;
       qState.time = null;
@@ -1202,7 +1258,7 @@ function qRenderDates() {
   });
 }
 
-// ── Time grid (Book tab-style grid, blue) ─────────────────────
+// ── Time grid — exact Book tab ag-grid style ──────────────────
 function qRenderTimeGrid() {
   const grid    = document.getElementById('qTimeGrid');
   const emptyEl = document.getElementById('qTimeEmpty');
@@ -1212,7 +1268,6 @@ function qRenderTimeGrid() {
   const nowH    = getNowHPH();
   const isToday = qState.date === today;
 
-  // Mark past vs available
   const slots = Q_TIMES.map(t => ({
     label: t,
     past: isToday && parseHourStr(t) <= nowH
@@ -1227,25 +1282,44 @@ function qRenderTimeGrid() {
   }
 
   if (emptyEl) emptyEl.style.display = 'none';
-  grid.style.display = 'grid';
+  grid.style.display = 'block';
   grid.innerHTML = '';
 
+  // Header row
+  const header = document.createElement('div');
+  header.className = 'q-ag-header';
+  header.innerHTML = '<div class="q-ag-htime">TIME</div><div class="q-ag-hslot">SELECT</div>';
+  grid.appendChild(header);
+
+  // Data rows — one per time slot
   slots.forEach(({ label, past }) => {
-    const cell = document.createElement('div');
-    cell.className = 'q-slot-cell' +
-      (past ? ' past' : '') +
-      (label === qState.time ? ' selected' : '');
-    cell.textContent = label;
+    const row = document.createElement('div');
+    row.className = 'q-ag-row' + (past ? ' past' : '');
+
+    const timeCol = document.createElement('div');
+    timeCol.className = 'q-ag-time';
+    timeCol.textContent = label;
+
+    const cellCol = document.createElement('div');
+    cellCol.className = 'q-ag-cell' + (label === qState.time ? ' selected' : '');
+
+    const inner = document.createElement('div');
+    inner.className = 'q-ag-cell-inner';
+    cellCol.appendChild(inner);
+
     if (!past) {
-      cell.onclick = () => {
+      cellCol.onclick = () => {
         qState.time = label;
-        document.querySelectorAll('#qTimeGrid .q-slot-cell').forEach(c => c.classList.remove('selected'));
-        cell.classList.add('selected');
+        document.querySelectorAll('#qTimeGrid .q-ag-cell').forEach(c => c.classList.remove('selected'));
+        cellCol.classList.add('selected');
         qUpdateSummary();
         qUpdateSteps();
       };
     }
-    grid.appendChild(cell);
+
+    row.appendChild(timeCol);
+    row.appendChild(cellCol);
+    grid.appendChild(row);
   });
 }
 

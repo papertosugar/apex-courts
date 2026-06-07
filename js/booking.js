@@ -182,13 +182,15 @@ function renderDates() {
     const isSelected = selPhStr === dPhStr;
 
     const chip = document.createElement('div');
-    chip.className = 'date-chip' + (dPhStr === getTodayPH() ? ' today' : '') + (isSelected ? ' selected' : '');
-    const dayNum = parseInt(dPhStr.split('-')[2]); // day number in PH time
-    chip.innerHTML = `
-      <div class="dc-dow">${formatDow(d)}</div>
-      <div class="dc-day">${dayNum}</div>
-      <div class="dc-mon">${formatDate(d).split(' ')[0]}</div>
-      ${hasSelection ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin:2px auto 0;flex-shrink:0"></div>` : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`}`;
+    const isChipToday = dPhStr === getTodayPH();
+    chip.className = 'date-chip' + (isChipToday ? ' today' : '') + (isSelected ? ' selected' : '');
+    const dayNum = parseInt(dPhStr.split('-')[2]);
+    const dotEl = hasSelection
+      ? `<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin:2px auto 0;flex-shrink:0"></div>`
+      : `<div style="width:6px;height:6px;margin:2px auto 0"></div>`;
+    chip.innerHTML = isChipToday
+      ? `<div class="dc-today-label">TODAY</div><div class="dc-day">${dayNum}</div>${dotEl}`
+      : `<div class="dc-dow">${formatDow(d)}</div><div class="dc-day">${dayNum}</div><div class="dc-mon">${formatDate(d).split(' ')[0]}</div>${dotEl}`;
 
     chip.addEventListener('click', () => {
       // Switch view only — don't clear selections
