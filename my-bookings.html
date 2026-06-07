@@ -150,6 +150,21 @@
     .cancel-highlight strong { color: var(--gold); }
 
     .cancel-actions { display: flex; gap: 10px; }
+
+    /* ── Nickname modal buttons ── */
+    .nick-btn-cancel {
+      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      background: var(--stone); border: 1px solid var(--stone-line); color: var(--cream);
+      cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 48px;
+    }
+    .nick-btn-cancel:hover { border-color: rgba(255,255,255,0.25); background: var(--ink-mid); }
+    .nick-btn-save {
+      flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      background: var(--accent); border: none; color: #0d0d0d;
+      cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 48px;
+    }
+    .nick-btn-save:hover:not(:disabled) { filter: brightness(1.1); }
+    .nick-btn-save:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-keep {
       flex: 1; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 700;
       background: var(--stone); border: 1px solid var(--stone-line); color: var(--cream);
@@ -299,11 +314,9 @@
       <div id="nickFeedback" style="font-size:12px;margin-top:6px;min-height:18px;color:var(--cream-muted)"></div>
     </div>
 
-    <div class="cancel-actions" style="margin-top:4px">
-      <button class="cancel-btn-no" onclick="closeNickModal()">Cancel</button>
-      <button class="cancel-btn-yes" id="nickSaveBtn" onclick="saveNickname()"
-        style="background:var(--accent);color:#0d0d0d;border:none;opacity:.5;cursor:not-allowed"
-        disabled>Save</button>
+    <div class="cancel-actions" style="margin-top:16px">
+      <button class="nick-btn-cancel" onclick="closeNickModal()">Cancel</button>
+      <button class="nick-btn-save" id="nickSaveBtn" onclick="saveNickname()" disabled>Save</button>
     </div>
   </div>
 </div>
@@ -375,7 +388,7 @@ function openNickModal() {
   document.getElementById('nickFeedback').textContent = '';
   document.getElementById('nickFeedback').style.color = 'var(--cream-muted)';
   const btn = document.getElementById('nickSaveBtn');
-  btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
+  btn.disabled = true;
   document.getElementById('nickModal').classList.add('open');
   setTimeout(() => input.focus(), 100);
 }
@@ -389,7 +402,7 @@ function onNickInput() {
   const val = document.getElementById('nickInput').value.trim();
   const fb  = document.getElementById('nickFeedback');
   const btn = document.getElementById('nickSaveBtn');
-  btn.disabled = true; btn.style.opacity = '.5'; btn.style.cursor = 'not-allowed';
+  btn.disabled = true;
 
   if (val.length < 2) {
     fb.textContent = val.length ? 'Minimum 2 characters required' : '';
@@ -422,7 +435,7 @@ function onNickInput() {
       } else {
         fb.textContent = 'Nickname available ✓';
         fb.style.color = '#4ade80';
-        btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+        btn.disabled = false;
       }
     } catch(err) {
       // Column may not exist yet — tell user to run SQL setup
@@ -433,7 +446,7 @@ function onNickInput() {
       } else {
         fb.textContent = 'Check failed — you can still try saving';
         fb.style.color = 'var(--gold)';
-        btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+        btn.disabled = false;
       }
     }
   }, 500);
