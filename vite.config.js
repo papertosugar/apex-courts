@@ -27,6 +27,9 @@ export default defineConfig({
         openplay:         resolve(__dirname, 'openplay.html'),
         policy:           resolve(__dirname, 'policy.html'),
         'auth-callback':  resolve(__dirname, 'auth-callback.html'),
+        'admin-dashboard': resolve(__dirname, 'admin/dashboard.html'),
+        'admin-pos':       resolve(__dirname, 'admin/pos.html'),
+        'admin-index':     resolve(__dirname, 'admin/index.html'),
       },
 
       output: {
