@@ -85,55 +85,12 @@
   else boot();
 })();
 
-/* ── Page loader progress controller ── */
-window._setProgress = (function () {
-  let cur = 0;
-  function dismiss() {
-    var ov = document.getElementById('_ldOverlay');
-    if (!ov || ov._gone) return;
-    ov._gone = true;
-    ov.style.transition = 'opacity 0.18s ease';
-    ov.style.opacity = '0';
-    setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200);
-  }
-  // Dismiss on DOMContentLoaded (fast — DOM ready, animations can start)
-  document.addEventListener('DOMContentLoaded', function () { dismiss(); });
-  // Safety fallback: force-dismiss after 3s no matter what
-  setTimeout(dismiss, 3000);
-  // Also dismiss on window load
-  window.addEventListener('load', function () { setTimeout(dismiss, 150); });
-
-  return function set(p) {
-    if (p <= cur) return;
-    cur = p;
-    requestAnimationFrame(function () {
-      var bar = document.getElementById('_ldBar');
-      var pct = document.getElementById('_ldPct');
-      if (bar) bar.style.width = p + '%';
-      if (pct) pct.textContent = Math.round(p) + '%';
-      if (p >= 100) setTimeout(dismiss, 180);
-    });
-  };
-})();
+/* _setProgress: no-op — overlay removed, animations are CSS-native */
+window._setProgress = function(){};
 </script>
 </head>
 <body>
 
-<!-- ── Page loading overlay ── -->
-<div id="_ldOverlay" style="
-  position:fixed;inset:0;z-index:99999;
-  background:#09090b;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  transition:opacity 0.45s cubic-bezier(0.22,1,0.36,1);
-  pointer-events:none;
-">
-  <!-- Logo mark -->
-  <div style="margin-bottom:28px;opacity:0.9">
-    <svg width="40" height="40" viewBox="0 0 20 20" fill="none">
-      <path d="M10 2L18 17H2L10 2Z" stroke="#D4AF37" stroke-width="1.8" fill="none"/>
-      <line x1="6" y1="12" x2="14" y2="12" stroke="#D4AF37" stroke-width="1.8"/>
-    </svg>
-  </div>
   <!-- Bar track -->
   <div style="width:180px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
     <div id="_ldBar" style="width:0%;height:100%;background:linear-gradient(90deg,#b8972a,#D4AF37);border-radius:2px;transition:width 0.25s ease"></div>
@@ -216,18 +173,11 @@ window._setProgress = (function () {
     50%       { opacity: 1;   transform: scale(1.4); }
   }
 
-  /* ── Hero-right entrance animation ──────────────────────── */
-  .hero-right {
-    opacity: 0;
-    transform: translateY(12px);
-    animation: heroRightIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.35s forwards;
-  }
-  @keyframes heroRightIn {
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes heroStatIn {
-    to { opacity: 1; transform: none; }
-  }
+  /* ── Hero entrance animations ─────────────────────────────
+     Overlay removed. styles.css animates hero children natively.
+     Only heroStatIn + heroRightIn needed here for stat rows.  ── */
+  @keyframes heroRightIn { to { opacity: 1; transform: none; } }
+  @keyframes heroStatIn  { to { opacity: 1; transform: none; } }
 
   #hero { position: relative; overflow: hidden; }
   .hero-slideshow {
@@ -448,15 +398,15 @@ window._setProgress = (function () {
       </div>
     </div>
     <div class="hero-stat-row" role="list" aria-label="Venue statistics">
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.6s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.15s both">
         <div class="hero-stat-num">9</div>
         <div class="hero-stat-label">Indoor Courts</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.5s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.28s both">
         <div class="hero-stat-num">98%</div>
         <div class="hero-stat-label">Satisfaction</div>
       </div>
-      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.6s forwards">
+      <div class="hero-stat" role="listitem" style="opacity:0;transform:translateY(8px);animation:heroStatIn 0.4s cubic-bezier(0.22,1,0.36,1) 0.41s both">
         <div class="hero-stat-num" aria-label="3 thousand plus">3K+</div>
         <div class="hero-stat-label">Members</div>
       </div>
