@@ -311,24 +311,54 @@ renderAvailability('pickleball');
   }
 
   // ── Court canvas: map bookings → animation active states ──
-  // Queries bookings table directly (no dependency on v_court_availability view).
-  // Falls back to localStorage if Supabase is unavailable.
+  // ALWAYS checks BOTH Supabase AND localStorage — results are OR'd together.
+  // This ensures bookings saved only in localStorage (Supabase offline / RLS blocked)
+  // still light up the canvas.
   async function syncCanvasActivity() {
     if (!window.updateCourtActivity) return;
+
     const nowStr = new Date().toTimeString().slice(0,5); // "HH:MM"
+    const nowH   = parseInt(nowStr) + parseInt(nowStr.slice(3)) / 60;
 
-    // Helper: is this court booked right now?
-    function isActiveNow(rows, courtNum, sport) {
-      return rows.some(r =>
-        Number(r.court_number) === courtNum &&
-        r.sport === sport &&
-        r.status !== 'cancelled' &&
-        r.start_time <= nowStr + ':00' &&
-        (r.end_time || '23:59:00') > nowStr
-      );
-    }
+    // Start with all courts off
+    const act = {
+      P1:false, P2:false, P3:false, P4:false,
+      B1:false, B2:false, B3:false, B4:false, DZ:false,
+    };
 
-    // ── Try Supabase first ──────────────────────────────────────
+    // ── 1) localStorage (ALWAYS — never skip) ──────────────────
+    try {
+      const local = JSON.parse(localStorage.getItem('apexBookings') || '[]');
+
+      function parseH(t) {
+        if (!t) return -1;
+        const s = String(t).replace(/[AP]M/gi,'').trim().split(':');
+        let h = parseInt(s[0]) || 0, m = parseInt(s[1]) || 0;
+        if (/PM/i.test(t) && h !== 12) h += 12;
+        if (/AM/i.test(t) && h === 12) h = 0;
+        // Pure 24h string (no AM/PM): h already correct
+        return h + m / 60;
+      }
+
+      local.forEach(b => {
+        if (b.status === 'cancelled') return;
+        const isDrill = b.sport === 'drill' || b.sport === 'drillzone';
+        const step = isDrill ? 0.5 : 1;
+        (b.slots || []).forEach(s => {
+          if (s.date !== today) return;
+          const startH = parseH(s.time);
+          if (startH < 0) return;
+          const endH = startH + step;
+          if (nowH < startH || nowH >= endH) return;   // not active right now
+          const c = Number(s.court);
+          if (b.sport === 'pickleball') { if (c >= 1 && c <= 4) act['P'+c] = true; }
+          else if (b.sport === 'badminton') { if (c >= 1 && c <= 4) act['B'+c] = true; }
+          else if (isDrill) { act.DZ = true; }
+        });
+      });
+    } catch(_) {}
+
+    // ── 2) Supabase (additive — OR with localStorage results) ──
     try {
       const { data, error } = await window.apexDB
         .from('bookings')
@@ -337,59 +367,29 @@ renderAvailability('pickleball');
         .neq('status', 'cancelled');
 
       if (!error && data) {
-        window.updateCourtActivity({
-          P1: isActiveNow(data,1,'pickleball'), P2: isActiveNow(data,2,'pickleball'),
-          P3: isActiveNow(data,3,'pickleball'), P4: isActiveNow(data,4,'pickleball'),
-          B1: isActiveNow(data,1,'badminton'),  B2: isActiveNow(data,2,'badminton'),
-          B3: isActiveNow(data,3,'badminton'),  B4: isActiveNow(data,4,'badminton'),
-          DZ: isActiveNow(data,1,'drillzone') || isActiveNow(data,1,'drill'),
-        });
-        return;
-      }
-    } catch(_) { /* fall through to localStorage */ }
+        data.forEach(r => {
+          if (r.status === 'cancelled') return;
+          const startH = parseFloat(r.start_time?.replace(':','.')?.split(':')[0]) || 0;
+          // Proper 24h parse: '15:00:00' → 15
+          const parts = (r.start_time || '').split(':');
+          const sh = parseInt(parts[0]) || 0;
+          const sm = parseInt(parts[1]) || 0;
+          const ep = (r.end_time || '23:00:00').split(':');
+          const eh = parseInt(ep[0]) || sh + 1;
+          const em = parseInt(ep[1]) || 0;
+          const sH = sh + sm / 60;
+          const eH = eh + em / 60;
+          if (nowH < sH || nowH >= eH) return;   // not active right now
 
-    // ── Fallback: derive from localStorage ─────────────────────
-    try {
-      const localBookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
-      const nowH = parseFloat(nowStr.split(':')[0]) + parseFloat(nowStr.split(':')[1]) / 60;
-
-      function isLocallyActive(sport, courtNum) {
-        return localBookings.some(b => {
-          if (b.status === 'cancelled') return false;
-          const bSports = sport === 'drillzone' ? ['drillzone','drill'] : [sport];
-          if (!bSports.includes(b.sport)) return false;
-          return (b.slots || []).some(s => {
-            if (s.date !== today) return false;
-            if (Number(s.court) !== courtNum) return false;
-            const startH = parseSlotHoursSimple(s.time);
-            const step   = b.sport === 'drill' ? 0.5 : 1;
-            return nowH >= startH && nowH < startH + step;
-          });
+          const c = Number(r.court_number) || 1;  // default to court 1 if null
+          if (r.sport === 'pickleball') { if (c >= 1 && c <= 4) act['P'+c] = true; }
+          else if (r.sport === 'badminton') { if (c >= 1 && c <= 4) act['B'+c] = true; }
+          else if (r.sport === 'drillzone' || r.sport === 'drill') { act.DZ = true; }
         });
       }
+    } catch(_) {}
 
-      // Simple hour parser for canvas (no booking.js dependency)
-      function parseSlotHoursSimple(t) {
-        if (!t) return 0;
-        const parts = t.replace(/[AP]M/g,'').trim().split(':');
-        let h = parseInt(parts[0]) || 0;
-        const m = parseInt(parts[1]) || 0;
-        if (/PM/i.test(t) && h !== 12) h += 12;
-        if (/AM/i.test(t) && h === 12) h = 0;
-        if (!/[AP]M/i.test(t) && h < 6) h += 12; // DB 24h: just use as-is
-        return h + m / 60;
-      }
-
-      window.updateCourtActivity({
-        P1: isLocallyActive('pickleball',1), P2: isLocallyActive('pickleball',2),
-        P3: isLocallyActive('pickleball',3), P4: isLocallyActive('pickleball',4),
-        B1: isLocallyActive('badminton',1),  B2: isLocallyActive('badminton',2),
-        B3: isLocallyActive('badminton',3),  B4: isLocallyActive('badminton',4),
-        DZ: isLocallyActive('drillzone',1),
-      });
-    } catch(e) {
-      console.warn('[Canvas] Activity sync failed:', e.message);
-    }
+    window.updateCourtActivity(act);
   }
 
   function onBookingChange() {
