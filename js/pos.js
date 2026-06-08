@@ -231,10 +231,115 @@ function buildWalkInOptions(sport, courtNum) {
     const durLabel = hrs > 0 ? `${hrs}h${mins ? ' ' + mins + 'm' : ''}` : `${mins} min`;
     const blocked  = firstBlocked !== null && endHour > firstBlocked;
     const blockReason = blocked ? `Booking at ${fmt12(firstBlocked)}` : '';
-    options.push({ endHour, endLabel: fmt12(endHour), totalMins, cost, durLabel, blocked, blockReason });
+    options.push({ endHour, endLabel: fmt12(endHour), totalMins, cost, durLabel, blocked, blockReason, firstBlocked });
   }
   return options;
 }
+
+// ─── RESERVATION CONFLICT MODAL ───
+function showConflictModal(selectedOpt, maxAllowedOpt) {
+  let modal = document.getElementById('conflictModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'conflictModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="background:var(--surface);border:1px solid rgba(239,68,68,0.4);border-radius:18px;padding:28px 28px 24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+        <div style="font-size:28px;text-align:center;margin-bottom:12px">⚠️</div>
+        <div id="conflictModalTitle" style="font-size:17px;font-weight:800;color:var(--text);text-align:center;margin-bottom:8px"></div>
+        <div id="conflictModalBody" style="font-size:13px;color:var(--text-muted);text-align:center;line-height:1.6;margin-bottom:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button id="conflictAcceptBtn" style="padding:13px;border-radius:10px;background:var(--gold);color:#000;font-weight:800;font-size:14px;border:none;cursor:pointer;width:100%"></button>
+          <button onclick="document.getElementById('conflictModal').style.display='none'" style="padding:11px;border-radius:10px;background:transparent;color:var(--text-dim);font-size:13px;border:1px solid var(--border);cursor:pointer;width:100%">Cancel walk-in</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  document.getElementById('conflictModalTitle').textContent = `Court reserved at ${fmt12(selectedOpt.firstBlocked)}`;
+  document.getElementById('conflictModalBody').innerHTML =
+    `You selected <strong>${selectedOpt.durLabel}</strong>, but this court has a reservation at <strong>${fmt12(selectedOpt.firstBlocked)}</strong>.<br><br>` +
+    `Maximum allowed: <strong style="color:var(--gold)">${maxAllowedOpt.durLabel} (until ${maxAllowedOpt.endLabel})</strong>`;
+  const acceptBtn = document.getElementById('conflictAcceptBtn');
+  acceptBtn.textContent = `✓ Book ${maxAllowedOpt.durLabel} instead (until ${maxAllowedOpt.endLabel})`;
+  acceptBtn.onclick = () => {
+    modal.style.display = 'none';
+    // Auto-select the max allowed option
+    selectedWalkInOption = maxAllowedOpt;
+    document.querySelectorAll('.ns-dur-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.endHour === String(maxAllowedOpt.endHour));
+    });
+    updateNsTotal();
+  };
+}
+
+// ─── 15-MIN RESERVATION WARNING SYSTEM ───
+const reservationWarned = {}; // key: `${sport}-${courtNum}-${bookingId}`
+
+function checkReservationWarnings() {
+  const now   = new Date();
+  const nowMs = now.getTime();
+  const ph    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  const today = getTodayPH();
+
+  Object.keys(COURT_DATA).forEach(sport => {
+    COURT_DATA[sport].forEach(court => {
+      if (court.status !== 'occupied') return;
+      const abbr = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
+      const courtName = `${abbr} Court ${court.num}`;
+
+      // Find next confirmed booking for this court today
+      const upcoming = getUpcomingBookingsForCourt(sport, court.num);
+      if (!upcoming.length) return;
+      const nextBkg = upcoming[0];
+
+      // Parse booking start time to ms
+      const [tp, period] = (nextBkg.time || '').split(' ');
+      if (!tp) return;
+      let [bh, bm = 0] = tp.split(':').map(Number);
+      if (period === 'PM' && bh !== 12) bh += 12;
+      if (period === 'AM' && bh === 12) bh = 0;
+      const bkgStartMs = new Date(ph.getFullYear(), ph.getMonth(), ph.getDate(), bh, bm, 0).getTime();
+      const minsUntil  = (bkgStartMs - nowMs) / 60000;
+
+      const warnKey = `${sport}-${court.num}-${nextBkg.id}`;
+      if (minsUntil <= 15 && minsUntil > 0 && !reservationWarned[warnKey]) {
+        reservationWarned[warnKey] = true;
+        showReservationWarning(courtName, nextBkg, Math.round(minsUntil));
+      }
+    });
+  });
+}
+
+function showReservationWarning(courtName, booking, minsLeft) {
+  let modal = document.getElementById('reservationWarningModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'reservationWarningModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="background:var(--surface);border:2px solid rgba(251,146,60,0.6);border-radius:18px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+        <div style="font-size:32px;text-align:center;margin-bottom:10px">⏰</div>
+        <div id="rwCourtName" style="font-size:18px;font-weight:800;color:#fb923c;text-align:center;margin-bottom:6px"></div>
+        <div id="rwBody" style="font-size:13px;color:var(--text-muted);text-align:center;line-height:1.7;margin-bottom:22px"></div>
+        <button onclick="document.getElementById('reservationWarningModal').style.display='none'"
+          style="width:100%;padding:13px;border-radius:10px;background:#fb923c;color:#000;font-weight:800;font-size:14px;border:none;cursor:pointer">
+          Acknowledged
+        </button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('rwCourtName').textContent = `${courtName} — Reservation in ${minsLeft} min`;
+  document.getElementById('rwBody').innerHTML =
+    `<strong>${booking.userName}</strong> has a reservation at <strong>${booking.time}</strong>.<br><br>` +
+    `Please inform the current player to <strong style="color:#fb923c">wrap up and clear the court</strong> before the reservation starts.`;
+  modal.style.display = 'flex';
+  // Also play a toast
+  showToast(`⏰ ${courtName}: reservation for ${booking.userName} in ${minsLeft} min — please clear!`);
+}
+
+// Start the warning checker (runs every 30 seconds)
+setInterval(checkReservationWarnings, 30000);
 
 function renderWalkInOptions(sport, courtNum) {
   const container = document.getElementById('nsDurationOptions');
@@ -243,9 +348,13 @@ function renderWalkInOptions(sport, courtNum) {
   // Default to first available option
   selectedWalkInOption = options.find(o => !o.blocked) || null;
   container.innerHTML = '';
+  // Last non-blocked option = max allowed
+  const maxAllowedOpt = [...options].reverse().find(o => !o.blocked) || null;
+
   options.forEach(opt => {
     const btn = document.createElement('button');
     btn.type = 'button';
+    btn.dataset.endHour = opt.endHour;
     btn.className = 'ns-dur-btn' + (opt === selectedWalkInOption ? ' selected' : '') + (opt.blocked ? ' blocked' : '');
     btn.innerHTML = `
       <div style="flex:1">
@@ -259,7 +368,9 @@ function renderWalkInOptions(sport, courtNum) {
       </div>`;
     btn.onclick = () => {
       if (opt.blocked) {
-        showToast(`❌ Cannot book until ${opt.endLabel} — court reserved at ${opt.blockReason.replace('Booking at ', '')}`);
+        // Show conflict modal with max allowed option
+        if (maxAllowedOpt) showConflictModal(opt, maxAllowedOpt);
+        else showToast(`❌ Court fully reserved — no walk-in available`);
         return;
       }
       selectedWalkInOption = opt;
