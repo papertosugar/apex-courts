@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ─── TIMEZONE HELPERS (mirrors utils.js — pos.html doesn't load utils.js) ───
+function getTodayPH() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+function getNowHourPH() {
+  const ph = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  return ph.getHours() + ph.getMinutes() / 60;
+}
+
 // ─── DATA LAYER ───
 function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
 function saveBookings(b)  { localStorage.setItem('apexBookings', JSON.stringify(b)); }
@@ -125,7 +134,7 @@ function calcEndTimeLabel(startTime, durationHrs) {
 }
 
 function getUpcomingBookingsForCourt(sport, courtNum) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const all   = getBookings();
   const rows  = [];
   all.forEach(b => {
@@ -159,7 +168,7 @@ function isBookingPast(b) {
   const dateStr = b.date;
   const timeStr = b.time || '';
   if (!dateStr) return false;
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   if (dateStr < today) return true;
   if (dateStr > today) return false;
   const [tp, period] = timeStr.split(' ');
@@ -173,7 +182,7 @@ function isBookingPast(b) {
 }
 
 function getFirstBlockedHour(sport, courtNum) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const nowH  = new Date().getHours();
   const bkgs  = getBookings().filter(b =>
     b.sport === sport && b.court === courtNum &&
@@ -674,7 +683,7 @@ function confirmNewSession() {
   const total     = Math.max(0, courtCost + equipCost - nsDiscount);
 
   const id    = 'APX-W' + Math.floor(1000 + Math.random() * 9000);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const abbr  = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
   const now   = new Date();
   const sh = now.getHours(); const sm = now.getMinutes();
@@ -997,7 +1006,7 @@ function endCourtSession(sport, courtNum) {
 // ═══════════════════════════════════════
 function seedDemoBookings() {
   if (getBookings().length > 0) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const demos = [
     { id:'APX-1241', userName:'Sarah K.',    sport:'pickleball', date:today, time:'10:00 AM', duration:1, court:1, extras:['racket'],         totalAmount:650,  status:'walkin',    paymentMethod:'cash',  createdAt:new Date().toISOString(), createdBy:'staff' },
     { id:'APX-1242', userName:'Marcus T.',   sport:'pickleball', date:today, time:'10:00 AM', duration:1.5, court:2, extras:['shoes','balls'], totalAmount:1070, status:'walkin',    paymentMethod:'cash',  createdAt:new Date().toISOString(), createdBy:'staff' },
@@ -1032,7 +1041,7 @@ function renderBookings() {
   const dateFilter  = document.getElementById('bookingDateFilter');
   const searchEl    = document.getElementById('bookingSearch');
   const sportFilter = document.getElementById('bookingSportFilter');
-  const filterDate  = dateFilter?.value || new Date().toISOString().split('T')[0];
+  const filterDate  = dateFilter?.value || getTodayPH();
   const searchQ     = searchEl?.value.trim().toLowerCase() || '';
   const filterSport = sportFilter?.value || '';
 
@@ -1285,7 +1294,7 @@ function updateLiveSummary() {
   if (revPanel) revPanel.style.display = isAdmin ? 'block' : 'none';
 
   if (isAdmin) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayPH();
     const todayB = getBookings().filter(b => b.date === today && b.status !== 'cancelled');
     const rev    = todayB.reduce((s, b) => s + (b.totalAmount || 0), 0);
     const revEl  = document.getElementById('summaryRevenue');
@@ -1421,7 +1430,7 @@ function scTab(tab, btn) {
 const DENOMS = [1000, 500, 200, 100, 50, 20, 5];
 
 function getOpeningFloat() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const record = JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
   return record ? record.float : 0;
 }
@@ -1471,7 +1480,7 @@ function updateDenomTotal() {
 function openShiftOpen() {
   const modal = document.getElementById('shiftOpenModal');
   if (!modal) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
 
   document.getElementById('shiftOpenDate').textContent =
     new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
@@ -1514,7 +1523,7 @@ function confirmShiftOpen() {
     showToast('Please enter your name.', true); return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const record = {
     float: total,
     denoms,
@@ -1574,7 +1583,7 @@ function openShiftLog() {
 }
 
 function printShiftOpen(recordArg) {
-  const today  = new Date().toISOString().split('T')[0];
+  const today  = getTodayPH();
   const record = recordArg || JSON.parse(localStorage.getItem('apexShiftOpen_' + today) || 'null');
   if (!record) { showToast('No shift open record for today.', true); return; }
 
@@ -1640,7 +1649,7 @@ function updateFloatIndicator() {
 function openShiftClose() {
   const modal   = document.getElementById('shiftCloseModal');
   if (!modal) return;
-  const today   = new Date().toISOString().split('T')[0];
+  const today   = getTodayPH();
   const dateEl  = document.getElementById('shiftCloseDate');
   const isAdmin = ['Admin','admin'].includes(localStorage.getItem('apexRole'));
   if (dateEl) dateEl.textContent =
@@ -1961,7 +1970,7 @@ function saveInventoryCheck() {
     stock[k] = parseInt(document.getElementById('stock-'+k)?.value || '0') || 0;
   });
   const record = {
-    date:      new Date().toISOString().split('T')[0],
+    date:      getTodayPH(),
     time:      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
     staff:     localStorage.getItem('apexUser') || 'Staff',
     equipment: equip,
@@ -1977,7 +1986,7 @@ function saveInventoryCheck() {
 }
 
 function printShiftSummary() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const bookings = getBookings().filter(b => b.date === today && b.status !== 'cancelled' && b.status !== 'voided');
   const byPM = { cash:0, gcash:0, card:0 };
   const bySport = {};
@@ -2037,7 +2046,7 @@ async function printReceiptUSBRaw(bytes) {
 function renderCheckIn() {
   const list = document.getElementById('checkinList');
   if (!list) return;
-  const today    = new Date().toISOString().split('T')[0];
+  const today    = getTodayPH();
   const bookings = getBookings().filter(b =>
     b.date === today && b.status === 'confirmed' && b.sport !== 'beverages'
   ).sort((a,b) => (a.time > b.time ? 1 : -1));
@@ -2201,7 +2210,7 @@ function chargeBeverages() {
   }).join(', ');
 
   const id    = 'APX-B' + Math.floor(1000 + Math.random() * 9000);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const now   = new Date();
   const sh = now.getHours(); const sm = now.getMinutes();
   const sp = sh >= 12 ? 'PM' : 'AM'; const sh12 = sh > 12 ? sh - 12 : sh === 0 ? 12 : sh;
@@ -2475,7 +2484,7 @@ function _renderReceiptHistory() {
     groups[d].push(h);
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayPH();
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
   let html = '';
@@ -2732,7 +2741,7 @@ function toggleLiveSummary() {
   const revMob  = document.getElementById('revenuePanel-mob');
   if (revMob) revMob.style.display = isAdmin ? 'block' : 'none';
   if (isAdmin) {
-    const today  = new Date().toISOString().split('T')[0];
+    const today  = getTodayPH();
     const todayB = getBookings().filter(b => b.date === today && b.status !== 'cancelled');
     const rev    = todayB.reduce((s, b) => s + (b.totalAmount || 0), 0);
     const revEl  = document.getElementById('mobSummaryRev');
@@ -2810,7 +2819,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Booking date filter
   const dateFilter = document.getElementById('bookingDateFilter');
   if (dateFilter) {
-    dateFilter.value = new Date().toISOString().split('T')[0];
+    dateFilter.value = getTodayPH();
     dateFilter.addEventListener('change', renderBookings);
   }
 

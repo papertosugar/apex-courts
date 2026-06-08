@@ -480,21 +480,39 @@ setInterval(() => {
 // ── Helpers ──
 function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
 
-// Flatten slot-based (online) bookings into individual rows with top-level date/court/time
+// Flatten slot-based (online) bookings into rows grouped by date+court
+// Each row = one continuous block on one court (correct duration per block)
 function normalizeBookings(bookings) {
   const rows = [];
   bookings.forEach(b => {
     if (b.slots && b.slots.length > 0) {
-      b.slots.forEach((s, i) => {
+      // Group slots by date+court
+      const groups = {};
+      b.slots.forEach(s => {
+        const key = `${s.date || ''}__${s.court != null ? s.court : ''}`;
+        if (!groups[key]) groups[key] = { date: s.date, court: s.court, sport: s.sport || b.sport, times: [] };
+        groups[key].times.push(s.time);
+      });
+      const groupArr = Object.values(groups);
+      groupArr.forEach((g, gi) => {
+        // Sort times, pick first as start time, duration = number of slots (each 1hr for court, 0.5hr for drill)
+        const step = (g.sport === 'drill') ? 0.5 : 1;
+        const duration = g.times.length * step;
+        // Sort times by hour
+        g.times.sort((a, z) => {
+          const toH = t => { if(!t) return 0; const [tp,p]=t.split(' '); let [h]=tp.split(':').map(Number); if(p==='PM'&&h!==12)h+=12; if(p==='AM'&&h===12)h=0; return h; };
+          return toH(a) - toH(z);
+        });
         rows.push({
           ...b,
-          date:  s.date  || b.date  || '',
-          court: s.court != null ? s.court : b.court,
-          time:  s.time  || b.time  || '',
-          sport: s.sport || b.sport,
-          _slotIdx: i,
-          _slotTotal: b.slots.length,
-          totalAmount: i === 0 ? (b.totalAmount || 0) : 0, // revenue only on first slot
+          date: g.date || '',
+          court: g.court != null ? g.court : b.court,
+          time: g.times[0] || b.time || '',
+          sport: g.sport,
+          duration,
+          _slotIdx: gi,
+          _slotTotal: groupArr.length,
+          totalAmount: gi === 0 ? (b.totalAmount || 0) : 0,
         });
       });
     } else {
