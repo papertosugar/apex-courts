@@ -124,7 +124,9 @@ function getFirstBlockedHour(sport, courtNum) {
     let h24 = hh;
     if (period === 'PM' && hh !== 12) h24 += 12;
     if (period === 'AM' && hh === 12) h24 = 0;
-    if (h24 > nowH && (first === null || h24 < first)) first = h24;
+    const bEndH = h24 + (b.duration || 1); // booking end hour (approx)
+    // Include any booking that hasn't fully ended yet (covers same-hour and future bookings)
+    if (bEndH > nowH && (first === null || h24 < first)) first = h24;
   });
   return first;
 }
