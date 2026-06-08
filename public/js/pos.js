@@ -161,13 +161,12 @@ function renderWalkInOptions(sport, courtNum) {
   if (!container) return;
   const options = buildWalkInOptions(sport, courtNum);
   // Default to first available option
-  selectedWalkInOption = options.find(o => !o.blocked) || options[0];
+  selectedWalkInOption = options.find(o => !o.blocked) || null;
   container.innerHTML = '';
   options.forEach(opt => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'ns-dur-btn' + (opt === selectedWalkInOption ? ' selected' : '') + (opt.blocked ? ' blocked' : '');
-    btn.disabled = opt.blocked;
     btn.innerHTML = `
       <div style="flex:1">
         <div style="font-size:14px;font-weight:700;color:${opt.blocked ? 'var(--text-dim)' : 'var(--text)'}">Until ${opt.endLabel}</div>
@@ -178,14 +177,16 @@ function renderWalkInOptions(sport, courtNum) {
           ? `<div style="font-size:11px;color:#f87171">⛔ ${opt.blockReason}</div>`
           : `<div style="font-size:16px;font-weight:800;color:var(--gold)">₱${opt.cost.toLocaleString()}</div>`}
       </div>`;
-    if (!opt.blocked) {
-      btn.onclick = () => {
-        selectedWalkInOption = opt;
-        container.querySelectorAll('.ns-dur-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        updateNsTotal();
-      };
-    }
+    btn.onclick = () => {
+      if (opt.blocked) {
+        showToast(`❌ Cannot book until ${opt.endLabel} — court reserved at ${opt.blockReason.replace('Booking at ', '')}`);
+        return;
+      }
+      selectedWalkInOption = opt;
+      container.querySelectorAll('.ns-dur-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateNsTotal();
+    };
     container.appendChild(btn);
   });
   updateNsTotal();
@@ -915,6 +916,22 @@ function seedDemoBookings() {
   saveBookings(demos);
 }
 
+// Normalize a booking to flat structure (handles both walkin and online slot-based bookings)
+function normalizeBooking(b) {
+  if (b.slots && b.slots.length > 0) {
+    return b.slots.map((s, i) => ({
+      ...b,
+      _slotIdx: i,
+      date:  s.date  || b.date,
+      court: s.court || b.court,
+      time:  s.time  || b.time,
+      sport: s.sport || b.sport,
+      _slotLabel: b.slots.length > 1 ? ` (slot ${i+1}/${b.slots.length})` : '',
+    }));
+  }
+  return [{ ...b, _slotIdx: 0, _slotLabel: '' }];
+}
+
 function renderBookings() {
   seedDemoBookings();
   const tbody = document.getElementById('bookingsTbody');
@@ -927,14 +944,16 @@ function renderBookings() {
   const searchQ     = searchEl?.value.trim().toLowerCase() || '';
   const filterSport = sportFilter?.value || '';
 
-  const all      = getBookings();
-  const filtered = all.filter(b => {
+  const all  = getBookings();
+  const rows = all.flatMap(b => normalizeBooking(b));
+
+  const filtered = rows.filter(b => {
     if (b.status === 'cancelled')                                              return false;
     if (filterDate && b.date !== filterDate)                                   return false;
     if (filterSport && b.sport !== filterSport)                                return false;
     if (searchQ && !b.userName?.toLowerCase().includes(searchQ) && !b.id?.toLowerCase().includes(searchQ)) return false;
     return true;
-  }).sort((a, b) => a.time > b.time ? 1 : -1);
+  }).sort((a, b) => (a.time || '') > (b.time || '') ? 1 : -1);
 
   tbody.innerHTML = '';
   if (!filtered.length) {
@@ -943,22 +962,25 @@ function renderBookings() {
   }
 
   filtered.forEach(b => {
-    const sportLabel = b.sport === 'pickleball' ? 'Pickleball' : b.sport === 'badminton' ? 'Badminton' : 'Drill Zone';
-    const abbr       = b.sport === 'pickleball' ? 'PB' : b.sport === 'badminton' ? 'BD' : 'DZ';
-    const courtLabel = b.sport === 'drill' ? 'DZ Zone 1' : `${abbr} ${b.court}`;
-    const durLabel   = b.duration < 1 ? '30 min' : b.duration === 1 ? '1 hr' : b.duration + ' hrs';
-    const statusMap  = { confirmed: 'chip-green', walkin: 'chip-purple', cancelled: 'chip-red', pending: 'chip-gold' };
+    const sport      = b.sport || 'pickleball';
+    const sportLabel = sport === 'pickleball' ? 'Pickleball' : sport === 'badminton' ? 'Badminton' : 'Drill Zone';
+    const abbr       = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
+    const courtVal   = b.court;
+    const courtLabel = sport === 'drill' ? 'DZ Zone 1' : courtVal ? `${abbr} ${courtVal}` : '—';
+    const dur        = b.duration || 1;
+    const durLabel   = dur < 1 ? `${Math.round(dur*60)} min` : dur === 1 ? '1 hr' : `${dur} hrs`;
     const chip       = `<span class="status-chip ${b.status || 'confirmed'}">${b.status || 'confirmed'}</span>`;
+    const idLabel    = b._slotLabel ? `${b.id}${b._slotLabel}` : b.id;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="font-family:monospace;font-size:11px;color:var(--text-dim)">${b.id}</td>
-      <td class="name">${b.userName}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text-dim)">${idLabel}</td>
+      <td class="name">${b.userName || '—'}</td>
       <td>${sportLabel}</td>
       <td>${courtLabel}</td>
       <td>${b.time || '—'}</td>
       <td>${durLabel}</td>
       <td>${chip}</td>
-      <td style="font-weight:700;color:var(--gold)">₱${(b.totalAmount||0).toLocaleString()}</td>
+      <td style="font-weight:700;color:var(--gold)">₱${(b._slotIdx > 0 ? 0 : b.totalAmount||0).toLocaleString()}</td>
       <td>
         <div style="display:flex;gap:6px">
           <button class="btn-sm outline" style="padding:5px 10px;font-size:11px" onclick="openEditModal('${b.id}')">Edit</button>
