@@ -109,6 +109,53 @@ function calcCourtCost(sport, totalMins) {
   return partial + fullHours * 600 + (remainder > 0 ? Math.round(600 * remainder / 60) : 0);
 }
 
+function getUpcomingBookingsForCourt(sport, courtNum) {
+  const today = new Date().toISOString().split('T')[0];
+  const all   = getBookings();
+  const rows  = [];
+  all.forEach(b => {
+    if (b.status !== 'confirmed') return;
+    if (b.slots && b.slots.length > 0) {
+      b.slots.forEach(s => {
+        if ((s.sport || b.sport) === sport && s.court === courtNum && s.date === today) {
+          rows.push({ ...b, date: s.date, court: s.court, time: s.time, sport: s.sport || b.sport });
+        }
+      });
+    } else {
+      if (b.sport === sport && b.court === courtNum && b.date === today) rows.push(b);
+    }
+  });
+  rows.sort((a, b) => {
+    const toMins = t => {
+      if (!t) return 9999;
+      const [tp, period] = t.split(' ');
+      let [h, m = 0] = tp.split(':').map(Number);
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return h * 60 + m;
+    };
+    return toMins(a.time) - toMins(b.time);
+  });
+  return rows;
+}
+
+function isBookingPast(b) {
+  const dateStr = b.date;
+  const timeStr = b.time || '';
+  if (!dateStr) return false;
+  const today = new Date().toISOString().split('T')[0];
+  if (dateStr < today) return true;
+  if (dateStr > today) return false;
+  const [tp, period] = timeStr.split(' ');
+  if (!tp) return false;
+  let [h, m = 0] = tp.split(':').map(Number);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  const bkgMins = h * 60 + m + Math.round((b.duration || 1) * 60);
+  const now = new Date();
+  return bkgMins <= now.getHours() * 60 + now.getMinutes();
+}
+
 function getFirstBlockedHour(sport, courtNum) {
   const today = new Date().toISOString().split('T')[0];
   const nowH  = new Date().getHours();
@@ -481,17 +528,39 @@ function renderCourtsView() {
           </div>`;
         card.addEventListener('click', () => toggleMaintenanceDirect(key, court.num));
       } else {
-        // Available court
-        card.innerHTML = `
-          <div class="cc-header">
-            <div class="cc-name">${abbr} ${key==='drill'?'Zone':'Court'} ${court.num}</div>
-            <div class="cc-badge available">Available</div>
-          </div>
-          <div class="cc-info" style="color:var(--text-muted);font-size:13px">Ready · tap to book</div>
-          <div style="margin-top:14px;padding:10px;border-radius:8px;background:rgba(34,197,94,0.05);border:1px dashed rgba(34,197,94,0.2);text-align:center;font-size:12px;color:rgba(74,222,128,0.5)">
-            + New Session
-          </div>`;
-        card.addEventListener('click', () => openNewSessionModal(key, court.num));
+        const upcoming = getUpcomingBookingsForCourt(key, court.num);
+        const nextBkg  = upcoming[0] || null;
+        if (nextBkg) {
+          const dur = nextBkg.duration || 1;
+          const durLabel = dur < 1 ? `${Math.round(dur*60)} min` : dur === 1 ? '1 hr' : `${dur} hrs`;
+          card.innerHTML = `
+            <div class="cc-header">
+              <div class="cc-name">${abbr} ${key==='drill'?'Zone':'Court'} ${court.num}</div>
+              <div class="cc-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Reserved</div>
+            </div>
+            <div style="margin-top:10px">
+              <div style="font-size:14px;font-weight:700;color:var(--text)">${nextBkg.userName}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${nextBkg.time || '—'} · ${durLabel}</div>
+              <div style="font-size:10px;font-family:monospace;color:var(--text-dim);margin-top:2px">${nextBkg.id}</div>
+            </div>
+            <button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
+              onclick="event.stopPropagation();checkInBooking('${nextBkg.id}','${key}',${court.num})">
+              ▶ Start Session
+            </button>
+            ${upcoming.length > 1 ? `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:6px">+${upcoming.length-1} more booking${upcoming.length>2?'s':''} today</div>` : ''}`;
+          card.addEventListener('click', () => openNewSessionModal(key, court.num));
+        } else {
+          card.innerHTML = `
+            <div class="cc-header">
+              <div class="cc-name">${abbr} ${key==='drill'?'Zone':'Court'} ${court.num}</div>
+              <div class="cc-badge available">Available</div>
+            </div>
+            <div class="cc-info" style="color:var(--text-muted);font-size:13px">Ready · tap to book</div>
+            <div style="margin-top:14px;padding:10px;border-radius:8px;background:rgba(34,197,94,0.05);border:1px dashed rgba(34,197,94,0.2);text-align:center;font-size:12px;color:rgba(74,222,128,0.5)">
+              + New Session
+            </div>`;
+          card.addEventListener('click', () => openNewSessionModal(key, court.num));
+        }
       }
       container.appendChild(card);
     });
@@ -971,7 +1040,9 @@ function renderBookings() {
     const durLabel   = dur < 1 ? `${Math.round(dur*60)} min` : dur === 1 ? '1 hr' : `${dur} hrs`;
     const chip       = `<span class="status-chip ${b.status || 'confirmed'}">${b.status || 'confirmed'}</span>`;
     const idLabel    = b._slotLabel ? `${b.id}${b._slotLabel}` : b.id;
+    const past       = isBookingPast(b);
     const tr = document.createElement('tr');
+    tr.style.opacity = past ? '0.55' : '1';
     tr.innerHTML = `
       <td style="font-family:monospace;font-size:11px;color:var(--text-dim)">${idLabel}</td>
       <td class="name">${b.userName || '—'}</td>
@@ -982,10 +1053,12 @@ function renderBookings() {
       <td>${chip}</td>
       <td style="font-weight:700;color:var(--gold)">₱${(b._slotIdx > 0 ? 0 : b.totalAmount||0).toLocaleString()}</td>
       <td>
-        <div style="display:flex;gap:6px">
-          <button class="btn-sm outline" style="padding:5px 10px;font-size:11px" onclick="openEditModal('${b.id}')">Edit</button>
-          <button class="btn-sm red" style="padding:5px 10px;font-size:11px" onclick="confirmCancelBooking('${b.id}')">Cancel</button>
-        </div>
+        ${past
+          ? `<span style="font-size:11px;color:var(--text-dim)">Completed</span>`
+          : `<div style="display:flex;gap:6px">
+               <button class="btn-sm outline" style="padding:5px 10px;font-size:11px" onclick="openEditModal('${b.id}')">Edit</button>
+               <button class="btn-sm red" style="padding:5px 10px;font-size:11px" onclick="confirmCancelBooking('${b.id}')">Cancel</button>
+             </div>`}
       </td>`;
     tbody.appendChild(tr);
   });
@@ -2000,6 +2073,7 @@ function checkInBooking(bookingId, sport, courtNum) {
   logActivity('checkin', bookingId, `${bkg.userName} checked in → ${abbr} ${courtNum}`);
   saveCourtData();
   renderCheckIn();
+  renderCourtsView();
   showToast(`✅ ${bkg.userName} checked in — ${abbr} Court ${courtNum}`);
 }
 
