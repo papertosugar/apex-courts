@@ -118,7 +118,6 @@ function calcCourtCost(sport, totalMins) {
   return partial + fullHours * 600 + (remainder > 0 ? Math.round(600 * remainder / 60) : 0);
 }
 
-// Calculate end time label from start time string + duration hours
 function calcEndTimeLabel(startTime, durationHrs) {
   if (!startTime) return '';
   const [tp, period] = startTime.split(' ');
@@ -134,16 +133,13 @@ function calcEndTimeLabel(startTime, durationHrs) {
   return `${eh12}:${String(em).padStart(2,'0')} ${ep}`;
 }
 
-// Returns today's bookings (confirmed OR walkin/active) for a specific court, sorted by time
 function getUpcomingBookingsForCourt(sport, courtNum) {
   const today = getTodayPH();
   const all   = getBookings();
   const rows  = [];
   all.forEach(b => {
-    // Include confirmed (upcoming) and walkin (in progress / just started from reservation)
     if (b.status !== 'confirmed') return;
     const cn = Number(courtNum);
-    // Slot-based (online)
     if (b.slots && b.slots.length > 0) {
       b.slots.forEach(s => {
         if ((s.sport || b.sport) === sport && Number(s.court) === cn && s.date === today) {
@@ -154,7 +150,6 @@ function getUpcomingBookingsForCourt(sport, courtNum) {
       if (b.sport === sport && Number(b.court) === cn && b.date === today) rows.push(b);
     }
   });
-  // Sort by time
   rows.sort((a, b) => {
     const toMins = t => {
       if (!t) return 9999;
@@ -169,7 +164,6 @@ function getUpcomingBookingsForCourt(sport, courtNum) {
   return rows;
 }
 
-// Returns true if a booking's date+time is in the past
 function isBookingPast(b) {
   const dateStr = b.date;
   const timeStr = b.time || '';
@@ -177,7 +171,6 @@ function isBookingPast(b) {
   const today = getTodayPH();
   if (dateStr < today) return true;
   if (dateStr > today) return false;
-  // Same day — check time
   const [tp, period] = timeStr.split(' ');
   if (!tp) return false;
   let [h, m = 0] = tp.split(':').map(Number);
@@ -185,28 +178,40 @@ function isBookingPast(b) {
   if (period === 'AM' && h === 12) h = 0;
   const bkgMins = h * 60 + m + Math.round((b.duration || 1) * 60);
   const now = new Date();
-  const nowMins = now.getHours() * 60 + now.getMinutes();
-  return bkgMins <= nowMins;
+  return bkgMins <= now.getHours() * 60 + now.getMinutes();
 }
 
 function getFirstBlockedHour(sport, courtNum) {
   const today = getTodayPH();
-  const nowH  = new Date().getHours();
-  const bkgs  = getBookings().filter(b =>
-    b.sport === sport && b.court === courtNum &&
-    b.date === today && b.status !== 'cancelled'
-  );
-  let first = null;
-  bkgs.forEach(b => {
-    const [tp, period] = (b.time || '').split(' ');
+  const nowH  = getNowHourPH();
+  const cn    = Number(courtNum);
+  const all   = getBookings();
+  let first   = null;
+
+  function checkTime(time, duration) {
+    const [tp, period] = (time || '').split(' ');
     if (!tp) return;
     const [hh] = tp.split(':').map(Number);
     let h24 = hh;
     if (period === 'PM' && hh !== 12) h24 += 12;
     if (period === 'AM' && hh === 12) h24 = 0;
-    const bEndH = h24 + (b.duration || 1); // booking end hour (approx)
-    // Include any booking that hasn't fully ended yet (covers same-hour and future bookings)
+    const bEndH = h24 + (duration || 1);
     if (bEndH > nowH && (first === null || h24 < first)) first = h24;
+  }
+
+  all.forEach(b => {
+    if (b.status === 'cancelled') return;
+    if (b.slots && b.slots.length > 0) {
+      b.slots.forEach(s => {
+        if ((s.sport || b.sport) === sport && Number(s.court) === cn && s.date === today) {
+          checkTime(s.time, 1);
+        }
+      });
+    } else {
+      if (b.sport === sport && Number(b.court) === cn && b.date === today) {
+        checkTime(b.time, b.duration || 1);
+      }
+    }
   });
   return first;
 }
@@ -264,7 +269,6 @@ function showConflictModal(selectedOpt, maxAllowedOpt) {
   acceptBtn.textContent = `✓ Book ${maxAllowedOpt.durLabel} instead (until ${maxAllowedOpt.endLabel})`;
   acceptBtn.onclick = () => {
     modal.style.display = 'none';
-    // Auto-select the max allowed option
     selectedWalkInOption = maxAllowedOpt;
     document.querySelectorAll('.ns-dur-btn').forEach(b => {
       b.classList.toggle('selected', b.dataset.endHour === String(maxAllowedOpt.endHour));
@@ -274,26 +278,21 @@ function showConflictModal(selectedOpt, maxAllowedOpt) {
 }
 
 // ─── 15-MIN RESERVATION WARNING SYSTEM ───
-const reservationWarned = {}; // key: `${sport}-${courtNum}-${bookingId}`
+const reservationWarned = {};
 
 function checkReservationWarnings() {
   const now   = new Date();
   const nowMs = now.getTime();
   const ph    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-  const today = getTodayPH();
 
   Object.keys(COURT_DATA).forEach(sport => {
     COURT_DATA[sport].forEach(court => {
       if (court.status !== 'occupied') return;
       const abbr = sport === 'pickleball' ? 'PB' : sport === 'badminton' ? 'BD' : 'DZ';
       const courtName = `${abbr} Court ${court.num}`;
-
-      // Find next confirmed booking for this court today
       const upcoming = getUpcomingBookingsForCourt(sport, court.num);
       if (!upcoming.length) return;
       const nextBkg = upcoming[0];
-
-      // Parse booking start time to ms
       const [tp, period] = (nextBkg.time || '').split(' ');
       if (!tp) return;
       let [bh, bm = 0] = tp.split(':').map(Number);
@@ -301,7 +300,6 @@ function checkReservationWarnings() {
       if (period === 'AM' && bh === 12) bh = 0;
       const bkgStartMs = new Date(ph.getFullYear(), ph.getMonth(), ph.getDate(), bh, bm, 0).getTime();
       const minsUntil  = (bkgStartMs - nowMs) / 60000;
-
       const warnKey = `${sport}-${court.num}-${nextBkg.id}`;
       if (minsUntil <= 15 && minsUntil > 0 && !reservationWarned[warnKey]) {
         reservationWarned[warnKey] = true;
@@ -334,23 +332,18 @@ function showReservationWarning(courtName, booking, minsLeft) {
     `<strong>${booking.userName}</strong> has a reservation at <strong>${booking.time}</strong>.<br><br>` +
     `Please inform the current player to <strong style="color:#fb923c">wrap up and clear the court</strong> before the reservation starts.`;
   modal.style.display = 'flex';
-  // Also play a toast
-  showToast(`⏰ ${courtName}: reservation for ${booking.userName} in ${minsLeft} min — please clear!`);
+  showToast(`⏰ ${courtName}: ${booking.userName}'s reservation in ${minsLeft} min — please clear!`);
 }
 
-// Start the warning checker (runs every 30 seconds)
 setInterval(checkReservationWarnings, 30000);
 
 function renderWalkInOptions(sport, courtNum) {
   const container = document.getElementById('nsDurationOptions');
   if (!container) return;
   const options = buildWalkInOptions(sport, courtNum);
-  // Default to first available option
   selectedWalkInOption = options.find(o => !o.blocked) || null;
-  container.innerHTML = '';
-  // Last non-blocked option = max allowed
   const maxAllowedOpt = [...options].reverse().find(o => !o.blocked) || null;
-
+  container.innerHTML = '';
   options.forEach(opt => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -368,7 +361,6 @@ function renderWalkInOptions(sport, courtNum) {
       </div>`;
     btn.onclick = () => {
       if (opt.blocked) {
-        // Show conflict modal with max allowed option
         if (maxAllowedOpt) showConflictModal(opt, maxAllowedOpt);
         else showToast(`❌ Court fully reserved — no walk-in available`);
         return;
@@ -611,10 +603,9 @@ function renderCourtsView() {
         const remaining = endTime - Date.now();
         const isUrgent  = remaining < 10 * 60000;
         const hasEquip  = court.equipment && court.equipment.length > 0;
-        // Show session time range from startTime ms
-        const startD   = new Date(court.startTime);
-        const endD     = new Date(endTime);
-        const fmtT     = d => { let h=d.getHours(),m=d.getMinutes(),p=h>=12?'PM':'AM'; h=h>12?h-12:h===0?12:h; return `${h}:${String(m).padStart(2,'0')} ${p}`; };
+        const startD    = new Date(court.startTime);
+        const endD      = new Date(endTime);
+        const fmtT      = d => { let h=d.getHours(),m=d.getMinutes(),p=h>=12?'PM':'AM'; h=h>12?h-12:h===0?12:h; return `${h}:${String(m).padStart(2,'0')} ${p}`; };
         const timeRange = `${fmtT(startD)} → ${fmtT(endD)}`;
 
         card.innerHTML = `
@@ -678,15 +669,13 @@ function renderCourtsView() {
           </div>`;
         card.addEventListener('click', () => toggleMaintenanceDirect(key, court.num));
       } else {
-        // Available court — check for upcoming confirmed bookings today
         const upcoming = getUpcomingBookingsForCourt(key, court.num);
         const nextBkg  = upcoming[0] || null;
-
         if (nextBkg) {
-          const dur      = nextBkg.duration || 1;
-          const endLabel = calcEndTimeLabel(nextBkg.time, dur);
+          const dur       = nextBkg.duration || 1;
+          const endLabel  = calcEndTimeLabel(nextBkg.time, dur);
           const timeRange = nextBkg.time ? `${nextBkg.time} → ${endLabel}` : '—';
-          const isActive  = nextBkg.status === 'walkin'; // already started
+          const isActive  = nextBkg.status === 'walkin';
           card.innerHTML = `
             <div class="cc-header">
               <div class="cc-name">${abbr} ${key==='drill'?'Zone':'Court'} ${court.num}</div>
@@ -697,9 +686,14 @@ function renderCourtsView() {
               <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${timeRange}</div>
               <div style="font-size:10px;font-family:monospace;color:var(--text-dim);margin-top:2px">${nextBkg.id}</div>
             </div>
-            ${!isActive ? `<button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
+            ${!isActive ? `
+            <button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
               onclick="event.stopPropagation();checkInBooking('${nextBkg.id}','${key}',${court.num})">
               ▶ Start Session
+            </button>
+            <button class="btn-sm" style="width:100%;margin-top:6px;padding:8px;font-size:12px;font-weight:600;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:var(--text-muted);border-radius:8px;cursor:pointer"
+              onclick="event.stopPropagation();openNewSessionModal('${key}',${court.num})">
+              + Walk-in (before reservation)
             </button>` : ''}
             ${upcoming.length > 1 ? `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:6px">+${upcoming.length-1} more booking${upcoming.length>2?'s':''} today</div>` : ''}`;
           card.addEventListener('click', () => openNewSessionModal(key, court.num));
@@ -1141,7 +1135,6 @@ function seedDemoBookings() {
 
 // Normalize a booking to flat structure (handles both walkin and online slot-based bookings)
 function normalizeBooking(b) {
-  // Online bookings store slot info in b.slots[]. Flatten to individual rows per slot.
   if (b.slots && b.slots.length > 0) {
     return b.slots.map((s, i) => ({
       ...b,
@@ -1150,7 +1143,6 @@ function normalizeBooking(b) {
       court: s.court || b.court,
       time:  s.time  || b.time,
       sport: s.sport || b.sport,
-      // Label multi-slot as "Slot 1/2" etc.
       _slotLabel: b.slots.length > 1 ? ` (slot ${i+1}/${b.slots.length})` : '',
     }));
   }
@@ -1169,8 +1161,7 @@ function renderBookings() {
   const searchQ     = searchEl?.value.trim().toLowerCase() || '';
   const filterSport = sportFilter?.value || '';
 
-  // Flatten all bookings (expand slot-based bookings into individual rows)
-  const all = getBookings();
+  const all  = getBookings();
   const rows = all.flatMap(b => normalizeBooking(b));
 
   const filtered = rows.filter(b => {
@@ -1195,7 +1186,6 @@ function renderBookings() {
     const courtLabel = sport === 'drill' ? 'DZ Zone 1' : courtVal ? `${abbr} ${courtVal}` : '—';
     const dur        = b.duration || 1;
     const durLabel   = dur < 1 ? `${Math.round(dur*60)} min` : dur === 1 ? '1 hr' : `${dur} hrs`;
-    const source     = b.createdBy === 'online' || b.source === 'local' ? 'Online' : 'Walk-in / Staff';
     const chip       = `<span class="status-chip ${b.status || 'confirmed'}">${b.status || 'confirmed'}</span>`;
     const idLabel    = b._slotLabel ? `${b.id}${b._slotLabel}` : b.id;
     const past       = isBookingPast(b);
@@ -2231,7 +2221,7 @@ function checkInBooking(bookingId, sport, courtNum) {
   logActivity('checkin', bookingId, `${bkg.userName} checked in → ${abbr} ${courtNum}`);
   saveCourtData();
   renderCheckIn();
-  renderCourtsView(); // refresh court cards to show occupied state
+  renderCourtsView();
   showToast(`✅ ${bkg.userName} checked in — ${abbr} Court ${courtNum}`);
 }
 

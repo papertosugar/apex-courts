@@ -183,22 +183,35 @@ function isBookingPast(b) {
 
 function getFirstBlockedHour(sport, courtNum) {
   const today = getTodayPH();
-  const nowH  = new Date().getHours();
-  const bkgs  = getBookings().filter(b =>
-    b.sport === sport && b.court === courtNum &&
-    b.date === today && b.status !== 'cancelled'
-  );
-  let first = null;
-  bkgs.forEach(b => {
-    const [tp, period] = (b.time || '').split(' ');
+  const nowH  = getNowHourPH();
+  const cn    = Number(courtNum);
+  const all   = getBookings();
+  let first   = null;
+
+  function checkTime(time, duration) {
+    const [tp, period] = (time || '').split(' ');
     if (!tp) return;
     const [hh] = tp.split(':').map(Number);
     let h24 = hh;
     if (period === 'PM' && hh !== 12) h24 += 12;
     if (period === 'AM' && hh === 12) h24 = 0;
-    const bEndH = h24 + (b.duration || 1); // booking end hour (approx)
-    // Include any booking that hasn't fully ended yet (covers same-hour and future bookings)
+    const bEndH = h24 + (duration || 1);
     if (bEndH > nowH && (first === null || h24 < first)) first = h24;
+  }
+
+  all.forEach(b => {
+    if (b.status === 'cancelled') return;
+    if (b.slots && b.slots.length > 0) {
+      b.slots.forEach(s => {
+        if ((s.sport || b.sport) === sport && Number(s.court) === cn && s.date === today) {
+          checkTime(s.time, 1);
+        }
+      });
+    } else {
+      if (b.sport === sport && Number(b.court) === cn && b.date === today) {
+        checkTime(b.time, b.duration || 1);
+      }
+    }
   });
   return first;
 }
@@ -673,9 +686,14 @@ function renderCourtsView() {
               <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${timeRange}</div>
               <div style="font-size:10px;font-family:monospace;color:var(--text-dim);margin-top:2px">${nextBkg.id}</div>
             </div>
-            ${!isActive ? `<button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
+            ${!isActive ? `
+            <button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
               onclick="event.stopPropagation();checkInBooking('${nextBkg.id}','${key}',${court.num})">
               ▶ Start Session
+            </button>
+            <button class="btn-sm" style="width:100%;margin-top:6px;padding:8px;font-size:12px;font-weight:600;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:var(--text-muted);border-radius:8px;cursor:pointer"
+              onclick="event.stopPropagation();openNewSessionModal('${key}',${court.num})">
+              + Walk-in (before reservation)
             </button>` : ''}
             ${upcoming.length > 1 ? `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:6px">+${upcoming.length-1} more booking${upcoming.length>2?'s':''} today</div>` : ''}`;
           card.addEventListener('click', () => openNewSessionModal(key, court.num));
