@@ -109,20 +109,36 @@ function calcCourtCost(sport, totalMins) {
   return partial + fullHours * 600 + (remainder > 0 ? Math.round(600 * remainder / 60) : 0);
 }
 
+function calcEndTimeLabel(startTime, durationHrs) {
+  if (!startTime) return '';
+  const [tp, period] = startTime.split(' ');
+  if (!tp) return '';
+  let [h, m = 0] = tp.split(':').map(Number);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  const totalMins = h * 60 + m + Math.round((durationHrs || 1) * 60);
+  let eh = Math.floor(totalMins / 60) % 24;
+  const em = totalMins % 60;
+  const ep = eh >= 12 ? 'PM' : 'AM';
+  const eh12 = eh > 12 ? eh - 12 : eh === 0 ? 12 : eh;
+  return `${eh12}:${String(em).padStart(2,'0')} ${ep}`;
+}
+
 function getUpcomingBookingsForCourt(sport, courtNum) {
   const today = new Date().toISOString().split('T')[0];
   const all   = getBookings();
   const rows  = [];
   all.forEach(b => {
-    if (b.status !== 'confirmed') return;
+    if (b.status !== 'confirmed' && b.status !== 'walkin') return;
+    const cn = Number(courtNum);
     if (b.slots && b.slots.length > 0) {
       b.slots.forEach(s => {
-        if ((s.sport || b.sport) === sport && s.court === courtNum && s.date === today) {
-          rows.push({ ...b, date: s.date, court: s.court, time: s.time, sport: s.sport || b.sport });
+        if ((s.sport || b.sport) === sport && Number(s.court) === cn && s.date === today) {
+          rows.push({ ...b, date: s.date, court: Number(s.court), time: s.time, sport: s.sport || b.sport });
         }
       });
     } else {
-      if (b.sport === sport && b.court === courtNum && b.date === today) rows.push(b);
+      if (b.sport === sport && Number(b.court) === cn && b.date === today) rows.push(b);
     }
   });
   rows.sort((a, b) => {
@@ -467,6 +483,10 @@ function renderCourtsView() {
         const remaining = endTime - Date.now();
         const isUrgent  = remaining < 10 * 60000;
         const hasEquip  = court.equipment && court.equipment.length > 0;
+        const startD    = new Date(court.startTime);
+        const endD      = new Date(endTime);
+        const fmtT      = d => { let h=d.getHours(),m=d.getMinutes(),p=h>=12?'PM':'AM'; h=h>12?h-12:h===0?12:h; return `${h}:${String(m).padStart(2,'0')} ${p}`; };
+        const timeRange = `${fmtT(startD)} → ${fmtT(endD)}`;
 
         card.innerHTML = `
           <div class="cc-header">
@@ -479,6 +499,7 @@ function renderCourtsView() {
           </div>
           <div class="cc-info">
             <div style="font-weight:700;font-size:14px;color:var(--text)">${court.player}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${timeRange}</div>
             ${hasEquip ? `<div style="font-size:11px;color:#fb923c;margin-top:2px">🏸 ${court.equipment.join(', ')}</div>` : ''}
           </div>
           <div class="cc-timer">
@@ -531,22 +552,24 @@ function renderCourtsView() {
         const upcoming = getUpcomingBookingsForCourt(key, court.num);
         const nextBkg  = upcoming[0] || null;
         if (nextBkg) {
-          const dur = nextBkg.duration || 1;
-          const durLabel = dur < 1 ? `${Math.round(dur*60)} min` : dur === 1 ? '1 hr' : `${dur} hrs`;
+          const dur       = nextBkg.duration || 1;
+          const endLabel  = calcEndTimeLabel(nextBkg.time, dur);
+          const timeRange = nextBkg.time ? `${nextBkg.time} → ${endLabel}` : '—';
+          const isActive  = nextBkg.status === 'walkin';
           card.innerHTML = `
             <div class="cc-header">
               <div class="cc-name">${abbr} ${key==='drill'?'Zone':'Court'} ${court.num}</div>
-              <div class="cc-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">Reserved</div>
+              <div class="cc-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">${isActive ? 'In Play' : 'Reserved'}</div>
             </div>
             <div style="margin-top:10px">
               <div style="font-size:14px;font-weight:700;color:var(--text)">${nextBkg.userName}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${nextBkg.time || '—'} · ${durLabel}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${timeRange}</div>
               <div style="font-size:10px;font-family:monospace;color:var(--text-dim);margin-top:2px">${nextBkg.id}</div>
             </div>
-            <button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
+            ${!isActive ? `<button class="btn-sm gold" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:700"
               onclick="event.stopPropagation();checkInBooking('${nextBkg.id}','${key}',${court.num})">
               ▶ Start Session
-            </button>
+            </button>` : ''}
             ${upcoming.length > 1 ? `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:6px">+${upcoming.length-1} more booking${upcoming.length>2?'s':''} today</div>` : ''}`;
           card.addEventListener('click', () => openNewSessionModal(key, court.num));
         } else {
