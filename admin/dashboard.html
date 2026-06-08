@@ -480,6 +480,30 @@ setInterval(() => {
 // ── Helpers ──
 function getBookings()    { return JSON.parse(localStorage.getItem('apexBookings')    || '[]'); }
 
+// Flatten slot-based (online) bookings into individual rows with top-level date/court/time
+function normalizeBookings(bookings) {
+  const rows = [];
+  bookings.forEach(b => {
+    if (b.slots && b.slots.length > 0) {
+      b.slots.forEach((s, i) => {
+        rows.push({
+          ...b,
+          date:  s.date  || b.date  || '',
+          court: s.court != null ? s.court : b.court,
+          time:  s.time  || b.time  || '',
+          sport: s.sport || b.sport,
+          _slotIdx: i,
+          _slotTotal: b.slots.length,
+          totalAmount: i === 0 ? (b.totalAmount || 0) : 0, // revenue only on first slot
+        });
+      });
+    } else {
+      rows.push({ ...b, _slotIdx: 0, _slotTotal: 1 });
+    }
+  });
+  return rows;
+}
+
 // ── Load bookings from Supabase and merge with localStorage ──
 async function syncBookingsFromSupabase() {
   if (!window.ApexCourts) return;
@@ -891,8 +915,8 @@ function loadUpcoming() {
   const el=document.getElementById('upcomingList');
   if(!el) return;
   const today=new Date().toISOString().split('T')[0];
-  const upcoming=getBookings()
-    .filter(b=>b.status!=='cancelled'&&b.date>=today)
+  const upcoming=normalizeBookings(getBookings())
+    .filter(b=>b.status!=='cancelled'&&b.date&&b.date>=today)
     .sort((a,b)=>(a.date+a.time)>(b.date+b.time)?1:-1)
     .slice(0,8);
   el.innerHTML='';
@@ -910,7 +934,7 @@ function loadUpcoming() {
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.userName}</div>
-        <div style="font-size:11px;color:var(--text-muted)">${sportLabel(b.sport)} · ${sportAbbr(b.sport)} ${b.court} · ${durLabel(b.duration)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${sportLabel(b.sport)}${b.court!=null?' · '+sportAbbr(b.sport)+' '+b.court:''} · ${durLabel(b.duration)}</div>
       </div>
       <div style="font-size:10px;padding:3px 8px;border-radius:4px;color:${sc};border:1px solid ${sc}22;background:${sc}11;flex-shrink:0">${b.status}</div>
     </div>`;
@@ -928,11 +952,11 @@ function renderAllBookings() {
   const sport   = document.getElementById('bk-sport')?.value||'';
   const status  = document.getElementById('bk-status')?.value||'';
 
-  bkFiltered = getBookings().filter(b=>{
+  bkFiltered = normalizeBookings(getBookings()).filter(b=>{
     if (sport  && b.sport  !==sport)  return false;
     if (status && b.status !==status) return false;
-    if (dateFrom && b.date < dateFrom) return false;
-    if (dateTo   && b.date > dateTo)   return false;
+    if (dateFrom && b.date && b.date < dateFrom) return false;
+    if (dateTo   && b.date && b.date > dateTo)   return false;
     if (search && !b.userName?.toLowerCase().includes(search) && !b.id?.toLowerCase().includes(search)) return false;
     return true;
   }).sort((a,b)=>(b.date+b.time)>(a.date+a.time)?1:-1);
@@ -967,8 +991,8 @@ function renderBkPage(page) {
         <td style="font-family:monospace;font-size:11px;color:var(--text-dim);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.id}</td>
         <td style="font-weight:600;color:var(--text);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.userName}</td>
         <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${sportLabel(b.sport)}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${sportAbbr(b.sport)} ${b.court}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.date}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.court!=null?`${sportAbbr(b.sport)} ${b.court}`:'—'}</td>
+        <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.date||'—'}</td>
         <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${b.time||'—'}</td>
         <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${durLabel(b.duration)}</td>
         <td style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)">${statusChip(b.status)}</td>
@@ -993,7 +1017,7 @@ function renderBkPage(page) {
 function exportBookingsCSV() {
   const rows=[['ID','Name','Sport','Court','Date','Time','Duration','Status','Total','Created']];
   bkFiltered.forEach(b=>{
-    rows.push([b.id,b.userName,sportLabel(b.sport),`${sportAbbr(b.sport)} ${b.court}`,b.date,b.time||'',durLabel(b.duration),b.status||'confirmed',b.totalAmount||0,b.createdAt||'']);
+    rows.push([b.id,b.userName,sportLabel(b.sport),b.court!=null?`${sportAbbr(b.sport)} ${b.court}`:'—',b.date||'',b.time||'',durLabel(b.duration),b.status||'confirmed',b.totalAmount||0,b.createdAt||'']);
   });
   const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const a=document.createElement('a');

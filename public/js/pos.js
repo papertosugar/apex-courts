@@ -129,7 +129,7 @@ function getUpcomingBookingsForCourt(sport, courtNum) {
   const all   = getBookings();
   const rows  = [];
   all.forEach(b => {
-    if (b.status !== 'confirmed' && b.status !== 'walkin') return;
+    if (b.status !== 'confirmed') return;
     const cn = Number(courtNum);
     if (b.slots && b.slots.length > 0) {
       b.slots.forEach(s => {

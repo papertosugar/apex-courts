@@ -132,7 +132,7 @@ function getUpcomingBookingsForCourt(sport, courtNum) {
   const rows  = [];
   all.forEach(b => {
     // Include confirmed (upcoming) and walkin (in progress / just started from reservation)
-    if (b.status !== 'confirmed' && b.status !== 'walkin') return;
+    if (b.status !== 'confirmed') return;
     const cn = Number(courtNum);
     // Slot-based (online)
     if (b.slots && b.slots.length > 0) {
