@@ -1566,11 +1566,24 @@ function doNavLogout() {
   const IMAGE_DURATION = 5000;
 
   // ── Fetch media from Supabase ────────────────────────────
+  async function waitForApexCourts(ms = 5000) {
+    if (window.ApexCourts?.db) return window.ApexCourts.db;
+    return new Promise(resolve => {
+      const t = Date.now();
+      const iv = setInterval(() => {
+        if (window.ApexCourts?.db) { clearInterval(iv); resolve(window.ApexCourts.db); }
+        else if (Date.now() - t > ms) { clearInterval(iv); resolve(null); }
+      }, 50);
+    });
+  }
+
   async function loadMedia() {
-    if (window.ApexCourts?.supabase) {
+    const db = await waitForApexCourts();
+    if (db) {
       try {
-        const { data, error } = await ApexCourts.supabase.storage
+        const { data, error } = await db.storage
           .from('slides').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+        console.log('[Slides] Supabase response:', { data, error });
         if (!error && data?.length) {
           const items = data
             .filter(f => /\.(mp4|mov|webm|jpe?g|png|webp|avif|gif)$/i.test(f.name))
@@ -1578,10 +1591,11 @@ function doNavLogout() {
               type: /\.(mp4|mov|webm)$/i.test(f.name) ? 'video' : 'image',
               url:  `${SUPABASE_PUB}/${encodeURIComponent(f.name)}`,
             }));
-          if (items.length) return items;
+          if (items.length) { console.log('[Slides] Loaded from Supabase:', items.length, 'items'); return items; }
         }
-      } catch (e) { console.warn('[Media]', e.message); }
+      } catch (e) { console.warn('[Slides] Supabase error:', e.message); }
     }
+    console.warn('[Slides] Falling back to local files');
     return LOCAL_FALLBACK;
   }
 
