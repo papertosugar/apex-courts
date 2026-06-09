@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview — Option 1: Split Hero</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #09090b; color: #eef0f5; font-family: system-ui, sans-serif; }
+
+  /* ── SPLIT HERO ── */
+  #hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* LEFT: Slideshow panel */
+  .hero-left-panel {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 56px;
+  }
+
+  /* Background image fills only the LEFT panel */
+  .hero-left-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=900&q=80') center/cover no-repeat;
+    filter: brightness(0.35) saturate(0.8);
+    z-index: 0;
+  }
+
+  /* Fade right edge of left panel into dark */
+  .hero-left-panel::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, transparent 60%, #09090b 100%);
+    z-index: 1;
+  }
+
+  .hero-left-content {
+    position: relative; z-index: 2;
+  }
+
+  .eyebrow {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: #00c2a8;
+  }
+  .eyebrow-line { width: 32px; height: 1px; background: #00c2a8; }
+
+  .hero-title {
+    font-family: 'Arial Black', system-ui, sans-serif;
+    font-size: clamp(56px, 7vw, 110px);
+    line-height: 0.92;
+    font-weight: 900;
+    margin-bottom: 20px;
+  }
+  .gold { color: #00c2a8; }
+  .dim  { color: rgba(238,240,245,0.3); }
+
+  .hero-body {
+    font-size: 16px; color: rgba(238,240,245,0.6);
+    line-height: 1.7; max-width: 380px;
+    margin-bottom: 36px; font-weight: 300;
+  }
+
+  .hero-actions { display: flex; gap: 12px; }
+  .btn-primary {
+    padding: 14px 28px; border-radius: 10px;
+    background: #00c2a8; color: #09090b;
+    font-size: 14px; font-weight: 800;
+    text-decoration: none; letter-spacing: 0.05em;
+  }
+  .btn-ghost {
+    padding: 14px 24px; border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(238,240,245,0.7);
+    font-size: 14px; font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* Slide dots (bottom of left panel) */
+  .slide-dots {
+    position: absolute; bottom: 32px; left: 56px;
+    display: flex; gap: 8px; z-index: 2;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.25);
+  }
+  .dot.active { width: 22px; background: #00c2a8; }
+
+  /* RIGHT: Animation panel — solid dark bg */
+  .hero-right-panel {
+    background: #0d0d12;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    gap: 24px;
+    position: relative;
+  }
+
+  /* Subtle grid texture on right */
+  .hero-right-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(0,194,168,0.03) 1px, transparent 1px);
+    background-size: 100% 60px;
+    pointer-events: none;
+  }
+
+  .court-box {
+    width: 100%; max-width: 440px;
+    aspect-ratio: 4/3;
+    background: #13131a;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+
+  .court-placeholder {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+  }
+  .court-grid-mock {
+    display: grid; grid-template-columns: 1fr 0.5fr 1fr;
+    gap: 5px; width: 200px; opacity: 0.5;
+  }
+  .court-cell {
+    height: 44px; border-radius: 5px;
+    border: 1px solid rgba(0,194,168,0.3);
+    background: rgba(0,194,168,0.05);
+  }
+  .court-cell.active {
+    border-color: rgba(0,194,168,0.7);
+    background: rgba(0,194,168,0.12);
+  }
+  .court-live-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: #00c2a8; opacity: 0.7;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+  }
+
+  .court-label-bottom {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(238,240,245,0.3);
+  }
+
+  /* LIVE badge top-right of right panel */
+  .live-badge {
+    position: absolute; top: 24px; right: 24px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #4ade80;
+    z-index: 2;
+  }
+
+  /* Stat row */
+  .stat-row {
+    display: flex; gap: 32px; justify-content: center;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-size: 28px; font-weight: 900;
+    font-family: 'Arial Black', sans-serif;
+    color: #00c2a8; line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px; color: rgba(238,240,245,0.4);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* Label */
+  .preview-label {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,194,168,0.15); border: 1px solid rgba(0,194,168,0.3);
+    color: #00c2a8; padding: 6px 18px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .option-links {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; z-index: 100;
+  }
+  .option-links a {
+    background: rgba(13,13,18,0.9); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(238,240,245,0.7); padding: 8px 18px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; text-decoration: none;
+  }
+  .option-links a.active { border-color: #00c2a8; color: #00c2a8; }
+</style>
+</head>
+<body>
+
+<div class="preview-label">Option 1 — Split Hero (50 / 50)</div>
+
+<section id="hero">
+
+  <!-- LEFT: Photo/Video Slideshow + Text -->
+  <div class="hero-left-panel">
+    <div class="hero-left-content">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        Now Open — Pickleball &amp; Badminton
+      </div>
+      <h1 class="hero-title">
+        PLAY AT<br>
+        <span class="gold">SMASH</span><br>
+        <span class="dim">STUDIO</span>
+      </h1>
+      <p class="hero-body">
+        Climate-controlled courts built for serious play.
+        Real-time booking, professional equipment, and a
+        community that lives for the game.
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary">Book a Court</a>
+        <a href="#" class="btn-ghost">Explore Sports →</a>
+      </div>
+    </div>
+    <div class="slide-dots">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Court Animation — clean dark panel -->
+  <div class="hero-right-panel">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Live
+    </div>
+
+    <div class="court-box">
+      <div class="court-placeholder">
+        <div class="court-grid-mock">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div class="court-cell active"></div>
+            <div class="court-cell"></div>
+            <div class="court-cell active"></div>
+            <div class="court-cell"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;justify-content:center">
+            <div class="court-cell" style="height:90px"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div class="court-cell"></div>
+            <div class="court-cell active"></div>
+            <div class="court-cell"></div>
+            <div class="court-cell active"></div>
+          </div>
+        </div>
+        <div class="court-live-label">
+          <div class="live-dot"></div>
+          Court Animation Here
+        </div>
+      </div>
+    </div>
+
+    <div class="court-label-bottom">8 Courts · Live Status</div>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">9</div>
+        <div class="stat-label">Indoor Courts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">98%</div>
+        <div class="stat-label">Satisfaction</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3K+</div>
+        <div class="stat-label">Members</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<div class="option-links">
+  <a href="preview-option1.html" class="active">Option 1 — Split Hero</a>
+  <a href="preview-option2.html">Option 2 — Animation Below</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview — Option 2: Animation Below Hero</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #09090b; color: #eef0f5; font-family: system-ui, sans-serif; }
+
+  /* ── HERO — fullscreen slideshow only ── */
+  #hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 140px 7% 100px;
+    overflow: hidden;
+  }
+
+  /* Full background image (same as current) */
+  #hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1400&q=80') center/cover no-repeat;
+    filter: brightness(0.32) saturate(0.8);
+    z-index: 0;
+  }
+
+  /* Gradient overlay */
+  #hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg,
+      rgba(9,9,11,0.88) 0%,
+      rgba(9,9,11,0.65) 50%,
+      rgba(9,9,11,0.45) 100%
+    );
+    z-index: 1;
+  }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 640px;
+  }
+
+  .eyebrow {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: #00c2a8;
+  }
+  .eyebrow-line { width: 32px; height: 1px; background: #00c2a8; }
+
+  .hero-title {
+    font-family: 'Arial Black', system-ui, sans-serif;
+    font-size: clamp(72px, 10vw, 136px);
+    line-height: 0.92; font-weight: 900;
+    margin-bottom: 20px;
+  }
+  .gold { color: #00c2a8; }
+  .dim  { color: rgba(238,240,245,0.3); }
+
+  .hero-body {
+    font-size: 17px; color: rgba(238,240,245,0.6);
+    line-height: 1.7; max-width: 440px;
+    margin-bottom: 36px; font-weight: 300;
+  }
+
+  .hero-actions { display: flex; gap: 12px; }
+  .btn-primary {
+    padding: 14px 28px; border-radius: 10px;
+    background: #00c2a8; color: #09090b;
+    font-size: 14px; font-weight: 800;
+    text-decoration: none; letter-spacing: 0.05em;
+  }
+  .btn-ghost {
+    padding: 14px 24px; border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(238,240,245,0.7);
+    font-size: 14px; font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* Slide dots */
+  .slide-dots {
+    position: absolute; bottom: 36px; left: 7%;
+    display: flex; gap: 8px; z-index: 2;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.25); }
+  .dot.active { width: 22px; background: #00c2a8; }
+
+  /* Scroll hint */
+  .scroll-hint {
+    position: absolute; bottom: 32px; right: 7%;
+    z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(238,240,245,0.3);
+  }
+  .scroll-arrow {
+    width: 20px; height: 20px;
+    border-right: 1.5px solid rgba(255,255,255,0.2);
+    border-bottom: 1.5px solid rgba(255,255,255,0.2);
+    transform: rotate(45deg);
+    animation: bounce 1.8s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: rotate(45deg) translateY(0); }
+    50%      { transform: rotate(45deg) translateY(5px); }
+  }
+
+  /* ── LIVE COURTS SECTION — below hero ── */
+  #live-courts {
+    background: #0d0d12;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 80px 7%;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #00c2a8;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .section-title {
+    font-family: 'Arial Black', sans-serif;
+    font-size: clamp(32px, 3.5vw, 52px);
+    font-weight: 900; line-height: 1;
+    margin-bottom: 16px;
+  }
+  .section-body {
+    font-size: 15px; color: rgba(238,240,245,0.5);
+    line-height: 1.7; max-width: 380px;
+    margin-bottom: 32px;
+  }
+
+  .stat-row {
+    display: flex; gap: 32px;
+  }
+  .stat { }
+  .stat-num {
+    font-size: 32px; font-weight: 900;
+    font-family: 'Arial Black', sans-serif;
+    color: #00c2a8; line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px; color: rgba(238,240,245,0.4);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* Court animation panel */
+  .court-panel {
+    background: #13131a;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+
+  .court-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,194,168,0.05) 0%, transparent 70%);
+  }
+
+  .court-grid-mock {
+    display: grid; grid-template-columns: 1fr 0.5fr 1fr;
+    gap: 6px; width: 240px; position: relative; z-index: 1;
+  }
+  .court-cell {
+    height: 52px; border-radius: 6px;
+    border: 1px solid rgba(0,194,168,0.2);
+    background: rgba(0,194,168,0.04);
+  }
+  .court-cell.active {
+    border-color: rgba(0,194,168,0.6);
+    background: rgba(0,194,168,0.1);
+    box-shadow: 0 0 12px rgba(0,194,168,0.15);
+  }
+  .court-cell.blue {
+    border-color: rgba(59,130,246,0.5);
+    background: rgba(59,130,246,0.08);
+  }
+
+  .court-bottom-label {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(238,240,245,0.25);
+    white-space: nowrap;
+  }
+
+  .court-top-badge {
+    position: absolute; top: 16px; right: 16px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #4ade80;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.2);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* Preview nav */
+  .preview-label {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,194,168,0.15); border: 1px solid rgba(0,194,168,0.3);
+    color: #00c2a8; padding: 6px 18px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .option-links {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; z-index: 100;
+  }
+  .option-links a {
+    background: rgba(13,13,18,0.9); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(238,240,245,0.7); padding: 8px 18px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; text-decoration: none;
+  }
+  .option-links a.active { border-color: #00c2a8; color: #00c2a8; }
+</style>
+</head>
+<body>
+
+<div class="preview-label">Option 2 — Fullscreen Hero + Animation Below</div>
+
+<!-- HERO: Fullscreen, clean — slideshow + text only -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="eyebrow">
+      <div class="eyebrow-line"></div>
+      Now Open — Pickleball &amp; Badminton
+    </div>
+    <h1 class="hero-title">
+      PLAY AT<br>
+      <span class="gold">SMASH</span><br>
+      <span class="dim">STUDIO</span>
+    </h1>
+    <p class="hero-body">
+      Climate-controlled courts built for serious play.
+      Real-time booking, professional equipment, and a
+      community that lives for the game.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary">Book a Court</a>
+      <a href="#" class="btn-ghost">Explore Sports →</a>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- LIVE COURTS: Dedicated section below hero -->
+<section id="live-courts">
+
+  <div>
+    <div class="section-label">
+      <div class="live-dot"></div>
+      Live Court Status
+    </div>
+    <h2 class="section-title">
+      COURTS<br>
+      <span class="gold">LIVE NOW</span>
+    </h2>
+    <p class="section-body">
+      Watch real-time court occupancy. See which courts are active,
+      reserved, or open — before you even arrive.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">9</div>
+        <div class="stat-label">Indoor Courts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">98%</div>
+        <div class="stat-label">Satisfaction</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3K+</div>
+        <div class="stat-label">Members</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="court-panel">
+    <div class="court-top-badge">
+      <div class="live-dot"></div>
+      Live
+    </div>
+
+    <div class="court-grid-mock">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div class="court-cell active"></div>
+        <div class="court-cell"></div>
+        <div class="court-cell active"></div>
+        <div class="court-cell"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;justify-content:center">
+        <div class="court-cell" style="height:110px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div class="court-cell blue"></div>
+        <div class="court-cell"></div>
+        <div class="court-cell blue active"></div>
+        <div class="court-cell"></div>
+      </div>
+    </div>
+
+    <div class="court-bottom-label">8 Courts · Live Status</div>
+  </div>
+
+</section>
+
+<div class="option-links">
+  <a href="preview-option1.html">Option 1 — Split Hero</a>
+  <a href="preview-option2.html" class="active">Option 2 — Animation Below</a>
+</div>
+
+</body>
+</html>
