@@ -288,7 +288,9 @@ window._setProgress = function(){};
     <!-- Image layer for photo slides -->
     <div id="heroImgSlide" style="position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease-in-out;z-index:0">
       <img id="heroImgEl" alt="" decoding="async"
-           style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" />
+           style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;filter:brightness(0.75) saturate(0.85)" />
+      <!-- Same dark gradient overlay as videos -->
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(9,9,11,0.88) 0%,rgba(9,9,11,0.70) 50%,rgba(9,9,11,0.55) 100%);pointer-events:none"></div>
     </div>
   </div>
 
