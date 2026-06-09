@@ -1581,17 +1581,49 @@ function doNavLogout() {
     const db = await waitForApexCourts();
     if (db) {
       try {
+        // 1) List files in the bucket
         const { data, error } = await db.storage
           .from('slides').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
-        console.log('[Slides] Supabase response:', { data, error });
-        if (!error && data?.length) {
-          const items = data
-            .filter(f => /\.(mp4|mov|webm|jpe?g|png|webp|avif|gif)$/i.test(f.name))
-            .map(f => ({
-              type: /\.(mp4|mov|webm)$/i.test(f.name) ? 'video' : 'image',
-              url:  `${SUPABASE_PUB}/${encodeURIComponent(f.name)}`,
+        if (error) throw error;
+        if (!data?.length) throw new Error('No files found in slides bucket');
+
+        const files = data.filter(f => /\.(mp4|mov|webm|jpe?g|png|webp|avif|gif)$/i.test(f.name));
+        if (!files.length) throw new Error('No media files in slides bucket');
+
+        // 2) Try public URL first (works if bucket is Public)
+        const testFile = files[0].name;
+        const { data: pubData } = db.storage.from('slides').getPublicUrl(testFile);
+        const testUrl = pubData?.publicUrl;
+        let usePublic = false;
+        if (testUrl) {
+          try {
+            const res = await fetch(testUrl, { method: 'HEAD' });
+            usePublic = res.ok;
+          } catch (_) {}
+        }
+
+        if (usePublic) {
+          // Public bucket — use direct public URLs
+          const items = files.map(f => ({
+            type: /\.(mp4|mov|webm)$/i.test(f.name) ? 'video' : 'image',
+            url:  db.storage.from('slides').getPublicUrl(f.name).data.publicUrl,
+          }));
+          console.log('[Slides] Loaded via public URL:', items.length, 'items');
+          return items;
+        } else {
+          // Private bucket — generate signed URLs (1 hour expiry)
+          const names = files.map(f => f.name);
+          const { data: signed, error: signErr } = await db.storage
+            .from('slides').createSignedUrls(names, 3600);
+          if (signErr) throw signErr;
+          const items = signed
+            .filter(s => s.signedUrl)
+            .map(s => ({
+              type: /\.(mp4|mov|webm)$/i.test(s.path) ? 'video' : 'image',
+              url:  s.signedUrl,
             }));
-          if (items.length) { console.log('[Slides] Loaded from Supabase:', items.length, 'items'); return items; }
+          console.log('[Slides] Loaded via signed URLs:', items.length, 'items');
+          return items;
         }
       } catch (e) { console.warn('[Slides] Supabase error:', e.message); }
     }
