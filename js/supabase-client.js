@@ -89,7 +89,7 @@ async function getCurrentUser() {
     const { data: { user }, error } = await db.auth.getUser();
     if (error || !user) return null;
 
-    // user_metadata에서 이름/역할 먼저 읽기 (profiles 없어도 동작)
+    // Read name/role from user_metadata first (works even without a profiles row)
     const meta = user.user_metadata || {};
     const baseProfile = {
       first_name: meta.first_name || meta.firstName || '',
@@ -97,7 +97,7 @@ async function getCurrentUser() {
       role:       meta.role || 'member',
     };
 
-    // profiles 테이블은 보너스 — 실패해도 로그인은 됨
+    // profiles table is a bonus — login succeeds even if it fails
     try {
       const { data: profile } = await db
         .from('profiles')
@@ -182,8 +182,8 @@ async function createBooking({ courtId, date, startTime, endTime, durationMins, 
 
   const { data, error } = await db.from('bookings').insert(payload).select().single();
   if (error) {
-    // court_id NOT NULL 에러: sport + court_number로 올바른 court_id를 조회해서 재시도
-    // ⚠️  courtNum(1~4 per-sport 번호)을 court_id로 쓰면 PB/BD 코트가 충돌하므로 금지
+    // court_id NOT NULL error: look up correct court_id via sport + court_number and retry
+    // ⚠️  Do NOT use courtNum (1–4 per-sport) as court_id — PB/BD courts would collide
     if ((error.message?.includes('court_id') || error.code === '23502') && sport) {
       try {
         const { data: courtRows } = await db
@@ -199,7 +199,7 @@ async function createBooking({ courtId, date, startTime, endTime, durationMins, 
           return data2;
         }
       } catch (_) {}
-      // 코트 조회도 실패하면 court_id 없이 재시도 (nullable인 경우)
+      // If court lookup also fails, retry without court_id (nullable case)
       delete payload.court_id;
       const { data: data3, error: error3 } = await db.from('bookings').insert(payload).select().single();
       if (error3) throw error3;

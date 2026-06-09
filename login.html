@@ -284,7 +284,7 @@ let successRole = null;
   if (p.get('reason') === 'idle') {
     const el = document.getElementById('errorMsg');
     if (el) {
-      el.textContent = '30분 비활동으로 자동 로그아웃 되었습니다. 다시 로그인해 주세요.';
+      el.textContent = 'You were automatically logged out after 30 minutes of inactivity. Please sign in again.';
       el.classList.add('show');
     }
   }
@@ -349,14 +349,13 @@ async function doLogin() {
       const { data, error } = await window.apexDB.auth.signInWithPassword({ email: contact, password });
 
       if (error) {
-        // 명확한 에러 메시지 표시
         const msg = error.message || '';
         if (msg.includes('Email not confirmed')) {
-          showError('이메일 인증이 완료되지 않았습니다. 가입 시 받은 이메일의 링크를 먼저 클릭해주세요.');
+          showError('Email not verified. Please click the confirmation link sent to your email first.');
         } else if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
-          showError('이메일 또는 비밀번호가 올바르지 않습니다.');
+          showError('Incorrect email or password.');
         } else {
-          showError('로그인 실패: ' + msg);
+          showError('Sign in failed: ' + msg);
         }
         btn.disabled = false;
         btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
@@ -386,7 +385,7 @@ async function doLogin() {
     }
   } catch (err) {
     console.warn('[Login] Supabase error:', err.message);
-    showError('로그인 실패: ' + (err.message || '알 수 없는 오류'));
+    showError('Sign in failed: ' + (err.message || 'Unknown error'));
     btn.disabled = false;
     btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
     return;

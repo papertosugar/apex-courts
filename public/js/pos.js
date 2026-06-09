@@ -1240,7 +1240,7 @@ function saveEditBooking() {
   const newDur   = parseFloat(document.getElementById('editDuration').value) || 1;
 
   if (!newDate || !newTime) {
-    showToast('날짜와 시간을 입력해주세요.', 'error'); return;
+    showToast('Please enter a date and time.', 'error'); return;
   }
 
   const bookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');

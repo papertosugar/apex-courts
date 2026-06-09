@@ -839,7 +839,7 @@ footer {
   .nav-links { display: none; }
   .nav-hamburger { display: flex; }
 
-  /* ── 모바일에서 reveal 요소 offset 줄이기 (넘침 방지) ── */
+  /* ── Reduce reveal element offset on mobile (prevent overflow) ── */
   .reveal.from-below  { transform: translateY(10px); }
   .reveal.from-left   { transform: translateX(-10px); }
   .reveal.from-right  { transform: translateX(10px); }
@@ -947,7 +947,7 @@ footer {
   /* Video mute button — move to avoid nav overlap */
   .hero-mute-btn { bottom: 80px; right: 16px; width: 36px; height: 36px; }
 
-  /* 히어로 stat 그리드 → 모바일 가로 스크롤로 */
+  /* Hero stat grid → horizontal scroll on mobile */
   .hero-stat-row {
     grid-template-columns: repeat(3, minmax(90px, 1fr));
     gap: var(--s1);
@@ -981,10 +981,10 @@ footer {
   /* Availability tabs — scroll */
   .avail-tab { font-size: 11px; padding: 6px 12px; white-space: nowrap; }
 
-  /* FAQ 그리드 — 1열 */
+  /* FAQ grid — single column */
   .faq-grid { grid-template-columns: 1fr !important; }
 
-  /* CTA band 버튼 아래로 */
+  /* CTA band — stack button below */
   .cta-band { grid-template-columns: 1fr; text-align: center; }
   .cta-band-right { text-align: center; }
   .cta-band-sub   { max-width: 100%; }

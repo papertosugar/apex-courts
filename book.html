@@ -226,7 +226,7 @@
       transition: all 0.15s;
       position: relative;
     }
-    /* BOOKED — 빨간색 */
+    /* BOOKED — red */
     .ag-cell.booked {
       background: rgba(239,68,68,0.13);
       cursor: not-allowed;
@@ -236,7 +236,7 @@
       font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
       color: #f87171;
     }
-    /* OPEN SESSION — 파란색 */
+    /* OPEN SESSION — blue */
     .ag-cell.open-session {
       background: rgba(59,130,246,0.12);
       cursor: pointer;
@@ -246,7 +246,7 @@
       font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
       color: #60a5fa;
     }
-    /* AVAILABLE — 회색 박스 */
+    /* AVAILABLE — gray box */
     .ag-cell.available {
       background: rgba(255,255,255,0.04);
     }
@@ -1128,9 +1128,9 @@
       <span style="font-size:24px;font-weight:800;color:var(--gold)" id="payModalTotal">₱0</span>
     </div>
 
-    <!-- Payment options (온라인 예약금) -->
+    <!-- Payment options (online reservation deposit) -->
     <div style="margin-bottom:10px;padding:10px 14px;border-radius:8px;background:rgba(0,194,168,0.06);border:1px solid rgba(0,194,168,0.15);font-size:12px;color:var(--cream-muted);line-height:1.6">
-      💡 온라인 예약 시 예약금을 선결제합니다. 현금 결제는 워크인(현장 방문)만 가능합니다.
+      💡 Online bookings require a deposit paid upfront. Cash payment is only available for walk-ins (on-site visit).
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <button class="pay-opt selected" onclick="selectPayMethod('gcash',this)" data-method="gcash"
@@ -1640,7 +1640,7 @@ window.qCalPickDate    = qCalPickDate;
     const nick = localStorage.getItem('apexNick');
     userEl.textContent = 'Hi, ' + (nick || user.split(' ')[0]);
   }
-  // POS/Admin 버튼은 Admin, POS Staff 에게만 표시
+  // POS/Admin button only visible to Admin and POS Staff
   if (roleEl && (role === 'Admin' || role === 'POS Staff')) {
     roleEl.style.display = 'inline-block';
     const href  = role === 'Admin' ? 'admin/dashboard.html' : 'admin/pos.html';

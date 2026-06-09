@@ -315,13 +315,13 @@ function calPickDate(isoStr) {
   jumpToCalendarDate(isoStr);
 }
 
-// ─── 예약 직전 실시간 충돌 체크 ───
-// 선택된 슬롯들을 Supabase + localStorage 양쪽에서 재확인
-// 충돌 있으면 충돌 슬롯 label 반환, 없으면 null
+// ─── Real-time conflict check before booking ───
+// Re-validates selected slots against both Supabase + localStorage
+// Returns the conflicting slot label if conflict found, otherwise null
 async function checkConflictsBeforeBook() {
   const step = getSlotStep();
 
-  // 1) localStorage 체크
+  // 1) localStorage check
   const localBookings = JSON.parse(localStorage.getItem('apexBookings') || '[]');
   for (const s of state.selectedSlots) {
     const dateStr = getPhDate(s.date);
@@ -342,7 +342,7 @@ async function checkConflictsBeforeBook() {
     if (conflict) return `${s.label} · Court ${s.court} (${dateStr})`;
   }
 
-  // 2) Supabase 체크 (연결된 경우)
+  // 2) Supabase check (if connected)
   if (window.apexDB) {
     try {
       const dates = [...new Set(state.selectedSlots.map(s => getPhDate(s.date)))];
@@ -370,7 +370,7 @@ async function checkConflictsBeforeBook() {
           if (conflict) return `${s.label} · Court ${s.court} (${dateStr})`;
         }
       }
-    } catch (_) { /* Supabase 오류는 무시 — localStorage 체크로 충분 */ }
+    } catch (_) { /* Supabase error ignored — localStorage check is sufficient */ }
   }
 
   return null;
@@ -391,12 +391,12 @@ function getSlotStatus(slotIdx, courtNum) {
   const cSport = (state.sport || '').toLowerCase();
   const taken = bookings.some(b => {
     if (b.status === 'cancelled') return false;
-    // sport가 없는(undefined/null) 레거시 항목은 다른 스포츠로 취급해 무시
+    // Legacy entries with no sport (undefined/null) are treated as a different sport — skip
     const bSport = (b.sport || '').toLowerCase();
     if (!bSport || bSport !== cSport) return false;
     return (b.slots || []).some(s => {
       if (s.date !== dateStr) return false;
-      // 슬롯에 sport 필드가 있으면 이중 검증 (없으면 부킹 레벨 검증으로 충분)
+      // If slot has a sport field, double-validate (otherwise booking-level check is sufficient)
       if (s.sport && s.sport.toLowerCase() !== cSport) return false;
       if (Number(s.court) !== courtNum) return false;
       // Parse the booked slot time
@@ -749,20 +749,20 @@ async function finalizePayment() {
   btn.disabled = true;
   btn.textContent = 'Checking availability…';
 
-  // ── Step 1: 예약 직전 실시간 중복 체크 ────────────────────────
+  // ── Step 1: Real-time duplicate check before booking ────────────────────────
   const conflictSlot = await checkConflictsBeforeBook();
   if (conflictSlot) {
     btn.disabled = false;
     btn.textContent = 'Confirm Booking';
     document.getElementById('paymentModal').classList.remove('open');
-    showBookingError(`이미 예약된 시간입니다: ${conflictSlot}. 다른 시간을 선택해주세요.`);
+    showBookingError(`This time slot is already booked: ${conflictSlot}. Please choose a different time.`);
     renderAvailGrid();
     return;
   }
 
   btn.textContent = 'Saving…';
 
-  // ── Step 2: Supabase에 저장 ───────────────────────────────────
+  // ── Step 2: Save to Supabase ───────────────────────────────────
   let supabaseSaved = false;
   if (window.ApexCourts) {
     try {
@@ -804,17 +804,17 @@ async function finalizePayment() {
       }
       supabaseSaved = true;
     } catch (e) {
-      // 동시 예약 충돌 (unique constraint 위반)
+      // Concurrent booking conflict (unique constraint violation)
       if (e.message?.includes('unique') || e.code === '23505') {
         btn.disabled = false;
         btn.textContent = 'Confirm Booking';
         document.getElementById('paymentModal').classList.remove('open');
-        showBookingError('방금 다른 분이 같은 시간을 예약했습니다. 다른 슬롯을 선택해주세요.');
+        showBookingError('Someone just booked the same time slot. Please choose a different slot.');
         renderAvailGrid();
         return;
       }
       console.error('[Booking] Supabase save failed:', e.message);
-      // DB 오류는 localStorage fallback으로 계속 진행
+      // DB error — continue with localStorage fallback
     }
   }
 
@@ -829,7 +829,7 @@ async function finalizePayment() {
     userId: localStorage.getItem('apexUserId') || null,
     slots: state.selectedSlots.map(s => ({
       date: getPhDate(s.date), court: s.court, time: s.label,
-      sport: state.sport,  // 슬롯별 sport 이중 저장 — PB/BD 혼동 방지
+      sport: state.sport,  // Per-slot sport stored redundantly — prevents PB/BD mix-up
     })),
     duration: totalDuration(),
     extras: Array.from(state.extras),
@@ -861,11 +861,11 @@ function closeModal() {
 }
 
 // ─── URL PARAMS ───
-// 홈 그리드 클릭 시 sport/date 자동 선택
+// Auto-select sport/date when coming from the home grid
 function applyUrlParams() {
   const p = new URLSearchParams(window.location.search);
 
-  // sport — 'drillzone' → 'drill' 정규화
+  // sport — normalize 'drillzone' → 'drill'
   let sport = p.get('sport') || '';
   if (sport === 'drillzone') sport = 'drill';
   if (sport) {
@@ -877,7 +877,7 @@ function applyUrlParams() {
     }
   }
 
-  // 홈에서 클릭하면 오늘 날짜 자동 선택
+  // Clicking from home auto-selects today's date
   if (p.get('sport') || p.get('time')) {
     state.selectedDate = phDateObj(getTodayPH()); // timezone-safe
     state.dateOffset   = 0;
@@ -961,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
             date:  b.booking_date,                    // 'YYYY-MM-DD'
             court: Number(b.court_number),
             time:  b.start_time,                      // '08:00:00' — parseSlotHours handles 24h
-            sport: b.sport === 'drillzone' ? 'drill' : (b.sport || ''), // 슬롯별 sport 이중 저장
+            sport: b.sport === 'drillzone' ? 'drill' : (b.sport || ''), // Per-slot sport stored redundantly
           }],
         }));
 
